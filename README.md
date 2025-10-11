@@ -1,6 +1,6 @@
-# 🌊 DiveBook
+# 🌊 Scubex
 
-**DiveBook** es una aplicación web para exploradores marinos que permite descubrir especies de vida marina por ubicación geográfica. Ideal para buceadores, snorkelers y amantes del mar.
+**Scubex** es una aplicación web para exploradores marinos que permite descubrir especies de vida marina por ubicación geográfica. Ideal para buceadores, snorkelers y amantes del mar.
 
 ## 🚀 Características
 
