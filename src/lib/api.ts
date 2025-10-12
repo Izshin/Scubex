@@ -3,8 +3,8 @@ export async function getZoneSpecies(bbox: number[]) {
   // TODO: Reemplazar con llamada real cuando tengas backend
   console.log('Simulando consulta para zona:', bbox);
   
-  // Simular delay de red
-  await new Promise(resolve => setTimeout(resolve, 800));
+  // Simular delay de red - sincronizado con animación del botón scan (2s)
+  await new Promise(resolve => setTimeout(resolve, 2000));
   
   // Datos de ejemplo basados en la zona del Mediterráneo
   const mockData = {

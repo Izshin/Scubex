@@ -1,15 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import maplibregl, { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-type Props = { onViewportIdle: (bbox: number[]) => void };
+type Props = { onViewportIdle?: (bbox: number[]) => void };
+export type MapViewRef = { getMap: () => Map | null };
 
-export default function MapView({ onViewportIdle }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
+export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle }, forwardedRef) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+
+  useImperativeHandle(forwardedRef, () => ({
+    getMap: () => mapRef.current
+  }));
   
   useEffect(() => {
-    if (!ref.current) return;
+    if (!containerRef.current) return;
     
     // Usar OpenStreetMap si no hay API key de MapTiler
     const style = import.meta.env.VITE_MAPTILER_KEY 
@@ -34,7 +39,7 @@ export default function MapView({ onViewportIdle }: Props) {
         };
 
     const map = new maplibregl.Map({
-      container: ref.current,
+      container: containerRef.current,
       style: style,
       center: [-5.98, 36.52], // Cádiz
       zoom: 8,
@@ -50,8 +55,10 @@ export default function MapView({ onViewportIdle }: Props) {
 
     let timer: number | null = null;
     const emitBbox = () => {
-      const b = map.getBounds(); // w,s,e,n
-      onViewportIdle([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+      if (onViewportIdle) {
+        const b = map.getBounds(); // w,s,e,n
+        onViewportIdle([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+      }
     };
 
     const onMoveEnd = () => {
@@ -69,7 +76,7 @@ export default function MapView({ onViewportIdle }: Props) {
 
   return (
     <div className="w-full h-full relative">
-      <div className="w-full h-full" ref={ref} />
+      <div className="w-full h-full" ref={containerRef} />
     </div>
   );
-}
+});

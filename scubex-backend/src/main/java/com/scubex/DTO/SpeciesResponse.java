@@ -18,7 +18,7 @@ public class SpeciesResponse {
     private String phylum;
     private Double latitude;
     private Double longitude;
-    private Integer speciesOccurrences;
+    private Integer numberOfOccurrences;
     
 }
     
