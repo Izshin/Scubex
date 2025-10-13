@@ -104,7 +104,7 @@ public class SpeciesService {
                 .fromUriString(obisApiUrl + "/occurrence")
                 .queryParam("geometry", wkt) // raw value; will be encoded below
                 .queryParam("size", 1000)
-                .queryParam("fields", "scientificName,decimalLatitude,decimalLongitude,eventDate")
+                .queryParam("fields", "scientificName,decimalLatitude,decimalLongitude,eventDate,phylum")
                 .queryParam("taxonid", "2,3,4");
 
         // build().encode() → encodes spaces as %20 (and other illegal chars) correctly
@@ -264,6 +264,8 @@ public class SpeciesService {
             species.setLatitude(mostRecent.getDecimalLatitude());
             species.setLongitude(mostRecent.getDecimalLongitude());
             species.setRecordDate(mostRecent.getEventDate());
+            species.setPhylum(mostRecent.getPhylum());
+            
         }
         
         // Enhanced information from iNaturalist

@@ -7,6 +7,7 @@ interface BackendSpeciesResponse {
   longitude: number;
   recordDate?: string;
   photoUrl?: string;
+  phylum?: string;
 }
 
 // Frontend display types  
@@ -17,6 +18,7 @@ interface FrontendSpeciesData {
   records: number;
   last_record: string;
   photoUrl?: string;
+  phylum?: string;
 }
 
 // Test function to check if backend is running
@@ -75,7 +77,8 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         scientific_name: species.scientificName,
         records: species.numberOfOccurrences,
         last_record: species.recordDate ? formatDate(species.recordDate) : 'Fecha desconocida',
-        photoUrl: species.photoUrl
+        photoUrl: species.photoUrl,
+        phylum: species.phylum
       }))
       .sort((a, b) => b.records - a.records); // Sort by records in descending order (most records first)
     

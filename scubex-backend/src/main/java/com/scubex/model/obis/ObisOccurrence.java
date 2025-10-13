@@ -8,6 +8,7 @@ public class ObisOccurrence {
     private Double decimalLatitude;
     private Double decimalLongitude;
     private String eventDate;
+    private String phylum;
     
 }
 

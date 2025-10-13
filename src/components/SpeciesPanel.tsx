@@ -1,5 +1,29 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Function to get emoji based on phylum
+const getPhylumEmoji = (phylum?: string): string => {
+  if (!phylum) return '🐟'; // Default fish
+  
+  const phylumLower = phylum.toLowerCase();
+  
+  // Marine phyla and their emojis
+  if (phylumLower.includes('chordata')) return '🐟'; // Fish, marine mammals
+  if (phylumLower.includes('mollusca')) return '🐚'; // Shells, squid, octopus
+  if (phylumLower.includes('arthropoda')) return '🦀'; // Crabs, lobsters, shrimp
+  if (phylumLower.includes('cnidaria')) return '🪼'; // Jellyfish, corals, sea anemones
+  if (phylumLower.includes('echinodermata')) return '⭐'; // Starfish, sea urchins
+  if (phylumLower.includes('porifera')) return '🧽'; // Sponges
+  if (phylumLower.includes('annelida')) return '🪱'; // Marine worms
+  if (phylumLower.includes('platyhelminthes')) return '🪱'; // Flatworms
+  if (phylumLower.includes('bryozoa')) return '🌿'; // Moss animals
+  if (phylumLower.includes('brachiopoda')) return '🐚'; // Lamp shells
+  if (phylumLower.includes('nemertea')) return '🪱'; // Ribbon worms
+  if (phylumLower.includes('sipuncula')) return '🪱'; // Peanut worms
+  if (phylumLower.includes('tardigrada')) return '🦠'; // Water bears
+  
+  return '🌊'; // Generic marine life
+};
+
 type Props = { 
   loading: boolean; 
   data?: {
@@ -10,6 +34,7 @@ type Props = {
       records: number;
       last_record: string;
       photoUrl?: string;
+      phylum?: string;
     }>;
     counts?: {
       total_taxa: number;
@@ -91,12 +116,9 @@ export default function SpeciesPanel({ loading, data }: Props) {
     <div className="h-full flex flex-col">
       {/* Header del panel */}
       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b">
-        <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-          🐠 Especies Marinas
-        </h2>
         <div className="text-sm text-gray-600 bg-white rounded-lg p-2 border space-y-1">
           <div className="flex items-center justify-between">
-            <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies únicas</span>
+            <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies distintas</span>
             {data.source && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                 {data.source.join(", ")}
@@ -161,9 +183,9 @@ export default function SpeciesPanel({ loading, data }: Props) {
                       <p className="text-sm text-gray-500 italic">{s.scientific_name}</p>
                     )}
                   </div>
-                  {/* Show photo if available, otherwise show fish emoji */}
+                  {/* Show photo if available, otherwise show phylum-specific emoji */}
                   <motion.div 
-                    className="w-12 h-12 flex-shrink-0"
+                    className="w-16 h-16 flex-shrink-0"
                     whileHover={{ 
                       scale: 1.1,
                       transition: { duration: 0.2 }
@@ -182,13 +204,13 @@ export default function SpeciesPanel({ loading, data }: Props) {
                       />
                     ) : null}
                     <div className={`text-2xl flex items-center justify-center w-full h-full ${s.photoUrl ? 'hidden' : ''}`}>
-                      🐟
+                      {getPhylumEmoji(s.phylum)}
                     </div>
                   </motion.div>
                 </div>
                 
-                <div className="flex items-center justify-between text-xs text-gray-600 mt-3">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-absolute justify-between text-xs text-gray-600 mt-3">
+                  <div className="flex items-absolute gap-4">
                     <motion.span 
                       className="bg-green-100 text-green-700 px-2 py-1 rounded-full"
                       whileHover={{ scale: 1.05 }}
