@@ -67,21 +67,30 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
     const backendData: BackendSpeciesResponse[] = await response.json();
     console.log('✅ Backend response:', backendData);
     
-    // Transform backend data to frontend format
-    const transformedSpecies: FrontendSpeciesData[] = backendData.map((species, index) => ({
-      taxon_id: index.toString(), // Use index as ID since backend doesn't provide one
-      common_name: species.commonName,
-      scientific_name: species.scientificName,
-      records: species.numberOfOccurrences,
-      last_record: species.recordDate ? formatDate(species.recordDate) : 'Fecha desconocida',
-      photoUrl: species.photoUrl
-    }));
+    // Transform backend data to frontend format and sort by number of records (most first)
+    const transformedSpecies: FrontendSpeciesData[] = backendData
+      .map((species, index) => ({
+        taxon_id: index.toString(), // Use index as ID since backend doesn't provide one
+        common_name: species.commonName,
+        scientific_name: species.scientificName,
+        records: species.numberOfOccurrences,
+        last_record: species.recordDate ? formatDate(species.recordDate) : 'Fecha desconocida',
+        photoUrl: species.photoUrl
+      }))
+      .sort((a, b) => b.records - a.records); // Sort by records in descending order (most records first)
+    
+    console.log('📊 Species sorted by records (highest first):', transformedSpecies.map(s => `${s.scientific_name}: ${s.records} records`));
+    
+    // Calculate total occurrences across all species
+    const totalOccurrences = transformedSpecies.reduce((sum, species) => sum + species.records, 0);
+    console.log('🔢 Total occurrences found:', totalOccurrences);
     
     // Return in the format expected by the frontend
     const frontendData = {
       species: transformedSpecies,
       counts: {
-        total_taxa: transformedSpecies.length
+        total_taxa: transformedSpecies.length,
+        total_occurrences: totalOccurrences
       },
       source: ["OBIS", "iNaturalist"] // Your backend uses these APIs
     };

@@ -28,7 +28,6 @@ function getRadiusFromZoom(zoom: number): number {
 
 export default function MapPage() {
   const [scanData, setScanData] = useState<{ lat: number; lng: number; radius: number } | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const mapRef = useRef<MapViewRef>(null);
   
   const q = useQuery({
@@ -37,12 +36,13 @@ export default function MapPage() {
     enabled: !!scanData
   });
 
+  // 🎯 MUCH SIMPLER: Radar animation syncs directly with actual loading state!
+  const isScanning = q.isLoading;
+
   const handleScan = () => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    setIsScanning(true);
-    
     // Get current map data
     const zoom = map.getZoom();
     const center = map.getCenter();
@@ -55,17 +55,12 @@ export default function MapPage() {
     console.log('📏 Search Radius:', `${radius}m`);
     console.log('🌊 Backend API Call will be:', `http://localhost:8080/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
     
-    // Set scan data to trigger the backend API call
+    // Set scan data to trigger the backend API call (this will automatically start isScanning via q.isLoading)
     setScanData({
       lat: Number(center.lat.toFixed(6)), // Round to 6 decimal places for precision
       lng: Number(center.lng.toFixed(6)), 
       radius: radius
     });
-    
-    // Simulate scanning animation
-    setTimeout(() => {
-      setIsScanning(false);
-    }, 2000);
   };
 
   return (
@@ -80,7 +75,11 @@ export default function MapPage() {
       {/* Main content con altura fija */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 min-h-0">
         <div className="relative">
-          <MapView ref={mapRef} />
+          <MapView 
+            ref={mapRef} 
+            isScanning={isScanning}
+            speciesData={q.data?.species || []}
+          />
           
           {/* Overlay de información animado */}
           <motion.div 

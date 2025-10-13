@@ -13,6 +13,7 @@ type Props = {
     }>;
     counts?: {
       total_taxa: number;
+      total_occurrences?: number;
     };
     source?: string[];
   }; 
@@ -93,15 +94,20 @@ export default function SpeciesPanel({ loading, data }: Props) {
         <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
           🐠 Especies Marinas
         </h2>
-        <div className="text-sm text-gray-600 bg-white rounded-lg p-2 border">
+        <div className="text-sm text-gray-600 bg-white rounded-lg p-2 border space-y-1">
           <div className="flex items-center justify-between">
-            <span>📊 Total: <strong>{data.counts?.total_taxa ?? 0}</strong> especies</span>
+            <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies únicas</span>
             {data.source && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                 {data.source.join(", ")}
               </span>
             )}
           </div>
+          {data.counts?.total_occurrences && (
+            <div className="text-xs text-gray-500">
+              🔢 <strong>{data.counts.total_occurrences.toLocaleString()}</strong> registros totales
+            </div>
+          )}
         </div>
       </div>
 
