@@ -78,7 +78,6 @@ export default function MapPage() {
           <MapView 
             ref={mapRef} 
             isScanning={isScanning}
-            speciesData={q.data?.species || []}
           />
           
           {/* Overlay de información animado */}
