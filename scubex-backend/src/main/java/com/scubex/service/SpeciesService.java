@@ -57,9 +57,11 @@ public class SpeciesService {
             INaturalistResponse iNatData = callINaturalistApi(scientificName);
             
             // Filter out microorganisms (total_results=0)
-            if (iNatData != null && iNatData.getTotalResults() > 0) {
+            if (iNatData != null && iNatData.getTotalResults() != null && iNatData.getTotalResults() > 0) {
                 SpeciesResponse species = buildSpeciesResponse(scientificName, occurrences, mostRecent, iNatData);
                 enrichedSpecies.add(species);
+            } else {
+                System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
             }
         }
         
@@ -128,21 +130,27 @@ public class SpeciesService {
 
     private INaturalistResponse callINaturalistApi(String scientificName) {
         try {
-            // Build iNaturalist search URL
-            String url = iNaturalistApiUrl + "/taxa?" +
-                        "q=" + java.net.URLEncoder.encode(scientificName, "UTF-8") +
-                        "&per_page=1" +  // We only need the first result
-                        "&order=desc&order_by=observations_count";  // Most observed first
+            // Build iNaturalist search URL with UriComponentsBuilder for proper encoding
+            URI uri = UriComponentsBuilder.fromUriString(iNaturalistApiUrl + "/taxa")
+                .queryParam("q", scientificName)
+                .queryParam("per_page", 1)  // We only need the first result
+                .queryParam("order", "desc")
+                .queryParam("order_by", "observations_count")  // Most observed first
+                .build()
+                .encode()
+                .toUri();
             
+            System.out.println("🦋 iNaturalist URI: " + uri);
             
-            // Make HTTP GET request to iNaturalist
-            String response = restTemplate.getForObject(url, String.class);
+            // Use automatic JSON deserialization instead of manual parsing
+            ResponseEntity<INaturalistResponse> response = restTemplate.getForEntity(uri, INaturalistResponse.class);
             
-            // Parse JSON response manually
-            if (response != null && !response.isEmpty()) {
-                return parseINaturalistResponse(response);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                System.out.println("✅ iNaturalist response successful");
+                return response.getBody();
             }
             
+            System.err.println("❌ iNaturalist HTTP " + response.getStatusCode() + " or empty body");
             return null;
             
         } catch (Exception e) {
@@ -151,157 +159,8 @@ public class SpeciesService {
         }
     }
     
-    /**
-     * Manually parse iNaturalist JSON response
-     * @param jsonResponse The JSON response string from iNaturalist API
-     * @return INaturalistResponse object or null if parsing fails
-     */
-    private INaturalistResponse parseINaturalistResponse(String jsonResponse) {
-        try {
-            INaturalistResponse response = new INaturalistResponse();
-            
-            // Extract total_results
-            String totalResultsPattern = "\"total_results\":(\\d+)";
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(totalResultsPattern);
-            java.util.regex.Matcher matcher = pattern.matcher(jsonResponse);
-            
-            if (matcher.find()) {
-                response.setTotalResults(Integer.parseInt(matcher.group(1)));
-            } else {
-                response.setTotalResults(0);
-            }
-            
-            // Extract results array
-            List<INaturalistInfo> results = new ArrayList<>();
-            
-            // Find the results array in the JSON
-            int resultsStart = jsonResponse.indexOf("\"results\":[");
-            if (resultsStart != -1) {
-                int arrayStart = jsonResponse.indexOf('[', resultsStart);
-                int arrayEnd = findMatchingBracket(jsonResponse, arrayStart);
-                
-                if (arrayEnd != -1) {
-                    String resultsArray = jsonResponse.substring(arrayStart + 1, arrayEnd);
-                    
-                    // Parse individual taxa objects
-                    List<String> taxaObjects = extractJsonObjects(resultsArray);
-                    
-                    for (String taxaJson : taxaObjects) {
-                        INaturalistInfo info = parseINaturalistInfo(taxaJson);
-                        if (info != null) {
-                            results.add(info);
-                        }
-                    }
-                }
-            }
-            
-            response.setResults(results);
-            
-            return response;
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error parsing iNaturalist JSON: " + e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Parse individual iNaturalist info object from JSON
-     */
-    private INaturalistInfo parseINaturalistInfo(String jsonObject) {
-        try {
-            INaturalistInfo info = new INaturalistInfo();
-            
-            // Extract preferred_common_name
-            String commonNamePattern = "\"preferred_common_name\":\\s*\"([^\"]+)\"";
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(commonNamePattern);
-            java.util.regex.Matcher matcher = pattern.matcher(jsonObject);
-            
-            if (matcher.find()) {
-                info.setPreferred_common_name(matcher.group(1));
-            }
-            
-            // Extract photo URL from default_photo.url
-            String photoUrlPattern = "\"default_photo\":\\s*\\{[^}]*\"url\":\\s*\"([^\"]+)\"";
-            pattern = java.util.regex.Pattern.compile(photoUrlPattern);
-            matcher = pattern.matcher(jsonObject);
-            
-            if (matcher.find()) {
-                info.setPhotoUrl(matcher.group(1));
-            }
-            
-            return info;
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error parsing iNaturalist info: " + e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Find the matching closing bracket for an array or object
-     */
-    private int findMatchingBracket(String json, int startIndex) {
-        if (startIndex >= json.length()) return -1;
-        
-        char openChar = json.charAt(startIndex);
-        char closeChar = (openChar == '[') ? ']' : '}';
-        
-        int count = 1;
-        boolean inString = false;
-        
-        for (int i = startIndex + 1; i < json.length(); i++) {
-            char c = json.charAt(i);
-            
-            if (c == '"' && (i == 0 || json.charAt(i - 1) != '\\')) {
-                inString = !inString;
-            } else if (!inString) {
-                if (c == openChar) {
-                    count++;
-                } else if (c == closeChar) {
-                    count--;
-                    if (count == 0) {
-                        return i;
-                    }
-                }
-            }
-        }
-        
-        return -1;
-    }
-    
-    /**
-     * Extract individual JSON objects from an array content
-     */
-    private List<String> extractJsonObjects(String arrayContent) {
-        List<String> objects = new ArrayList<>();
-        
-        int start = 0;
-        boolean inString = false;
-        int braceCount = 0;
-        
-        for (int i = 0; i < arrayContent.length(); i++) {
-            char c = arrayContent.charAt(i);
-            
-            if (c == '"' && (i == 0 || arrayContent.charAt(i - 1) != '\\')) {
-                inString = !inString;
-            } else if (!inString) {
-                if (c == '{') {
-                    if (braceCount == 0) {
-                        start = i;
-                    }
-                    braceCount++;
-                } else if (c == '}') {
-                    braceCount--;
-                    if (braceCount == 0) {
-                        objects.add(arrayContent.substring(start, i + 1));
-                    }
-                }
-            }
-        }
-        
-        return objects;
-    }
+
+
     
     // Helper methods for processing data
     
