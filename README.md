@@ -31,7 +31,7 @@
 - **Estilos**: Tailwind CSS + PostCSS
 - **Build**: Vite con HMR
 
-## � APIs de Datos Marinos
+## APIs de Datos Marinos
 
 ### OBIS (Ocean Biodiversity Information System)
 - **Propósito**: Obtener ocurrencias reales de especies marinas por coordenadas
@@ -45,7 +45,7 @@
 - **Datos**: Imágenes de especies, nombres vernáculos, información taxonómica
 - **Integración**: Mapeo automático con anotaciones `@JsonProperty`
 
-## �🏗️ Estructura del Proyecto
+## 🏗️ Estructura del Proyecto
 
 ```
 ├── scubex-backend/                    # 🖥️ Backend Spring Boot
