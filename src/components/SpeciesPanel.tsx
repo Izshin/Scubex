@@ -123,8 +123,8 @@ export default function SpeciesPanel({ loading, data }: Props) {
               >
                 🤿
               </motion.div>
-              <p className="text-gray-500">No se encontraron especies en esta zona</p>
-              <p className="text-xs text-gray-400 mt-1">Prueba explorando otra área</p>
+              <p className="text-gray-500">No se encontraron especies marinas en esta zona</p>
+              <p className="text-xs text-gray-400 mt-1">Prueba explorando otra área </p>
             </motion.div>
           ) : (
             data.species?.map((s, index) => (
