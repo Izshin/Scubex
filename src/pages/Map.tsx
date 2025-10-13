@@ -80,30 +80,6 @@ export default function MapPage() {
             isScanning={isScanning}
           />
           
-          {/* Overlay de información animado */}
-          <motion.div 
-            className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border z-10"
-            initial={{ opacity: 0, x: -20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            whileHover={{ scale: 1.05 }}
-          >
-            <div className="text-sm text-gray-700">
-              <motion.div 
-                className="font-semibold text-blue-600 mb-1"
-                animate={{ 
-                  color: ["#2563eb", "#0891b2", "#2563eb"]
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-            Mapa Marino
-              </motion.div>
-              <div>Arrastra para explorar diferentes zonas</div>
-              <div className="text-xs text-gray-500 mt-1">
-                Zoom: Rueda del ratón • Pan: Click y arrastra
-              </div>
-            </div>
-          </motion.div>
 
           {/* Scan Button */}
           <motion.button
