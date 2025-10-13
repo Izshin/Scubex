@@ -1,9 +1,9 @@
-package com.scubex.scubex_backend;
+package com.scubex;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication()
 public class ScubexBackendApplication {
 
 	public static void main(String[] args) {

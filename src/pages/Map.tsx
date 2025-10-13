@@ -33,7 +33,7 @@ export default function MapPage() {
   
   const q = useQuery({
     queryKey: ["zone-species", scanData],
-    queryFn: () => getZoneSpecies([scanData!.lng - 0.01, scanData!.lat - 0.01, scanData!.lng + 0.01, scanData!.lat + 0.01]), // Mock bbox for now
+    queryFn: () => getZoneSpecies(scanData!), // Pass the scan data directly to the backend API
     enabled: !!scanData
   });
 
@@ -48,17 +48,17 @@ export default function MapPage() {
     const center = map.getCenter();
     const radius = getRadiusFromZoom(zoom);
     
-    // Console log the data for now
-    console.log('🗺️ Map Scan Data:');
-    console.log('📍 Center:', { lat: center.lat, lng: center.lng });
-    console.log('🔍 Zoom Level:', zoom);
-    console.log('📏 Radius (meters):', radius);
-    console.log('🌊 Future API Call:', `/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
+    // Log the scan parameters
+    console.log('🗺️ Map Scan initiated:');
+    console.log('📍 Center:', { lat: center.lat.toFixed(6), lng: center.lng.toFixed(6) });
+    console.log('🔍 Zoom Level:', zoom.toFixed(1));
+    console.log('📏 Search Radius:', `${radius}m`);
+    console.log('🌊 Backend API Call will be:', `http://localhost:8080/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
     
-    // Set scan data to trigger the query
+    // Set scan data to trigger the backend API call
     setScanData({
-      lat: center.lat,
-      lng: center.lng,
+      lat: Number(center.lat.toFixed(6)), // Round to 6 decimal places for precision
+      lng: Number(center.lng.toFixed(6)), 
       radius: radius
     });
     

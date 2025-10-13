@@ -9,6 +9,7 @@ type Props = {
       scientific_name: string;
       records: number;
       last_record: string;
+      photoUrl?: string;
     }>;
     counts?: {
       total_taxa: number;
@@ -154,15 +155,29 @@ export default function SpeciesPanel({ loading, data }: Props) {
                       <p className="text-sm text-gray-500 italic">{s.scientific_name}</p>
                     )}
                   </div>
+                  {/* Show photo if available, otherwise show fish emoji */}
                   <motion.div 
-                    className="text-2xl"
+                    className="w-12 h-12 flex-shrink-0"
                     whileHover={{ 
-                      scale: 1.2,
-                      rotate: [0, -10, 10, 0],
-                      transition: { duration: 0.5 }
+                      scale: 1.1,
+                      transition: { duration: 0.2 }
                     }}
                   >
-                    🐟
+                    {s.photoUrl ? (
+                      <img 
+                        src={s.photoUrl} 
+                        alt={s.common_name ?? s.scientific_name}
+                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                        onError={(e) => {
+                          // Fallback to emoji if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`text-2xl flex items-center justify-center w-full h-full ${s.photoUrl ? 'hidden' : ''}`}>
+                      🐟
+                    </div>
                   </motion.div>
                 </div>
                 
