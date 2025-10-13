@@ -1,13 +1,18 @@
 
 Frontend:
-
-Implement frontent dots to the radar scan animation so they progressively show on the sea
+TF1. Implement frontent dots to the radar scan animation so they progressively show on the sea
+TF2. Related to TB1, implement login screen for when oAuth2 is implemented
 
 Backend:
-
-Implement oAuth2 autentification for google login
-Implement WeatherAPI and stormglass.io API's for sea and weather conditions
+TB1. Implement oAuth2 autentification for google login, security config probably will be changed
+TB2. Implement WeatherAPI and stormglass.io API's for sea and weather conditions
 
 Docs:
-Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval
-How the frontend handles such petitions, talk about mapView, animations and "scans" 
+TD1(!). Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval, 
+TD2(!). Related to TD1, How the frontend handles such petitions, talk about mapView, animations and "scans".
+TD3. Talk about project configuration, such as application properties and security configuration
+
+
+
+Glossary:
+(!): Means it's a urgent task (needed to be done before all others), the more "!" the more urgent it is XD
