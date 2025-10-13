@@ -1,0 +1,13 @@
+
+Frontend:
+
+Implement frontent dots to the radar scan animation so they progressively show on the sea
+
+Backend:
+
+Implement oAuth2 autentification for google login
+Implement WeatherAPI and stormglass.io API's for sea and weather conditions
+
+Docs:
+Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval
+How the frontend handles such petitions, talk about mapView, animations and "scans" 
