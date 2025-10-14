@@ -98,8 +98,14 @@ export default function MapPage() {
               {isScanning ? (
                 <motion.div 
                   className="w-6 h-6 relative"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ 
+                    duration: 1, 
+                    repeat: Infinity, 
+                    ease: "linear",
+                    repeatType: "loop"
+                  }}
+                  key="loading-spinner" // Force remount to ensure clean animation
                 >
                   <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
                   <div className="absolute inset-0 border-2 border-transparent border-t-white rounded-full"></div>
@@ -141,7 +147,13 @@ export default function MapPage() {
                 <motion.div 
                   className="absolute inset-0 bg-white/20 rounded-full"
                   animate={{ scale: [1, 2, 1], opacity: [1, 0, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    repeatType: "loop"
+                  }}
+                  key="pulse-effect" // Force remount for clean animation
                 />
               )}
             </div>

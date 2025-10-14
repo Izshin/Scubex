@@ -1,15 +1,18 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Function to get emoji based on phylum
-const getPhylumEmoji = (phylum?: string): string => {
+const getPhylumEmoji = (phylum?: string, commonName?: string): string => {
   if (!phylum) return '🐟'; // Default fish
   
   const phylumLower = phylum.toLowerCase();
-  
+  const commonNameLower = commonName?.toLowerCase() || '';
   // Marine phyla and their emojis
   if (phylumLower.includes('chordata')) return '🐟'; // Fish, marine mammals
-  if (phylumLower.includes('mollusca')) return '🐚'; // Shells, squid, octopus
-  if (phylumLower.includes('arthropoda')) return '🦀'; // Crabs, lobsters, shrimp
+  if (commonNameLower.includes('octopus') || commonNameLower.includes('squid')) return '🐙'; // Octopus, squid
+  if (phylumLower.includes('mollusca')) return '🐚'; // Shells, mollusks
+  if (commonNameLower.includes('lobster')) return '🦞'; // Lobster
+  if (commonNameLower.includes('shrimp')) return '🦐'; // Shrimp
+  if (phylumLower.includes('arthropoda')) return '🦀'; // Crabs
   if (phylumLower.includes('cnidaria')) return '🪼'; // Jellyfish, corals, sea anemones
   if (phylumLower.includes('echinodermata')) return '⭐'; // Starfish, sea urchins
   if (phylumLower.includes('porifera')) return '🧽'; // Sponges
@@ -80,13 +83,25 @@ export default function SpeciesPanel({ loading, data }: Props) {
         >
           <motion.div 
             className="inline-block rounded-full h-6 w-6 border-b-2 border-blue-600"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            animate={{ rotate: [0, 360] }}
+            transition={{ 
+              duration: 1, 
+              repeat: Infinity, 
+              ease: "linear",
+              repeatType: "loop"
+            }}
+            key="species-loading-spinner"
           />
           <motion.p 
             className="mt-2 text-sm"
             animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatType: "loop"
+            }}
+            key="species-loading-text"
           >
             Explorando vida marina...
           </motion.p>
@@ -204,7 +219,7 @@ export default function SpeciesPanel({ loading, data }: Props) {
                       />
                     ) : null}
                     <div className={`text-2xl flex items-center justify-center w-full h-full ${s.photoUrl ? 'hidden' : ''}`}>
-                      {getPhylumEmoji(s.phylum)}
+                      {getPhylumEmoji(s.phylum, s.common_name)}
                     </div>
                   </motion.div>
                 </div>
