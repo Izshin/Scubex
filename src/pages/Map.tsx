@@ -142,18 +142,21 @@ export default function MapPage() {
                 </motion.div>
               )}
               
-              {/* Pulse effect when scanning */}
+              {/* Single continuous radar pulse */}
               {isScanning && (
                 <motion.div 
-                  className="absolute inset-0 bg-white/20 rounded-full"
-                  animate={{ scale: [1, 2, 1], opacity: [1, 0, 1] }}
+                  className="absolute inset-0 bg-white/25 rounded-full"
+                  animate={{ 
+                    scale: [0, 3], 
+                    opacity: [0.7, 0] 
+                  }}
                   transition={{ 
-                    duration: 1.5, 
+                    duration: 1.8, 
                     repeat: Infinity,
-                    ease: "easeInOut",
+                    ease: "easeOut",
                     repeatType: "loop"
                   }}
-                  key="pulse-effect" // Force remount for clean animation
+                  key="radar-pulse"
                 />
               )}
             </div>
