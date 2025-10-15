@@ -1,7 +1,6 @@
 
 Frontend:
-TF1. Implement frontent dots to the radar scan animation so they progressively show on the sea
-TF2. Related to TB1, implement login screen for when oAuth2 is implemented
+TF1. Related to TB1, implement login screen for when oAuth2 is implemented
 
 Backend:
 TB1. Implement oAuth2 autentification for google login, security config probably will be changed
