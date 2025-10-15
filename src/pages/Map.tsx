@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import MapView, { type MapViewRef } from "../components/MapView";
+import MapView, { type MapViewRef } from "../components/MapComponents/MapView";
 import { getZoneSpecies } from "../lib/api";
 import SpeciesPanel from "../components/SpeciesPanel";
 

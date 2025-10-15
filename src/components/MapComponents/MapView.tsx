@@ -1,6 +1,6 @@
 import { useRef, forwardRef, useImperativeHandle } from "react";
 import { Map } from "maplibre-gl";
-import MapRender, { type MapRenderRef } from "./MapComponents/MapRender";
+import MapRender, { type MapRenderRef } from "./MapRender";
 import ScanningAnimation from "./ScanningAnimation";
 
 type Props = { 
