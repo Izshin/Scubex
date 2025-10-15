@@ -128,14 +128,16 @@ export default function MapPage() {
                       cy="2" 
                       r="2"
                       fill="currentColor"
+                      initial={{ scale: 0, opacity: 0 }}
                       animate={{ 
-                        scale: [1, 1.5, 1],
-                        opacity: [1, 0.5, 1]
+                        scale: [0, 1.5, 0],
+                        opacity: [0, 1, 0]
                       }}
                       transition={{ 
                         duration: 2, 
                         repeat: Infinity, 
-                        ease: "easeInOut" 
+                        ease: "easeInOut",
+                        repeatType: "loop"
                       }}
                     />
                   </svg>
@@ -148,12 +150,12 @@ export default function MapPage() {
                   className="absolute inset-0 bg-white/25 rounded-full"
                   animate={{ 
                     scale: [0, 3], 
-                    opacity: [0.7, 0] 
+                    opacity: [0, 0.7, 0] 
                   }}
                   transition={{ 
                     duration: 1.8, 
                     repeat: Infinity,
-                    ease: "easeOut",
+                    ease: "easeInOut",
                     repeatType: "loop"
                   }}
                   key="radar-pulse"
