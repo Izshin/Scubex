@@ -158,6 +158,7 @@ export default function SpeciesPanel({ loading, data }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
+              
             >
               <motion.div 
                 className="text-4xl mb-2"
@@ -173,7 +174,7 @@ export default function SpeciesPanel({ loading, data }: Props) {
             data.species?.map((s, index) => (
               <motion.div 
                 key={s.taxon_id} 
-                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-default group"
                 initial={{ opacity: 0, x: -20, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 20, scale: 0.95 }}
