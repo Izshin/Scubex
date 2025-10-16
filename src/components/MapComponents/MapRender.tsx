@@ -62,21 +62,12 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     
     mapRef.current = map;
 
-    let timer: number | null = null;
-    const emitBbox = () => {
+    map.on("load", () => {
       if (onViewportIdle) {
         const b = map.getBounds(); // w,s,e,n
         onViewportIdle([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
       }
-    };
-
-    const onMoveEnd = () => {
-      if (timer) window.clearTimeout(timer);
-      timer = window.setTimeout(emitBbox, 500); // debounce 500ms
-    };
-
-    map.on("load", emitBbox);
-    map.on("moveend", onMoveEnd);
+    });
     
     // Add bathymetry layer when style loads
     map.on("style.load", () => {
@@ -118,6 +109,35 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
 
     return () => { 
       map.remove(); 
+    };
+  }, []); // Remove onViewportIdle dependency to prevent map re-initialization
+
+  // Set up viewport change handler separately 
+  useEffect(() => {
+    if (!mapRef.current || !onViewportIdle) return;
+
+    let timer: number | null = null;
+    const emitBbox = () => {
+      if (onViewportIdle && mapRef.current) {
+        const b = mapRef.current.getBounds(); // w,s,e,n
+        onViewportIdle([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+      }
+    };
+
+    const onMoveEnd = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(emitBbox, 500); // debounce 500ms
+    };
+
+    mapRef.current.on("moveend", onMoveEnd);
+    
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.off("moveend", onMoveEnd);
+      }
+      if (timer) {
+        window.clearTimeout(timer);
+      }
     };
   }, [onViewportIdle]);
 

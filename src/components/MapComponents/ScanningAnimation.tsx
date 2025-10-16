@@ -11,8 +11,8 @@ interface OceanDot {
 
 interface ScanningAnimationProps {
   isScanning: boolean;
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  mapRef: React.RefObject<Map | null>;
+  containerRef: { current: HTMLDivElement | null };
+  mapRef: { current: Map | null };
 }
 
 export default function ScanningAnimation({ isScanning, containerRef, mapRef }: ScanningAnimationProps) {

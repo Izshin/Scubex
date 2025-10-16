@@ -1,4 +1,4 @@
-import { useRef, forwardRef, useImperativeHandle } from "react";
+import { useRef, forwardRef, useImperativeHandle, useMemo } from "react";
 import { Map } from "maplibre-gl";
 import MapRender, { type MapRenderRef } from "./MapRender";
 import ScanningAnimation from "./ScanningAnimation";
@@ -17,13 +17,18 @@ export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, 
     getMap: () => mapRenderRef.current?.getMap() || null
   }));
 
-  const getContainerRef = () => ({ 
-    current: mapRenderRef.current?.getContainer() || null 
-  });
+  // Stable refs for ScanningAnimation
+  const stableContainerRef = useMemo(() => ({
+    get current() {
+      return mapRenderRef.current?.getContainer() || null;
+    }
+  }), []);
 
-  const getMapRef = () => ({ 
-    current: mapRenderRef.current?.getMap() || null 
-  });
+  const stableMapRef = useMemo(() => ({
+    get current() {
+      return mapRenderRef.current?.getMap() || null;
+    }
+  }), []);
 
   return (
     <div className="w-full h-full relative">
@@ -34,8 +39,8 @@ export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, 
       />
       <ScanningAnimation 
         isScanning={isScanning}
-        containerRef={getContainerRef()}
-        mapRef={getMapRef()}
+        containerRef={stableContainerRef}
+        mapRef={stableMapRef}
       />
     </div>
   );

@@ -1,67 +1,53 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { observer } from "mobx-react-lite";
 import MapView, { type MapViewRef } from "../components/MapComponents/MapView.tsx";
-import { getZoneSpecies } from "../lib/api";
 import SpeciesPanel from "../components/SpeciesPanel";
+import { useSpeciesStore, useMapStore } from "../lib/stores/index.tsx";
 
-// Zoom to radius conversion (in meters)
-const zoomToRadius: Record<number, number> = {
-  8: 10000,   // 10km - country/region level
-  9: 7000,    // 7km
-  10: 5000,   // 5km - city level  
-  11: 3000,   // 3km
-  12: 2000,   // 2km - district level
-  13: 1500,   // 1.5km
-  14: 1000,   // 1km - neighborhood
-  15: 700,    // 700m
-  16: 500,    // 500m - local area
-  17: 300,    // 300m
-  18: 100     // 100m - precise location
-};
-
-function getRadiusFromZoom(zoom: number): number {
-  const roundedZoom = Math.round(zoom);
-  return zoomToRadius[roundedZoom] || 1000; // Default to 1km
-}
-
-export default function MapPage() {
-  const [scanData, setScanData] = useState<{ lat: number; lng: number; radius: number } | null>(null);
+const MapPage = observer(() => {
+  const speciesStore = useSpeciesStore();
+  const mapStore = useMapStore();
   const mapRef = useRef<MapViewRef>(null);
-  
-  const q = useQuery({
-    queryKey: ["zone-species", scanData],
-    queryFn: () => getZoneSpecies(scanData!), // Pass the scan data directly to the backend API
-    enabled: !!scanData
-  });
+
+  // Update zoom when map viewport changes - useCallback to prevent map re-initialization
+  const handleViewportChange = useCallback((bbox: number[]) => {
+    const map = mapRef.current?.getMap();
+    if (map) {
+      const zoom = map.getZoom();
+      const center = map.getCenter();
+      mapStore.updateMapState(zoom, { lat: center.lat, lng: center.lng }, bbox);
+    }
+  }, [mapStore]);
 
   // 🎯 MUCH SIMPLER: Radar animation syncs directly with actual loading state!
-  const isScanning = q.isLoading;
+  const isScanning = speciesStore.isScanning;
 
-  const handleScan = () => {
+  const handleScan = useCallback(async () => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
     // Get current map data
     const zoom = map.getZoom();
     const center = map.getCenter();
-    const radius = getRadiusFromZoom(zoom);
+    const radius = mapStore.zoomRadius;
     
     // Log the scan parameters
-    console.log('🗺️ Map Scan initiated:');
+    console.log('🗺️ MobX Map Scan initiated:');
     console.log('📍 Center:', { lat: center.lat.toFixed(6), lng: center.lng.toFixed(6) });
     console.log('🔍 Zoom Level:', zoom.toFixed(1));
     console.log('📏 Search Radius:', `${radius}m`);
     console.log('🌊 Backend API Call will be:', `http://localhost:8080/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
     
-    // Set scan data to trigger the backend API call (this will automatically start isScanning via q.isLoading)
-    setScanData({
+    // Update map state and fetch species data using MobX store
+    mapStore.updateMapState(zoom, { lat: center.lat, lng: center.lng });
+    await speciesStore.fetchSpecies({
       lat: Number(center.lat.toFixed(6)), // Round to 6 decimal places for precision
       lng: Number(center.lng.toFixed(6)), 
       radius: radius
     });
-  };
+  }, [mapStore, speciesStore]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -78,6 +64,7 @@ export default function MapPage() {
           <MapView 
             ref={mapRef} 
             isScanning={isScanning}
+            onViewportIdle={handleViewportChange}
           />
           
 
@@ -168,9 +155,15 @@ export default function MapPage() {
         </div>
         
         <div className="bg-white shadow-xl border-l border-gray-200 flex flex-col min-h-0">
-          <SpeciesPanel loading={q.isLoading} data={q.data} />
+          <SpeciesPanel 
+            loading={speciesStore.isLoading} 
+            data={speciesStore.speciesData || undefined} 
+            zoom={mapStore.currentZoom} 
+          />
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default MapPage;

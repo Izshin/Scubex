@@ -28,7 +28,8 @@ const getPhylumEmoji = (phylum?: string, commonName?: string): string => {
 };
 
 type Props = { 
-  loading: boolean; 
+  loading: boolean;
+  zoom?: number;
   data?: {
     species?: Array<{
       taxon_id: string;
@@ -47,7 +48,7 @@ type Props = {
   }; 
 };
 
-export default function SpeciesPanel({ loading, data }: Props) {
+export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   if (loading) {
     return (
       <motion.div 
