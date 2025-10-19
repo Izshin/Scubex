@@ -43,8 +43,8 @@ export default function ScanningAnimation({ isScanning, containerRef, mapRef }: 
     
     // Progressive dot density based on scan time
     const baseDotsPerSweep = 1;
-    const maxDotsPerSweep = 15;
-    const rampUpTime = 15000; // 15 seconds to reach max density
+    const maxDotsPerSweep = 12;
+    const rampUpTime = 30000; // 30 seconds to reach max density
 
     // Calculate current dot density (1 to 15 dots)
     const progress = Math.min(scanElapsedTime / rampUpTime, 1);
