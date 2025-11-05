@@ -220,8 +220,12 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  // Set basename only for GitHub Pages deployment
+  // Use empty basename for development and local builds
+  const basename = import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL : '';
+  
   return (
-    <Router>
+    <Router basename={basename}>
       <TransitionProvider>
         <AnimatedRoutes />
       </TransitionProvider>
