@@ -9,10 +9,340 @@ export default function Home() {
     startWaveTransition('/map');
   };
 
+  const handleCreatureClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-600 relative overflow-hidden">
+      {/* Marine Animals Swimming - Full screen width */}
+      <div className="fixed inset-0 z-10 w-screen h-screen">
+        {/* Fish swimming left to right - FLIPPED to face right */}
+        <motion.div 
+          className="absolute top-[15%] text-4xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.7, 0.7, 0]
+          }}
+          transition={{ 
+            duration: 15,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 2,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐟</div>
+        </motion.div>
+
+        <motion.div 
+          className="absolute top-[45%] text-5xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.6, 0.6, 0]
+          }}
+          transition={{ 
+            duration: 18,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 8,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐠</div>
+        </motion.div>
+
+        <motion.div 
+          className="absolute top-[70%] text-3xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.8, 0.8, 0]
+          }}
+          transition={{ 
+            duration: 12,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 14,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐡</div>
+        </motion.div>
+
+        {/* Fish swimming right to left - Normal orientation faces left */}
+        <motion.div 
+          className="absolute top-[25%] text-5xl cursor-pointer"
+          initial={{ x: 'calc(100vw + 100px)', opacity: 0 }}
+          animate={{ 
+            x: ['calc(100vw + 100px)', '-100px'],
+            opacity: [0, 0.7, 0.7, 0]
+          }}
+          transition={{ 
+            duration: 20,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 5,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🐠
+        </motion.div>
+
+        <motion.div 
+          className="absolute top-[55%] text-4xl cursor-pointer"
+          initial={{ x: 'calc(100vw + 100px)', opacity: 0 }}
+          animate={{ 
+            x: ['calc(100vw + 100px)', '-100px'],
+            opacity: [0, 0.6, 0.6, 0]
+          }}
+          transition={{ 
+            duration: 16,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 11,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🐟
+        </motion.div>
+
+        <motion.div 
+          className="absolute top-[80%] text-6xl cursor-pointer"
+          initial={{ x: 'calc(100vw + 100px)', opacity: 0 }}
+          animate={{ 
+            x: ['calc(100vw + 100px)', '-100px'],
+            opacity: [0, 0.5, 0.5, 0]
+          }}
+          transition={{ 
+            duration: 22,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 17,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🐠
+        </motion.div>
+
+        {/* Sea Turtle - slow and majestic - FLIPPED to face right */}
+        <motion.div 
+          className="absolute top-[35%] text-6xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.8, 0.8, 0],
+            y: [0, -10, 0, 10, 0]
+          }}
+          transition={{ 
+            duration: 25,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 20,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐢</div>
+        </motion.div>
+
+        {/* Jellyfish - floating up and down */}
+        <motion.div 
+          className="absolute top-[20%] left-[30%] text-4xl cursor-pointer"
+          animate={{ 
+            y: [0, -30, 0, -20, 0],
+            opacity: [0.4, 0.7, 0.4, 0.6, 0.4],
+            rotate: [-5, 5, -5, 0, -5]
+          }}
+          transition={{ 
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 3
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🪼
+        </motion.div>
+
+        <motion.div 
+          className="absolute top-[60%] right-[25%] text-5xl cursor-pointer"
+          animate={{ 
+            y: [0, -40, 0, -25, 0],
+            opacity: [0.3, 0.6, 0.3, 0.5, 0.3],
+            rotate: [5, -5, 5, 0, 5]
+          }}
+          transition={{ 
+            duration: 9,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 6
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🪼
+        </motion.div>
+
+        {/* Octopus - occasional appearance - FLIPPED to face right */}
+        <motion.div 
+          className="absolute top-[65%] text-5xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.6, 0.6, 0],
+            rotate: [0, 15, -15, 0]
+          }}
+          transition={{ 
+            duration: 20,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 30,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐙</div>
+        </motion.div>
+
+        {/* Dolphin - fast swimmer - FLIPPED to face right */}
+        <motion.div 
+          className="absolute top-[40%] text-6xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.8, 0.8, 0],
+            y: [0, -20, -10, 0, 10, 0]
+          }}
+          transition={{ 
+            duration: 10,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 25,
+            ease: "easeOut"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -40, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐬</div>
+        </motion.div>
+
+        {/* Whale - large and slow - Normal orientation faces left */}
+        <motion.div 
+          className="absolute top-[50%] text-8xl cursor-pointer"
+          initial={{ x: 'calc(100vw + 100px)', opacity: 0 }}
+          animate={{ 
+            x: ['calc(100vw + 100px)', '-100px'],
+            opacity: [0, 0.7, 0.7, 0]
+          }}
+          transition={{ 
+            duration: 35,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 40,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.15, transition: { duration: 0.2 } }}
+          whileTap={{ y: -35, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🐋
+        </motion.div>
+
+        {/* Crab - walking on bottom - FLIPPED to face right */}
+        <motion.div 
+          className="absolute bottom-[10%] text-4xl cursor-pointer"
+          initial={{ x: '-100px', opacity: 0 }}
+          animate={{ 
+            x: ['-100px', 'calc(100vw + 100px)'],
+            opacity: [0, 0.6, 0.6, 0],
+            rotate: [0, 5, -5, 0, 5]
+          }}
+          transition={{ 
+            duration: 28,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 35,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+          whileTap={{ y: -30, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🦀</div>
+        </motion.div>
+
+        {/* Shark - occasional predator - Normal orientation faces left */}
+        <motion.div 
+          className="absolute top-[38%] text-7xl cursor-pointer"
+          initial={{ x: 'calc(100vw + 100px)', opacity: 0 }}
+          animate={{ 
+            x: ['calc(100vw + 100px)', '-100px'],
+            opacity: [0, 0.8, 0.8, 0]
+          }}
+          transition={{ 
+            duration: 12,
+            times: [0, 0.1, 0.9, 1],
+            repeat: Infinity,
+            delay: 50,
+            ease: "linear"
+          }}
+          whileHover={{ scale: 1.15, transition: { duration: 0.2 } }}
+          whileTap={{ y: -35, transition: { duration: 0.3, type: "spring", stiffness: 400 } }}
+          onClick={handleCreatureClick}
+          style={{ pointerEvents: 'auto' }}
+        >
+          🦈
+        </motion.div>
+
+      
+
+
+      </div>
+
       {/* Animación de burbujas oceánicas */}
-      <div className="absolute inset-0 opacity-20">
+      <div className="absolute inset-0 opacity-20 z-0">
         {/* ... (código de burbujas sin cambios) ... */}
         {/* Burbujas grandes */}
         <motion.div 
