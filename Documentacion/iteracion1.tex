@@ -1,104 +1,99 @@
 %!TEX root =  tfg.tex
-\chapter{Costes}
-
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
-\end{quotation}
+\chapter{Iteración 1: Escáner de Biodiversidad}
 
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada. Se ha seguido un ciclo TDD para implementar la compleja lógica de integración y filtrado de datos entre múltiples APIs científicas.
 \end{abstract}
 
 \section{Características a desarrollar}
 
 \begin{enumerate}
-\item Funcionalidad A. Ver Tabla \ref{tab:valorAportado1}.
-\item Funcionalidad B.
+\item Escáner de Especies bajo demanda (Backend). Ver Tabla \ref{tab:valorAportadoScan}.
+\item Filtrado y Enriquecimiento de Datos Biológicos.
 \end{enumerate}
 
 \begin{table*}[htb]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Análisis de valor aportado 0001}
-\textbf{Propuesta}&Trabajo que pretende analizarse y justificarse\\
+{Análisis de valor aportado: Escáner de Especies}
+\textbf{Propuesta}&Implementación de un endpoint REST que agregue datos de OBIS e iNaturalist para una zona geográfica.\\
 \midrule
-\textbf{Valor}&Qué valor aporta al proyecto o al usuario final.\\
-\textbf{Coste}&Qué costes en términos de esfuerzo, adquisiciones y limitaciones tiene la propuesta\\
-\textbf{Opciones}&Qué otras opciones se tienen que aporten un valor similar? ¿Es realmente un valor relevante para el proyecto/cliente\\
-\textbf{Riesgos}&Qué riesgos pueden surgir a la hora de desarrollar esta propuesta.\\
-\textbf{Deuda técnica}&Posibles deudas técnicas que se asumen con el desarrollo de esta propuesta.\\
+\textbf{Valor}&Permite al usuario descubrir fauna real validada científicamente sin conocimientos técnicos.\\
+\textbf{Coste}&Alto esfuerzo de integración. Requiere orquestar llamadas asíncronas y gestionar distintos formatos de datos.\\
+\textbf{Opciones}&Usar solo una API (OBIS) reduciría el coste, pero eliminaría el valor visual (fotos) y semántico (nombres comunes), haciendo la app inútil para turistas.\\
+\textbf{Riesgos}&Rate limits de APIs externas. Inconsistencia de datos entre OBIS e iNaturalist.\\
+\textbf{Deuda técnica}&Complejidad en la gestión de errores distribuidos (si una API falla).\\
 	\end{coolTable}
-	\caption{Análisis de valor aportado 0001\label{tab:valorAportado1}}
+	\caption{Análisis de valor aportado: Escáner\label{tab:valorAportadoScan}}
 \end{table*}
 
 \section{Diseño}
-Aquí una discusión de cómo va a afectar todo al diseño
 
-Debe insertarse un diagrama UML de diseño con los cambios y hacer referencia en el texto así Fig. \ref{fig:diseno01}.
-
-\begin{figure}[htbp]
-\begin{center}
-\missingfigure{Aquí el modelo de diseño en formato vectorial preferentemente (pdf)}
-% Incluir la figura quitando el comentario a la fila de abajo.
-% \includegraphics[width=\textwidth]{myfile.pdf}
-\caption{Diagrama UML de diseño para la iteración 1}
-\label{fig:diseno01}
-\end{center}
-\end{figure}
-
-Un memorando técnico por cada decisión de diseño.
+El diseño se centra en resolver la incompatibilidad entre la búsqueda radial del usuario y la búsqueda geométrica requerida por las fuentes de datos.
 
 \begin{table*}[htb]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 0001}
-\textbf{Asunto}&¿Cuál es el problema?\\
-\textbf{Resumen}&¿Cuál es la solución propuesta?\\
+{Memorando técnico 001: Geometría de Búsqueda}
+\textbf{Asunto}&Incompatibilidad de búsqueda radial en API OBIS.\\
+\textbf{Resumen}&Generación de polígonos WKT a partir de radio y centro.\\
 \midrule
-\textbf{Factores causantes}&Descripción pormenorizada del problema\\
-\textbf{Solución}&Descripción pormenorizada de la solución propuesta\\
-\textbf{Motivación}&¿Por qué propone esta solución?\\
-\textbf{Cuestiones abiertas}& Factores a tener en cuenta en la solución cuya dimensión se reconoce.\\
-\textbf{Alternativas}&Otras soluciones consideradas y la razón por la que se excluyeron.\\
+\textbf{Factores causantes}&El frontend solicita datos basados en un punto central y un nivel de zoom (radio), pero OBIS requiere un objeto `POLYGON` en formato WKT.\\
+\textbf{Solución}&Implementar un servicio de utilidad geométrica que calcule los vértices de un cuadrado (o aproximación circular) inscrito en el radio de visión.\\
+\textbf{Motivación}&OBIS ofrece la mayor base de datos científica, es imperativo adaptarse a su interfaz.\\
+\textbf{Alternativas}&Filtrado post-proceso: Pedir un área muy grande y filtrar en memoria (descartado por ineficiencia).\\
 	\end{coolTable}
-	\caption{Memorando técnico 0001}
+	\caption{Memorando técnico 001: Geometría}
+\end{table*}
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 002: Calidad de Datos}
+\textbf{Asunto}&Presencia de microorganismos no visualizables.\\
+\textbf{Resumen}&Filtrado cruzado mediante existencia de recursos en iNaturalist.\\
+\midrule
+\textbf{Factores causantes}&OBIS devuelve todo tipo de registros biológicos (ej. \textit{Pycnococcaceae}). Para una app turística/deportiva, estos datos son ruido.\\
+\textbf{Solución}&Verificar cada nombre científico contra iNaturalist. Si `total\_results == 0` o no hay foto, se descarta el registro.\\
+\textbf{Motivación}&Mantener la relevancia visual y la experiencia de usuario.\\
+\textbf{Cuestiones abiertas}&El aumento de latencia por múltiples peticiones HTTP.\\
+	\end{coolTable}
+	\caption{Memorando técnico 002: Filtrado}
 \end{table*}
 
 
 \section{Implementación}
 
-Un memorando técnico por cada decisión de implementación y refactorización que afecte al diseño.
+Se ha aplicado TDD para definir primero el comportamiento del orquestador de especies. A continuación se detalla el flujo principal.
 
-\begin{asigResponsabilidad}{0001}{Prueba}
-{[return\_type] method\_name1 (param1:type1, ...)}
-\pasoPseudo{1. Paso 1.}
-\pasoPseudo{2. Paso 2.}
+\begin{asigResponsabilidad}{SCAN-01}{Orquestación de Escaneo}
+{[List<Species>] scanSpecies (lat: Double, lng: Double, zoom: Integer)}
+\pasoPseudo{1. Calcular radio de búsqueda basado en el nivel de zoom.}
+\pasoPseudo{2. Generar polígono WKT (Well-Known Text) para el área definida.}
+\pasoPseudo{3. Consultar OBIS API con el polígono para obtener ocurrencias raw.}
+\pasoPseudo{4. Para cada especie única devuelta por OBIS:}
+\pasoPseudo{4.1. Consultar iNaturalist API por nombre científico.}
+\pasoPseudo{4.2. Si iNaturalist devuelve 0 resultados, descartar especie.}
+\pasoPseudo{4.3. Si hay resultados, enriquecer con Foto y Nombre Común.}
+\pasoPseudo{5. Retornar lista filtrada y ordenada.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{1}{ClassName}{[return\_type] method\_name1 (param1:type1, ...)}{001}{SI}
+\pasoCodigo{1}{ZoomUtils}{[Double] calculateRadius(zoom)}{001}{NO}
+\pasoCodigo{2}{GeometryUtils}{[String] createPolygonWKT(lat, lng, radius)}{001}{NO}
+\pasoCodigo{3}{ObisClient}{[List<ObisResult>] fetchOccurrences(wktPolygon)}{001}{NO}
+\pasoCodigo{4.1}{INatClient}{[INatTaxon] searchTaxon(scientificName)}{002}{NO}
+\pasoCodigo{4.2}{Stream}{filter(taxon -> taxon.getTotalResults > 0)}{002}{NO}
 \diagramaColaboracion{figures/colDiagram.png}
-\end{asigResponsabilidad}
-
-\begin{asigResponsabilidad}{alvotermar02}{Grubber}
-{[return\_type] grubber (param1:type1, ...)}
-\pasoPseudo{1. Lanzar 2 dados}
-\pasoPseudo{2. Compara resultado de los dados con kicking del open-side}
-\pasoPseudo{2.1. Si valor dados es menor o igual a kicking, avanza 10m}
-\pasoPseudo{3.1. Si no hay defensa y el golpeo es exitoso, el pateador retiene la posesi\'on del bal\'on}
-\pasoPseudo{3.2. Si hay defensa y el golpe es exitoso, el atacante tira un dado y suma su valor al de speed y strength y el defensor lanza 2 dados y lo suma al valor de speed y strength de su jugador, el vencedor ser\'a aquel que tenga m\'as puntos, si es igual, la posesi\'on es del defensor}
-\pasoPseudo{4.1. Si no es exitoso y hay defensa el bal\'on pasa a posesi\'on del defensor}
-\pasoPseudo{4.2. Si no es exitoso y no hay defensa de lanza un line-out}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{1}{Dice}{[Integer] throwDice ()}{001}{SI}
-\pasoCodigo{2}{ClassName}{[Int] compareKickingToDice (kicking:Integer, dice: Integer)}{001}{SI}
-\pasoCodigo{2.1}{ClassName}{[Integer] setLine (line:Integer)}{001}{SI}
-\pasoCodigo{4.2}{ClassName}{[Integer] lineOut ()}{001}{SI}
-%\diagramaColaboracion{colDiagram.png}
 \end{asigResponsabilidad}
 
 \section{Pruebas}
 
-Descripción de las pruebas realizadas al software
+Siguiendo TDD, se implementaron los siguientes casos antes del código productivo:
+
+\begin{itemize}
+    \item \textbf{shouldGenerateValidWKT}: Verifica que, dado un punto y radio, se genera un String `POLYGON(...)` geométricamente cerrado.
+    \item \textbf{shouldFilterMicroorganisms}: Mockea una respuesta de OBIS con \textit{Pycnococcaceae} y verifica que, al simular una respuesta vacía de iNaturalist, el servicio retorna una lista vacía.
+\end{itemize}
 
 \section{Despliegue}
 
-Breve resumen de cómo se han desplegado los cambios en el sistema de producción.
+El backend se ha empaquetado como un JAR ejecutable (Spring Boot) y se despliega junto con la configuración de credenciales para las APIs externas.

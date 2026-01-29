@@ -1,18 +1,40 @@
 %!TEX root =  tfg.tex
 \chapter{Arranque}
 
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
-\end{quotation}
-
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Este capítulo define la arquitectura base del proyecto Scubex y la lista inicial de características priorizadas para el desarrollo del Producto Mínimo Viable (MVP), centrado en la exploración de biodiversidad marina.
 \end{abstract}
 
 \section{Lista de características}
 
-Aplicar aquí la primera iteración de Feature Driven Development.
+Siguiendo la metodología de desarrollo, se han identificado las siguientes características nucleares:
+
+\begin{enumerate}
+    \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google.
+    \item \textbf{Exploración Geográfica}: Visualización de mapa interactivo con datos climáticos.
+    \item \textbf{Escáner de Especies}: Identificación de fauna marina en tiempo real basada en coordenadas.
+    \item \textbf{Perfil de Usuario}: Persistencia de preferencias y datos básicos.
+\end{enumerate}
 
 \section{Diseño arquitectónico}
 \label{sec:arquitectura}
-Descripción de los sistemas de producción, preproducción y pruebas.
+
+El sistema sigue una arquitectura de cliente-servidor desacoplada.
+
+\subsection{Stack Tecnológico}
+
+\begin{itemize}
+    \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas.
+    \item \textbf{Frontend}: React 18 + Vite. SPA para una experiencia de usuario fluida.
+    \item \textbf{Base de Datos}: H2 (Embebida) para datos de usuario; sin persistencia propia de datos biológicos (se consumen en tiempo real).
+    \item \textbf{Seguridad}: Spring Security (OAuth2 Client).
+\end{itemize}
+
+\subsection{Integración de APIs Externas}
+
+\begin{itemize}
+    \item \textbf{OBIS}: Proveedor de ocurrencias biológicas (Nombre científico, Coordenadas, Taxonomía).
+    \item \textbf{iNaturalist}: Proveedor de metadatos multimedia (Fotos, Nombres comunes).
+    \item \textbf{WeatherAPI}: Datos meteorológicos (Viento).
+    \item \textbf{Stormglass}: Datos oceanográficos (Temp. agua) [Uso restringido por rate-limit].
+\end{itemize}
