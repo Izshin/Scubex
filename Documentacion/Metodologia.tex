@@ -1,18 +1,104 @@
 %!TEX root =  tfg.tex
 \chapter{Metodología}
 
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
-\end{quotation}
-
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Este capítulo describe el marco metodológico adoptado para el desarrollo de Scubex, basado en Feature-Driven Development (FDD) con adaptaciones específicas para un proyecto académico individual. Se detallan las fases del ciclo de vida, la integración de Test-Driven Development (TDD) y el sistema de seguimiento iterativo empleado.
 \end{abstract}
 
 \section{Estructura organizacional del proyecto}
 
-¿Se hace en grupo? En caso afirmativo, ¿cuál va a ser la responsabilidad de cada uno?
+El proyecto Scubex ha sido desarrollado de forma individual por el autor como Trabajo Fin de Grado, asumiendo las responsabilidades de:
+
+\begin{itemize}
+    \item \textbf{Arquitecto de Software}: Diseño de la arquitectura cliente-servidor y selección del stack tecnológico.
+    \item \textbf{Desarrollador Full-Stack}: Implementación del backend (Spring Boot) y frontend (React + Vite).
+    \item \textbf{Integrador de APIs}: Orquestación de servicios externos (OBIS, iNaturalist, WeatherAPI, Stormglass).
+    \item \textbf{Documentador Técnico}: Redacción de la memoria académica y especificación de APIs mediante OpenAPI (Swagger).
+\end{itemize}
+
+La supervisión técnica y académica ha sido proporcionada por el tutor del proyecto, quien ha validado decisiones arquitectónicas y avances iterativos.
 
 \section{Metodología de desarrollo}
 
-Indicar en qué metodología nos basamos, explicarla brevemente y luego adaptarla a nuestras necesidades. Cada una de estas cuestiones debe ser una subsección.
+\subsection{Justificación de Feature-Driven Development (FDD)}
+
+Se ha adoptado \textbf{Feature-Driven Development} como metodología central debido a sus características idóneas para proyectos de alcance medio con requisitos funcionales bien definidos:
+
+\begin{itemize}
+    \item \textbf{Orientación a características}: Cada funcionalidad (escáner de especies, integración climática, red social) se desarrolla como una unidad atómica documentable.
+    \item \textbf{Iteraciones cortas}: Ciclos de 1-2 semanas permiten validar integraciones complejas con APIs externas de forma incremental.
+    \item \textbf{Trazabilidad}: Mapeo directo entre requisitos funcionales, código y documentación académica.
+    \item \textbf{Escalabilidad}: Facilita la adición de nuevas características (clima, oceanografía, social) sin refactorizar el núcleo existente.
+\end{itemize}
+
+A diferencia de Scrum (orientado a equipos) o Kanban (enfocado en flujo continuo), FDD proporciona un marco estructurado para proyectos donde la calidad del diseño y la documentación técnica son criterios de evaluación académica.
+
+\subsection{Adaptación del ciclo FDD para Scubex}
+
+El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha adaptado la secuencia y se ha añadido una fase de documentación:
+
+\begin{enumerate}
+    \item \textbf{Construir un modelo global}: Diseño inicial de la arquitectura del sistema (capítulo de Arranque).
+    
+    \item \textbf{Desarrollar la lista de características}: Identificación y priorización de funcionalidades nucleares (Gestión de usuarios OAuth2, Escáner de especies, Exploración climática, Red social).
+    
+    \item \textbf{Planificar por característica}: Estimación temporal y asignación de recursos para cada iteración.
+    
+    \item \textbf{Diseñar por característica}: Especificación detallada mediante diagramas de colaboración y tablas de análisis de valor (Memorandos Técnicos).
+    
+    \item \textbf{Construir por característica}: Implementación incremental con validación mediante pruebas automatizadas (TDD).
+    
+    \item \textbf{Documentar la característica}: Redacción académica de cada iteración en LaTeX, incluyendo justificación de decisiones técnicas y lecciones aprendidas.
+\end{enumerate}
+
+\subsection{Integración de Test-Driven Development (TDD)}
+
+Dentro de la fase 5 (Construir por característica), se ha aplicado \textbf{TDD} como práctica de ingeniería para garantizar la robustez de las integraciones con APIs externas:
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Ciclo TDD aplicado en Scubex}
+\textbf{Red}& Escribir una prueba que falle para el comportamiento esperado (Ej: \texttt{shouldFilterMicroorganisms}).\\
+\midrule
+\textbf{Green}& Implementar el código mínimo para que la prueba pase (Ej: Lógica de filtrado en \texttt{SpeciesService}).\\
+\textbf{Refactor}& Mejorar el diseño sin cambiar el comportamiento (Ej: Extraer utilidades geométricas a \texttt{GeometryUtils}).\\
+\textbf{Commit}& Versionar el cambio con mensaje descriptivo en Git.\\
+	\end{coolTable}
+	\caption{Ciclo Red-Green-Refactor aplicado}
+\end{table*}
+
+\textbf{Motivación de TDD en este contexto}:
+\begin{itemize}
+    \item Las APIs externas (OBIS, iNaturalist) tienen comportamientos impredecibles (inconsistencias de datos, cambios de formato).
+    \item Las transformaciones geométricas (coordenadas → WKT Polygon) requieren validación matemática rigurosa.
+    \item El filtrado cruzado de especies (OBIS $\times$ iNaturalist) introduce complejidad lógica que debe ser testeable de forma aislada.
+\end{itemize}
+
+\subsection{Herramientas de desarrollo}
+
+\begin{itemize}
+    \item \textbf{Control de versiones}: Git + GitHub (commits atómicos por característica).
+    \item \textbf{Gestión de dependencias}: Maven (backend), npm (frontend).
+    \item \textbf{Testing}: JUnit 5 + Mockito (backend), Vitest (frontend).
+    \item \textbf{Documentación de API}: Swagger/OpenAPI 3.0 (generación automática de contratos REST).
+    \item \textbf{Compilación}: Vite (desarrollo frontend con HMR), Spring Boot Maven Plugin (empaquetado JAR).
+\end{itemize}
+
+\section{Seguimiento y control}
+
+El progreso del proyecto se ha monitorizado mediante:
+
+\begin{itemize}
+    \item \textbf{Archivo TODO}: Lista priorizada de tareas pendientes con urgencias marcadas (!).
+    \item \textbf{Commits semánticos}: Mensajes estructurados (feat, fix, docs, refactor) para trazabilidad histórica.
+    \item \textbf{Reuniones de seguimiento}: Sesiones quincenales con el tutor para validar decisiones arquitectónicas y resolver bloqueos técnicos.
+    \item \textbf{Documentación incremental}: Redacción de capítulos de iteración inmediatamente tras completar cada fase de desarrollo.
+\end{itemize}
+
+\textbf{Métricas de avance}:
+\begin{itemize}
+    \item Número de características completadas (Iteración 1: Escáner, Iteración 2: Clima, etc.).
+    \item Cobertura de tests unitarios (objetivo: >70\% en lógica de negocio).
+    \item Páginas de documentación LaTeX redactadas por iteración (objetivo: 8-12 páginas/iteración).
+\end{itemize}

@@ -2,39 +2,118 @@
 \chapter{Arranque}
 
 \begin{abstract}
-Este capítulo define la arquitectura base del proyecto Scubex y la lista inicial de características priorizadas para el desarrollo del Producto Mínimo Viable (MVP), centrado en la exploración de biodiversidad marina.
+Este capítulo define la arquitectura base del proyecto Scubex y la lista inicial de características priorizadas para el desarrollo del Producto Mínimo Viable (MVP), centrado en la exploración de biodiversidad marina y condiciones climáticas en tiempo real.
 \end{abstract}
 
 \section{Lista de características}
 
-Siguiendo la metodología de desarrollo, se han identificado las siguientes características nucleares:
+Siguiendo la fase 2 de FDD (Desarrollar lista de características), se han identificado las siguientes funcionalidades nucleares priorizadas por su valor técnico y experiencia de usuario:
 
 \begin{enumerate}
-    \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google.
-    \item \textbf{Exploración Geográfica}: Visualización de mapa interactivo con datos climáticos.
-    \item \textbf{Escáner de Especies}: Identificación de fauna marina en tiempo real basada en coordenadas.
-    \item \textbf{Perfil de Usuario}: Persistencia de preferencias y datos básicos.
+    \item \textbf{Gestión de Usuarios (OAuth2 + H2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto, preferencias).
+    \item \textbf{Exploración Geográfica}: Visualización de mapa interactivo mediante MapLibre GL JS con controles de zoom y navegación.
+    \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas.
+    \item \textbf{Datos Climáticos y Oceanográficos}: Integración de viento (WeatherAPI), temperatura del agua y corrientes (Stormglass).
+    \item \textbf{Red Social Geoespacial}: Sistema de posts geolocalizados con likes y comentarios (feature futura).
 \end{enumerate}
+
+\textbf{Justificación de priorización}:
+\begin{itemize}
+    \item OAuth2 se implementa primero para establecer el modelo de autenticación antes de añadir persistencia de datos de usuario.
+    \item El escáner de especies constituye el MVP funcional mínimo que justifica el proyecto.
+    \item Las características climáticas y sociales son extensiones que añaden valor incremental sin modificar el núcleo arquitectónico.
+\end{itemize}
 
 \section{Diseño arquitectónico}
 \label{sec:arquitectura}
 
-El sistema sigue una arquitectura de cliente-servidor desacoplada.
+El sistema sigue una arquitectura de \textbf{cliente-servidor desacoplada} con Gateway de APIs científicas.
 
 \subsection{Stack Tecnológico}
 
 \begin{itemize}
-    \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas.
-    \item \textbf{Frontend}: React 18 + Vite. SPA para una experiencia de usuario fluida.
-    \item \textbf{Base de Datos}: H2 (Embebida) para datos de usuario; sin persistencia propia de datos biológicos (se consumen en tiempo real).
-    \item \textbf{Seguridad}: Spring Security (OAuth2 Client).
+    \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas, orquestador de peticiones asíncronas y gestor de autenticación.
+    \item \textbf{Frontend}: React 18 + Vite. Single Page Application (SPA) con Hot Module Replacement (HMR) para desarrollo ágil.
+    \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
+    \item \textbf{Base de Datos}: H2 (Embebida) para datos de usuario (perfiles, posts, likes). Sin persistencia de datos biológicos (consumo en tiempo real desde APIs).
+    \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
+    \item \textbf{Documentación de API}: OpenAPI 3.0 (Swagger UI) con anotaciones automáticas.
+\end{itemize}
+
+\subsection{Justificación de MapLibre GL JS}
+
+A diferencia de Google Maps API o Leaflet, MapLibre GL JS se ha seleccionado por:
+\begin{itemize}
+    \item \textbf{Renderizado vectorial nativo}: Permite animaciones CSS personalizadas (efecto sonar del escáner) sin sobrecarga de DOM.
+    \item \textbf{Sin necesidad de geocodificación}: El proyecto no requiere búsqueda de direcciones ni rutas, solo visualización de capas geoespaciales.
+    \item \textbf{Open Source y sin rate limits}: Alternativa libre a Mapbox GL (del cual es fork).
 \end{itemize}
 
 \subsection{Integración de APIs Externas}
 
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{3.5cm}p{3.5cm}p{\textwidth-7.5cm}}{3}
+{APIs externas integradas en Scubex}
+\textbf{API}&\textbf{Proveedor}&\textbf{Datos proporcionados}\\
+\midrule
+OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento.\\
+iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (preferred\_common\_name).\\
+WeatherAPI&WeatherAPI.com& Condiciones climáticas: velocidad/dirección del viento, temperatura del aire, precipitaciones.\\
+Stormglass&Stormglass.io& Datos oceanográficos: temperatura del agua, altura de olas, corrientes. \textbf{Rate limit}: 10 req/día (uso restringido).\\
+	\end{coolTable}
+	\caption{Resumen de APIs externas}
+\end{table*}
+
+\textbf{Estrategia de consumo}:
 \begin{itemize}
-    \item \textbf{OBIS}: Proveedor de ocurrencias biológicas (Nombre científico, Coordenadas, Taxonomía).
-    \item \textbf{iNaturalist}: Proveedor de metadatos multimedia (Fotos, Nombres comunes).
-    \item \textbf{WeatherAPI}: Datos meteorológicos (Viento).
-    \item \textbf{Stormglass}: Datos oceanográficos (Temp. agua) [Uso restringido por rate-limit].
+    \item \textbf{OBIS + iNaturalist}: Consultas bajo demanda mediante el botón "Scan Area" (evita rate limit innecesario).
+    \item \textbf{WeatherAPI}: Polling cada 30 minutos para actualizar capa de viento en el mapa.
+    \item \textbf{Stormglass}: Uso condicional (solo si el usuario solicita datos oceanográficos avanzados).
+\end{itemize}
+
+\subsection{Patrón Arquitectónico: Gateway API}
+
+El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltiples APIs externas y aplicando lógica de negocio antes de exponer un contrato simplificado al cliente React:
+
+\begin{enumerate}
+    \item \textbf{Cliente React} invoca \texttt{GET /api/species?lat=X\&lng=Y\&radius=Z}.
+    \item \textbf{SpeciesService} (backend) ejecuta:
+    \begin{enumerate}
+        \item Transformación geométrica: \texttt{(lat, lng, radius)} $\rightarrow$ \texttt{WKT POLYGON}.
+        \item Petición a OBIS: \texttt{GET /occurrence?geometry=POLYGON(...)}.
+        \item Para cada especie única devuelta por OBIS:
+        \begin{itemize}
+            \item Petición a iNaturalist: \texttt{GET /taxa?q=<scientificName>}.
+            \item Filtrado: Si \texttt{total\_results == 0}, descartar especie.
+            \item Enriquecimiento: Extraer foto y nombre común.
+        \end{itemize}
+    \end{enumerate}
+    \item \textbf{Respuesta JSON} unificada con modelo \texttt{SpeciesResponse}.
+\end{enumerate}
+
+\textbf{Ventajas}:
+\begin{itemize}
+    \item El cliente React no necesita conocer la existencia de múltiples APIs.
+    \item La lógica de filtrado (microorganismos, especies sin foto) se centraliza en el backend.
+    \item Se evita exposición de API keys en el navegador.
+\end{itemize}
+
+\section{Seguimiento y control}
+
+\textbf{Fase del proyecto}: Arranque (Fase 1 de FDD: Modelo Global).
+
+\textbf{Estado}:
+\begin{itemize}
+    \item [OK] Arquitectura definida y documentada.
+    \item [OK] Stack tecnológico seleccionado y justificado.
+    \item [OK] APIs externas identificadas y contratos analizados.
+    \item [PENDIENTE] OAuth2 pendiente de implementación (TB1 en TODO).
+    \item [PENDIENTE] H2 Database pendiente de configuración.
+\end{itemize}
+
+\textbf{Decisiones arquitectónicas pendientes}:
+\begin{itemize}
+    \item Estrategia de caching para respuestas de OBIS (considerar Redis si el rate limit se vuelve problemático).
+    \item Gestión de timeout en peticiones a Stormglass (timeout: 5s, fallback: omitir datos oceanográficos).
 \end{itemize}
