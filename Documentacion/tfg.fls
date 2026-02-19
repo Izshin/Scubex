@@ -622,9 +622,6 @@ INPUT .\Metodologia.tex
 INPUT .\Metodologia.tex
 INPUT .\Metodologia.tex
 INPUT Metodologia.tex
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\tcrm1200.tfm
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\mathpazo\zplmr7y.vf
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmsy10.tfm
 INPUT .\Planificacion.tex
 INPUT .\Planificacion.tex
 INPUT .\Planificacion.tex
@@ -641,11 +638,14 @@ INPUT .\Arranque.tex
 INPUT .\Arranque.tex
 INPUT .\Arranque.tex
 INPUT Arranque.tex
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\mathpazo\zplmr7y.vf
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmsy10.tfm
 INPUT .\iteracion1.tex
 INPUT .\iteracion1.tex
 INPUT .\iteracion1.tex
 INPUT .\iteracion1.tex
 INPUT iteracion1.tex
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\tcrm1200.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbn8t.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\kpfonts\jkpttbn8t.vf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbn8r.tfm

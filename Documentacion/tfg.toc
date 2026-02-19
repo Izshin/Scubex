@@ -2,11 +2,9 @@
 \babel@toc {spanish}{}\relax 
 \contentsline {part}{I\hspace {1em}Introducción}{1}{part.1}%
 \contentsline {chapter}{\numberline {1}Contexto}{3}{chapter.1}%
-\contentsline {section}{\numberline {1.1}El mundo del X (videojuego, e-commerce,...)}{4}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Subcontexto}{4}{section.1.2}%
-\contentsline {section}{\numberline {1.3}Subsubcontexto}{4}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Estado del arte}{4}{section.1.4}%
-\contentsline {chapter}{\numberline {2}Contexto}{5}{chapter.2}%
+\contentsline {section}{\numberline {1.1}Redes sociales y exploración marina}{4}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Aplicaciones y tecnologías similares}{4}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Objetivos}{5}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Motivación}{6}{section.2.1}%
 \contentsline {section}{\numberline {2.2}Listado de objetivos}{6}{section.2.2}%
 \contentsline {part}{II\hspace {1em}Organización del proyecto}{7}{part.2}%
@@ -15,60 +13,59 @@
 \contentsline {section}{\numberline {3.2}Metodología de desarrollo}{10}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Justificación de Feature-Driven Development (FDD)}{10}{subsection.3.2.1}%
 \contentsline {subsection}{\numberline {3.2.2}Adaptación del ciclo FDD para Scubex}{11}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Integración de Test-Driven Development (TDD)}{11}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Herramientas de desarrollo}{12}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.3}Herramientas de desarrollo}{11}{subsection.3.2.3}%
 \contentsline {section}{\numberline {3.3}Seguimiento y control}{12}{section.3.3}%
-\contentsline {chapter}{\numberline {4}Planificación}{15}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Resumen temporal del proyecto}{16}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Planificación inicial}{16}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Informe de tiempos del proyecto}{16}{section.4.3}%
-\contentsline {chapter}{\numberline {5}Costes}{19}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Resumen de costes del proyecto}{20}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Costes de personal}{20}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Costes materiales}{20}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Costes indirectos}{20}{section.5.4}%
-\contentsline {part}{III\hspace {1em}Desarrollo del proyecto}{21}{part.3}%
-\contentsline {chapter}{\numberline {6}Arranque}{23}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Lista de características}{24}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Diseño arquitectónico}{24}{section.6.2}%
-\contentsline {subsection}{\numberline {6.2.1}Stack Tecnológico}{25}{subsection.6.2.1}%
-\contentsline {subsection}{\numberline {6.2.2}Justificación de MapLibre GL JS}{25}{subsection.6.2.2}%
-\contentsline {subsection}{\numberline {6.2.3}Integración de APIs Externas}{25}{subsection.6.2.3}%
-\contentsline {subsection}{\numberline {6.2.4}Patrón Arquitectónico: Gateway API}{26}{subsection.6.2.4}%
-\contentsline {section}{\numberline {6.3}Seguimiento y control}{27}{section.6.3}%
-\contentsline {chapter}{\numberline {7}Iteración 1: Escáner de Biodiversidad}{29}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Características a desarrollar}{30}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Diseño}{31}{section.7.2}%
-\contentsline {subsection}{\numberline {7.2.1}Incompatibilidad 1: Búsqueda radial vs. geométrica}{31}{subsection.7.2.1}%
-\contentsline {subsection}{\numberline {7.2.2}Incompatibilidad 2: Calidad de datos visuales}{32}{subsection.7.2.2}%
-\contentsline {subsection}{\numberline {7.2.3}Uso del campo \texttt {phylum} como fallback}{33}{subsection.7.2.3}%
-\contentsline {section}{\numberline {7.3}Implementación}{34}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Pruebas}{35}{section.7.4}%
-\contentsline {section}{\numberline {7.5}Contrato de API REST (OpenAPI)}{35}{section.7.5}%
-\contentsline {subsection}{\numberline {7.5.1}Documentación OpenAPI (TD1)}{36}{subsection.7.5.1}%
-\contentsline {subsection}{\numberline {7.5.2}Integración con el frontend (TD2)}{38}{subsection.7.5.2}%
-\contentsline {subsubsection}{Arquitectura del frontend}{38}{subsubsection*.7}%
-\contentsline {subsection}{\numberline {7.5.3}Configuración del proyecto (TD3)}{40}{subsection.7.5.3}%
-\contentsline {subsubsection}{Configuración del backend}{40}{subsubsection*.8}%
-\contentsline {subsubsection}{Configuración de seguridad (Spring Security)}{41}{subsubsection*.9}%
-\contentsline {subsubsection}{Configuración del frontend (Vite)}{42}{subsubsection*.10}%
-\contentsline {section}{\numberline {7.6}Despliegue}{43}{section.7.6}%
-\contentsline {section}{\numberline {7.7}Seguimiento y control}{43}{section.7.7}%
-\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{47}{part.4}%
-\contentsline {chapter}{\numberline {8}Manual de usuario}{49}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Sección libre}{50}{section.8.1}%
-\contentsline {chapter}{\numberline {9}Conclusiones}{51}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Informe post-mortem}{52}{section.9.1}%
-\contentsline {subsection}{\numberline {9.1.1}Lo que ha ido bien}{52}{subsection.9.1.1}%
-\contentsline {subsection}{\numberline {9.1.2}Lo que ha ido mal}{52}{subsection.9.1.2}%
-\contentsline {subsection}{\numberline {9.1.3}Discusión}{52}{subsection.9.1.3}%
-\contentsline {section}{\numberline {9.2}Trabajos futuros}{52}{section.9.2}%
-\contentsline {part}{V\hspace {1em}Appendices}{53}{part.5}%
-\contentsline {chapter}{\numberline {A}Software Product Lines}{55}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}Software Product Lines}{56}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Feature Models}{56}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Automated Analysis of Feature Models}{58}{section.Alph1.3}%
-\contentsline {subsection}{\numberline {A.3.1}Scope}{58}{subsection.Alph1.3.1}%
-\contentsline {section}{\numberline {A.4}Dynamic Software Product Lines (DSPL)}{61}{section.Alph1.4}%
-\contentsline {section}{\numberline {A.5}Hypothesis and Objectives}{61}{section.Alph1.5}%
-\contentsline {chapter}{Referencias bibliográficas}{64}{table.Alph1.1}%
+\contentsline {chapter}{\numberline {4}Planificación}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Resumen temporal del proyecto}{14}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Planificación inicial}{14}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Informe de tiempos del proyecto}{14}{section.4.3}%
+\contentsline {chapter}{\numberline {5}Costes}{17}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Resumen de costes del proyecto}{18}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Costes de personal}{18}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Costes materiales}{18}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Costes indirectos}{18}{section.5.4}%
+\contentsline {part}{III\hspace {1em}Desarrollo del proyecto}{19}{part.3}%
+\contentsline {chapter}{\numberline {6}Arranque}{21}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Lista de características}{22}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Diseño arquitectónico}{22}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Stack Tecnológico}{23}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Justificación de MapLibre GL JS}{23}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Integración de APIs Externas}{23}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}Patrón Arquitectónico: Gateway API}{24}{subsection.6.2.4}%
+\contentsline {section}{\numberline {6.3}Seguimiento y control}{25}{section.6.3}%
+\contentsline {chapter}{\numberline {7}Iteración 1: Escáner de Biodiversidad}{27}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Características a desarrollar}{28}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Diseño}{29}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Incompatibilidad 1: Búsqueda radial vs. geométrica}{29}{subsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.2.2}Incompatibilidad 2: Calidad de datos visuales}{30}{subsection.7.2.2}%
+\contentsline {subsection}{\numberline {7.2.3}Uso del campo \texttt {phylum} como fallback}{31}{subsection.7.2.3}%
+\contentsline {section}{\numberline {7.3}Implementación}{32}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Pruebas}{33}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Contrato de API REST (OpenAPI)}{33}{section.7.5}%
+\contentsline {subsection}{\numberline {7.5.1}Documentación OpenAPI (TD1)}{34}{subsection.7.5.1}%
+\contentsline {subsection}{\numberline {7.5.2}Integración con el frontend (TD2)}{36}{subsection.7.5.2}%
+\contentsline {subsubsection}{Arquitectura del frontend}{36}{subsubsection*.7}%
+\contentsline {subsection}{\numberline {7.5.3}Configuración del proyecto (TD3)}{38}{subsection.7.5.3}%
+\contentsline {subsubsection}{Configuración del backend}{38}{subsubsection*.8}%
+\contentsline {subsubsection}{Configuración de seguridad (Spring Security)}{39}{subsubsection*.9}%
+\contentsline {subsubsection}{Configuración del frontend (Vite)}{40}{subsubsection*.10}%
+\contentsline {section}{\numberline {7.6}Despliegue}{41}{section.7.6}%
+\contentsline {section}{\numberline {7.7}Seguimiento y control}{41}{section.7.7}%
+\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{45}{part.4}%
+\contentsline {chapter}{\numberline {8}Manual de usuario}{47}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Sección libre}{48}{section.8.1}%
+\contentsline {chapter}{\numberline {9}Conclusiones}{49}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Informe post-mortem}{50}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Lo que ha ido bien}{50}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Lo que ha ido mal}{50}{subsection.9.1.2}%
+\contentsline {subsection}{\numberline {9.1.3}Discusión}{50}{subsection.9.1.3}%
+\contentsline {section}{\numberline {9.2}Trabajos futuros}{50}{section.9.2}%
+\contentsline {part}{V\hspace {1em}Appendices}{51}{part.5}%
+\contentsline {chapter}{\numberline {A}Software Product Lines}{53}{appendix.Alph1}%
+\contentsline {section}{\numberline {A.1}Software Product Lines}{54}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}Feature Models}{54}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Automated Analysis of Feature Models}{56}{section.Alph1.3}%
+\contentsline {subsection}{\numberline {A.3.1}Scope}{56}{subsection.Alph1.3.1}%
+\contentsline {section}{\numberline {A.4}Dynamic Software Product Lines (DSPL)}{59}{section.Alph1.4}%
+\contentsline {section}{\numberline {A.5}Hypothesis and Objectives}{59}{section.Alph1.5}%
+\contentsline {chapter}{Referencias bibliográficas}{62}{table.Alph1.1}%

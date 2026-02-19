@@ -20,8 +20,8 @@ Siguiendo la fase 2 de FDD (Desarrollar lista de características), se han ident
 \textbf{Justificación de priorización}:
 \begin{itemize}
     \item OAuth2 se implementa primero para establecer el modelo de autenticación antes de añadir persistencia de datos de usuario.
-    \item El escáner de especies constituye el MVP funcional mínimo que justifica el proyecto.
-    \item Las características climáticas y sociales son extensiones que añaden valor incremental sin modificar el núcleo arquitectónico.
+    \item El escáner de especies, clima y publicación de avistamientos constituyen el MVP funcional mínimo que justifica el proyecto, pues no hay alternativas con interfaces intuitivas.
+    \item El resto de funciones sociales son el punto de extensión para añadir valor al producto de manera incremental.
 \end{itemize}
 
 \section{Diseño arquitectónico}
@@ -33,7 +33,7 @@ El sistema sigue una arquitectura de \textbf{cliente-servidor desacoplada} con G
 
 \begin{itemize}
     \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas, orquestador de peticiones asíncronas y gestor de autenticación.
-    \item \textbf{Frontend}: React 18 + Vite. Single Page Application (SPA) con Hot Module Replacement (HMR) para desarrollo ágil.
+    \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil.
     \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
     \item \textbf{Base de Datos}: H2 (Embebida) para datos de usuario (perfiles, posts, likes). Sin persistencia de datos biológicos (consumo en tiempo real desde APIs).
     \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
