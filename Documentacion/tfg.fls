@@ -560,14 +560,6 @@ INPUT .\acronyms.tex
 INPUT .\acronyms.tex
 INPUT acronyms.tex
 OUTPUT tfg.glsdefs
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\palatino\pplr8t.tfm
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssmn8t.tfm
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\kpfonts\jkpssmn8t.vf
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssmn8r.tfm
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssmne.tfm
 INPUT .\Contexto.tex
 INPUT .\Contexto.tex
 INPUT .\Contexto.tex
@@ -733,6 +725,9 @@ INPUT .\figures\introduction\newAAFM.pdf
 INPUT .\figures\introduction\newAAFM.pdf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\palatino\pplr8t.vf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\palatino\pplr8r.tfm
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
+INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\tex\latex\kpfonts\t1jkpss.fd
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssmn8t.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssbn8t.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpssbsc8t.tfm
@@ -780,8 +775,6 @@ INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\mathpazo\f
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\mathpazo\fplmr.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpssbsc8a.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpssbsc8a.pfb
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpssmn8a.pfb
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpssmn8a.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpttbn8a.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpttbn8a.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\kpfonts\jkpttmn8a.pfb
