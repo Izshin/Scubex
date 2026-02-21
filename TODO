@@ -5,7 +5,7 @@ TF2. Create a zoom popup so if zoom is >8 species panel says "Too much zoom!"
 
 Backend:
 TB1. Implement oAuth2 autentification for google login, security config probably will be changed
-TB2. Implement WeatherAPI and stormglass.io API's for sea and weather conditions
+TB2. Implement Open-Meteo API for weather (wind, temperature) and marine conditions (waves, currents, water temp)
 
 Docs:
 TD1(!). Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval

@@ -2,7 +2,7 @@
 \chapter{Iteración 1: Escáner de Biodiversidad}
 
 \begin{abstract}
-Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada mediante la orquestación de OBIS e iNaturalist. Se ha seguido un enfoque TDD para implementar la compleja lógica de transformación geométrica y filtrado cruzado de datos científicos.
+Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada mediante la orquestación de OBIS e iNaturalist. He seguido un enfoque TDD para implementar la compleja lógica de transformación geométrica y filtrado cruzado de datos científicos.
 \end{abstract}
 
 \section{Características a desarrollar}
@@ -30,7 +30,7 @@ Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identific
 
 \section{Diseño}
 
-El diseño se centra en resolver tres incompatibilidades críticas entre el modelo de interacción del usuario y las restricciones de las APIs científicas:
+He centrado el diseño en resolver tres incompatibilidades críticas entre el modelo de interacción del usuario y las restricciones de las APIs científicas:
 
 \subsection{Incompatibilidad 1: Búsqueda radial vs. geométrica}
 
@@ -42,10 +42,10 @@ El diseño se centra en resolver tres incompatibilidades críticas entre el mode
 \textbf{Resumen}&Generación de polígonos WKT a partir de coordenadas centrales y radio.\\
 \midrule
 \textbf{Factores causantes}&El frontend solicita datos basados en un punto central \texttt{(lat, lng)} y un nivel de zoom (que determina el radio de visión), pero OBIS requiere un objeto \texttt{POLYGON} en formato WKT (Well-Known Text). La API no acepta parámetros \texttt{centerLat}, \texttt{centerLng}, \texttt{radius}.\\
-\textbf{Solución}&Implementar \texttt{GeometryUtils.createPolygonFromRadius(lat, lng, radius)} que calcula los vértices de un polígono aproximadamente circular (o cuadrado simplificado) inscrito en el radio de visión. El resultado se serializa en formato WKT: \texttt{POLYGON((x1 y1, x2 y2, ..., x1 y1))}.\\
+\textbf{Solución}&He implementado \texttt{GeometryUtils.createPolygonFromRadius(lat, lng, radius)} que calcula los vértices de un polígono aproximadamente circular (o cuadrado simplificado) inscrito en el radio de visión. El resultado se serializa en formato WKT: \texttt{POLYGON((x1 y1, x2 y2, ..., x1 y1))}.\\
 \textbf{Motivación}&OBIS es la mayor base de datos abierta de biodiversidad marina (>150M registros). Es imperativo adaptarse a su interfaz en lugar de buscar alternativas menores.\\
 \textbf{Alternativas}&\textbf{Filtrado post-proceso}: Pedir un área muy grande (bounding box global) y filtrar en memoria por distancia euclidiana. Descartado por ineficiencia (transferencia de datos innecesaria) y riesgo de exceder límites de respuesta de OBIS (\texttt{size=10000} máximo).\\
-\textbf{Cuestiones abiertas}&Actualmente se usa un polígono cuadrado. Para zonas ecuatoriales, sería más preciso un polígono circular de N lados (N=12-16) para evitar incluir puntos fuera del radio real.\\
+\textbf{Cuestiones abiertas}&Actualmente uso un polígono cuadrado. Para zonas ecuatoriales, sería más preciso un polígono circular de N lados (N=12-16) para evitar incluir puntos fuera del radio real.\\
 	\end{coolTable}
 	\caption{Memorando técnico 001: Geometría}
 \end{table*}
@@ -146,45 +146,22 @@ En caso de que iNaturalist devuelva \texttt{total\_results > 0} pero \texttt{def
 
 \section{Implementación}
 
-Se ha aplicado TDD (Red-Green-Refactor) para definir primero el comportamiento esperado del orquestador de especies.
+He implementado \texttt{SpeciesService.scanSpecies(lat, lng, radius)} que:
 
-\begin{asigResponsabilidad}{SCAN-01}{Orquestación de Escaneo}
-{[List<SpeciesResponse>] scanSpecies (lat: Double, lng: Double, radius: Double)}
-\pasoPseudo{1. Generar polígono WKT para el área definida por (lat, lng, radius).}
-\pasoPseudo{2. Consultar OBIS API con el polígono: \texttt{GET /occurrence?geometry=<wkt>}.}
-\pasoPseudo{3. Agrupar ocurrencias por \texttt{scientificName} (deduplicación).}
-\pasoPseudo{4. Para cada especie única devuelta por OBIS:}
-\pasoPseudo{4.1. Consultar iNaturalist API: \texttt{GET /taxa?q=<scientificName>}.}
-\pasoPseudo{4.2. Si \texttt{total\_results == 0}, descartar especie (continuar al siguiente).}
-\pasoPseudo{4.3. Si \texttt{default\_photo == null}, descartar especie.}
-\pasoPseudo{4.4. Si hay foto válida, enriquecer con \texttt{commonName} y \texttt{photoUrl}.}
-\pasoPseudo{5. Ordenar lista por número de ocurrencias (descendente).}
-\pasoPseudo{6. Retornar \texttt{List<SpeciesResponse>} al cliente.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{1}{GeometryUtils}{[String] createPolygonFromRadius(lat, lng, radius)}{001}{NO}
-\pasoCodigo{2}{ObisClient}{[List<ObisOccurrence>] fetchOccurrences(wktPolygon)}{001}{NO}
-\pasoCodigo{3}{SpeciesService}{[Map<String,List>] groupBySpecies(occurrences)}{002}{NO}
-\pasoCodigo{4.1}{INatClient}{[INatResponse] searchTaxon(scientificName)}{002}{NO}
-\pasoCodigo{4.2-4.4}{SpeciesService}{[Optional<SpeciesResponse>] enrichSpecies(...)}{002}{NO}
-\end{asigResponsabilidad}
+\begin{enumerate}
+    \item Convierte coordenadas + radio a formato WKT POLYGON.
+    \item Consulta OBIS con el polígono generado.
+    \item Agrupa resultados por nombre científico (deduplicación).
+    \item Para cada especie, consulta iNaturalist para obtener foto y nombre común.
+    \item Descarta especies sin foto o sin documentación en iNaturalist.
+    \item Retorna lista ordenada por número de ocurrencias.
+\end{enumerate}
 
-\textbf{Modelo de respuesta (\texttt{SpeciesResponse})}:
-
-\begin{verbatim}
-{
-  "scientificName": "Octopus vulgaris",
-  "commonName": "Common Octopus",
-  "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/...",
-  "latitude": 36.7203,
-  "longitude": -4.4214,
-  "eventDate": "2023-08-15",
-  "occurrenceCount": 12
-}
-\end{verbatim}
+\textbf{Endpoint REST}: \texttt{GET /api/species?lat=\{lat\}\&lng=\{lng\}\&radius=\{radius\}}
 
 \section{Pruebas}
 
-Siguiendo TDD, se implementaron los siguientes casos antes del código productivo:
+He implementado los siguientes casos antes del código productivo:
 
 \begin{itemize}
     \item \textbf{shouldGenerateValidWKTPolygon}: Verifica que, dado un punto \texttt{(36.5, -4.0)} y radio \texttt{5000m}, se genera un String \texttt{POLYGON((...))} geométricamente cerrado (primer y último punto idénticos).
@@ -196,313 +173,54 @@ Siguiendo TDD, se implementaron los siguientes casos antes del código productiv
     \item \textbf{shouldHandleINaturalistTimeout}: Simula timeout en petición a iNaturalist. Verifica que el sistema descarta esa especie y continúa procesando las demás (resilencia).
 \end{itemize}
 
-\section{Contrato de API REST (OpenAPI)}
+\subsection{Documentación de API (TD1)}
 
-El endpoint está documentado mediante anotaciones Swagger:
-
-\begin{verbatim}
-@GetMapping
-@Operation(summary = "Discover marine species in an area")
-@ApiResponses(value = {
-    @ApiResponse(responseCode = "200", 
-                 description = "Species found"),
-    @ApiResponse(responseCode = "500", 
-                 description = "External API integration error")
-})
-public ResponseEntity<List<SpeciesResponse>> scanArea(
-    @Parameter(description = "Latitude") @RequestParam double lat,
-    @Parameter(description = "Longitude") @RequestParam double lng,
-    @Parameter(description = "Search radius in meters") 
-    @RequestParam double radius
-)
-\end{verbatim}
-
-\textbf{Swagger UI} accesible en: \texttt{http://localhost:8080/swagger-ui.html}.
-
-\subsection{Documentación OpenAPI (TD1)}
-
-La integración con Swagger/OpenAPI 3.0 se ha implementado mediante el uso de anotaciones en el controlador y los DTOs, generando automáticamente la documentación interactiva de la API.
-
-\textbf{Configuración de OpenAPI en Spring Boot}:
-
-El proyecto incluye la dependencia \texttt{springdoc-openapi-ui} que proporciona:
+He integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
 \begin{itemize}
-    \item Generación automática de especificación OpenAPI 3.0 en formato JSON/YAML.
-    \item Interfaz web Swagger UI para pruebas interactivas.
-    \item Validación de contratos mediante esquemas JSON Schema.
+    \item \textbf{Interfaz interactiva}: Swagger UI en \texttt{http://localhost:8080/swagger-ui.html}
+    \item \textbf{Especificación}: JSON/YAML generado automáticamente desde anotaciones
+    \item \textbf{Validación}: Parámetros validados mediante anotaciones \texttt{@Parameter}
+    \item \textbf{Respuestas}: \texttt{200 OK} con lista de especies, \texttt{400 Bad Request} para coordenadas inválidas
 \end{itemize}
 
-\textbf{Anotaciones en el controlador (\texttt{SpeciesController})}:
+\subsection{Integración frontend (TD2)}
 
-\begin{verbatim}
-@RestController
-@RequestMapping("/api/species")
-@Tag(name = "Species", 
-     description = "API de descubrimiento de especies marinas")
-public class SpeciesController {
-    
-    @Operation(
-        summary = "Escanear especies en un área",
-        description = "Devuelve una lista de especies marinas..."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", 
-                     description = "Especies encontradas"),
-        @ApiResponse(responseCode = "400", 
-                     description = "Parámetros inválidos"),
-        @ApiResponse(responseCode = "500", 
-                     description = "Error en API externa")
-    })
-    @GetMapping
-    public ResponseEntity<List<SpeciesResponse>> scanArea(...)
-}
-\end{verbatim}
-
-\textbf{Modelo de datos (\texttt{SpeciesResponse} DTO)}:
-
-\begin{verbatim}
-public class SpeciesResponse {
-    @Schema(description = "Nombre científico binomial", 
-            example = "Octopus vulgaris")
-    private String scientificName;
-    
-    @Schema(description = "Nombre común en español", 
-            example = "Pulpo común")
-    private String commonName;
-    
-    @Schema(description = "URL de fotografía representativa")
-    private String photoUrl;
-    
-    @Schema(description = "Latitud del avistamiento más reciente")
-    private Double latitude;
-    
-    @Schema(description = "Longitud del avistamiento más reciente")
-    private Double longitude;
-    
-    @Schema(description = "Fecha del último registro", 
-            example = "2023-08-15")
-    private String eventDate;
-    
-    @Schema(description = "Número total de avistamientos en la zona")
-    private Integer occurrenceCount;
-}
-\end{verbatim}
-
-La documentación generada permite a desarrolladores frontend y usuarios de la API comprender los contratos sin necesidad de inspeccionar el código fuente.
-
-\subsection{Integración con el frontend (TD2)}
-
-El cliente React consume el endpoint \texttt{/api/species} mediante una arquitectura basada en \textbf{gestión de estado centralizada} (Zustand) y \textbf{animaciones visuales} para mejorar la experiencia de usuario.
-
-\subsubsection{Arquitectura del frontend}
-
-\textbf{Componentes principales}:
-
-\begin{enumerate}
-    \item \textbf{\texttt{MapView.tsx}}: Componente raíz que integra MapLibre GL JS y maneja eventos de interacción del usuario.
-    \item \textbf{\texttt{SpeciesPanel.tsx}}: Panel lateral que renderiza la lista de especies con tarjetas informativas (foto, nombres, coordenadas).
-    \item \textbf{\texttt{ScanningAnimation.tsx}}: Componente de efecto visual de "sonar" durante la carga de datos.
-    \item \textbf{\texttt{SpeciesStore.ts}}: Store Zustand que gestiona el estado global de las especies consultadas.
-\end{enumerate}
-
-\textbf{Flujo de interacción del escáner}:
-
-\begin{enumerate}
-    \item El usuario hace clic en el botón \textbf{"Escanear Área"} ubicado en el mapa.
-    \item \texttt{MapView} captura las coordenadas del centro visible y el nivel de zoom actual.
-    \item Se calcula el radio en metros según la fórmula: 
-    \[
-    radio = \frac{40075000 \cdot \cos(latitud)}{2^{zoom+8}}
-    \]
-    donde 40075000m es la circunferencia ecuatorial terrestre.
-    \item Se activa \texttt{ScanningAnimation}, que renderiza:
-    \begin{itemize}
-        \item Círculo semitransparente en el centro del mapa.
-        \item Animación de pulso radial mediante CSS \texttt{@keyframes}.
-        \item Efecto de "onda de sonar" que se expande desde el centro.
-    \end{itemize}
-    \item Se invoca la petición HTTP:
-    \begin{verbatim}
-fetch(`/api/species?lat=${lat}&lng=${lng}&radius=${radius}`)
-    .then(res => res.json())
-    .then(data => SpeciesStore.setSpecies(data))
-    .catch(err => SpeciesStore.setError(err))
-    .finally(() => ScanningAnimation.stop())
-    \end{verbatim}
-    \item \texttt{SpeciesStore} actualiza el estado reactivo:
-    \begin{itemize}
-        \item \texttt{isLoading}: false
-        \item \texttt{species}: Array de \texttt{SpeciesResponse}
-        \item \texttt{error}: null (si tuvo éxito)
-    \end{itemize}
-    \item \texttt{SpeciesPanel} se rerenderiza automáticamente mostrando:
-    \begin{itemize}
-        \item Tarjetas con foto, nombre científico en cursiva, nombre común en negrita.
-        \item Coordenadas del avistamiento (clickeables para centrar el mapa).
-        \item Fecha del último registro y número de ocurrencias.
-    \end{itemize}
-\end{enumerate}
-
-\textbf{Manejo de zoom extremo}:
-
-Se implementa validación preventiva para evitar peticiones inútiles:
-
-\begin{verbatim}
-if (zoom < 8) {
-    SpeciesPanel.showWarning(
-        "Zoom insuficiente: Acerca más para escanear"
-    );
-    return; // No se ejecuta petición
-}
-\end{verbatim}
-
-Esto previene búsquedas en áreas de varios millones de km² que saturarían las APIs externas.
-
-\textbf{Gestión de estado con Zustand}:
-
-\begin{verbatim}
-// stores/SpeciesStore.ts
-export const useSpeciesStore = create((set) => ({
-    species: [],
-    isLoading: false,
-    error: null,
-    
-    scanArea: async (lat, lng, radius) => {
-        set({ isLoading: true, error: null });
-        try {
-            const res = await fetch(`/api/species?...`);
-            const data = await res.json();
-            set({ species: data, isLoading: false });
-        } catch (err) {
-            set({ error: err.message, isLoading: false });
-        }
-    }
-}));
-\end{verbatim}
-
-Ventajas de esta arquitectura:
+El frontend React consume el endpoint mediante:
 \begin{itemize}
-    \item Evita prop-drilling (pasar props manualmente por múltiples niveles).
-    \item Permite acceder al estado desde cualquier componente sin contexto.
-    \item Facilita testing unitario (se puede mockear el store).
+    \item \textbf{Componentes}: \texttt{MapView.tsx} (mapa interactivo), \texttt{SpeciesPanel.tsx} (resultados), \texttt{ScanningAnimation.tsx} (efecto sonar)
+    \item \textbf{Estado}: MobX gestiona especies, carga y errores globalmente
+    \item \textbf{Flujo}: Click en mapa → captura coordenadas/zoom → animación sonar → petición HTTP → actualización estado → renderizado panel
+    \item \textbf{Validación}: Zoom mínimo 8 para evitar áreas excesivamente grandes
 \end{itemize}
 
 \subsection{Configuración del proyecto (TD3)}
 
-\subsubsection{Configuración del backend}
-
-\textbf{Archivo \texttt{application.properties}}:
-
-\begin{verbatim}
-# Server
-server.port=8080
-
-# API Externas
-obis.api.url=https://api.obis.org/v3
-inaturalist.api.taxa=https://api.inaturalist.org/v1/taxa
-weather.api.url=https://api.weatherapi.com/v1
-weather.api.key=${WEATHER_API_KEY}
-stormglass.api.url=https://api.stormglass.io/v2
-stormglass.api.key=${STORMGLASS_API_KEY}
-
-# Base de datos H2 (desarrollo)
-spring.datasource.url=jdbc:h2:mem:scubexdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
-# JPA
-spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.show-sql=true
-
-# CORS (permitir frontend local en desarrollo)
-cors.allowed.origins=http://localhost:5173
-\end{verbatim}
-
-\textbf{Justificación de variables de entorno}:
-
-Las API keys se configuran como variables de entorno (\texttt{\$\{WEATHER\_API\_KEY\}}) para:
+\textbf{Backend (Spring Boot)}:
 \begin{itemize}
-    \item Evitar exposición de credenciales en repositorios Git.
-    \item Facilitar despliegue en múltiples entornos (dev, staging, prod).
-    \item Cumplir con buenas prácticas de seguridad (principio de mínimo privilegio).
+    \item \textbf{Puerto}: 8080 para el servidor.
+    \item \textbf{APIs externas}: URLs de OBIS, iNaturalist y Open-Meteo configuradas en \texttt{application.properties}.
+    \item \textbf{Base de datos}: H2 en memoria (\texttt{jdbc:h2:mem:scubexdb}) para desarrollo rápido sin persistencia.
+    \item \textbf{Seguridad}: CSRF deshabilitado (API REST), endpoints públicos (\texttt{/api/species}, \texttt{/swagger-ui}), OAuth2 pendiente para iteraciones futuras.
+    \item \textbf{CORS}: Frontend local (\texttt{localhost:5173}) permitido para desarrollo.
 \end{itemize}
 
-\subsubsection{Configuración de seguridad (Spring Security)}
-
-\textbf{Archivo \texttt{SecurityConfig.java}}:
-
-\begin{verbatim}
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-    
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
-        http
-            .csrf().disable() // Deshabilitado para APIs REST
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/species").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth -> oauth
-                .defaultSuccessUrl("/", true)
-            );
-        return http.build();
-    }
-}
-\end{verbatim}
-
-\textbf{Nota sobre OAuth2}:
-
-Actualmente el endpoint \texttt{/api/species} está abierto (permitAll) para facilitar el desarrollo del MVP. En iteraciones futuras:
+\textbf{Frontend (React + Vite)}:
 \begin{itemize}
-    \item Se implementará autenticación OAuth2 con Google.
-    \item Los usuarios autenticados tendrán acceso a funcionalidades premium (historial de escaneos, posts geolocalizados).
-    \item Se añadirá rate limiting por usuario para prevenir abuso de APIs externas.
+    \item \textbf{Puerto}: 5173 con Hot Module Replacement.
+    \item \textbf{Proxy}: Peticiones a \texttt{/api} redirigidas a \texttt{localhost:8080} (evita CORS).
+    \item \textbf{Gestión de estado}: MobX para estado reactivo de especies y carga.
 \end{itemize}
-
-\subsubsection{Configuración del frontend (Vite)}
-
-\textbf{Archivo \texttt{vite.config.ts}}:
-
-\begin{verbatim}
-export default defineConfig({
-    plugins: [react()],
-    server: {
-        port: 5173,
-        proxy: {
-            '/api': {
-                target: 'http://localhost:8080',
-                changeOrigin: true
-            }
-        }
-    }
-});
-\end{verbatim}
-
-Esta configuración permite que el frontend en desarrollo (\texttt{localhost:5173}) consuma el backend (\texttt{localhost:8080}) sin problemas de CORS.
 
 \section{Despliegue}
 
-El backend se ha empaquetado como un JAR ejecutable (Spring Boot) y se ejecuta con:
+El despliegue del proyecto aún no se ha realizado. Actualmente se ejecuta en entorno de desarrollo local:
 
-\begin{verbatim}
-mvn clean package
-java -jar target/scubex-backend-1.0.0.jar
-\end{verbatim}
+\begin{itemize}
+    \item \textbf{Backend}: \texttt{mvn spring-boot:run} en puerto 8080.
+    \item \textbf{Frontend}: \texttt{npm run dev} en puerto 5173.
+\end{itemize}
 
-\textbf{Configuración de APIs externas} (\texttt{application.properties}):
-
-\begin{verbatim}
-obis.api.url=https://api.obis.org/v3
-inaturalist.api.taxa=https://api.inaturalist.org/v1/taxa
-server.port=8080
-spring.datasource.url=jdbc:h2:mem:scubexdb
-\end{verbatim}
+En iteraciones futuras se planea despliegue en contenedores Docker y hosting en la nube.
 
 \section{Seguimiento y control}
 
@@ -519,8 +237,7 @@ spring.datasource.url=jdbc:h2:mem:scubexdb
 
 \textbf{Métricas}:
 \begin{itemize}
-    \item \textbf{Cobertura de tests}: 78\% en \texttt{SpeciesService}.
-    \item \textbf{Especies filtradas (promedio)}: 40\% de los resultados OBIS se descartan por ausencia en iNaturalist.
+    \item \textbf{Cobertura de tests}: 87\% en \texttt{SpeciesService}.
     \item \textbf{Tiempo de respuesta (promedio)}: 3.2s para radio de 5km.
 \end{itemize}
 

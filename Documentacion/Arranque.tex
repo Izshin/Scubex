@@ -13,7 +13,7 @@ Siguiendo la fase 2 de FDD (Desarrollar lista de características), se han ident
     \item \textbf{Gestión de Usuarios (OAuth2 + H2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto, preferencias).
     \item \textbf{Exploración Geográfica}: Visualización de mapa interactivo mediante MapLibre GL JS con controles de zoom y navegación.
     \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas.
-    \item \textbf{Datos Climáticos y Oceanográficos}: Integración de viento (WeatherAPI), temperatura del agua y corrientes (Stormglass).
+    \item \textbf{Datos Climáticos y Oceanográficos}: Integración completa mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos).
     \item \textbf{Red Social Geoespacial}: Sistema de posts geolocalizados con likes y comentarios (feature futura).
 \end{enumerate}
 
@@ -44,7 +44,6 @@ El sistema sigue una arquitectura de \textbf{cliente-servidor desacoplada} con G
 
 A diferencia de Google Maps API o Leaflet, MapLibre GL JS se ha seleccionado por:
 \begin{itemize}
-    \item \textbf{Renderizado vectorial nativo}: Permite animaciones CSS personalizadas (efecto sonar del escáner) sin sobrecarga de DOM.
     \item \textbf{Sin necesidad de geocodificación}: El proyecto no requiere búsqueda de direcciones ni rutas, solo visualización de capas geoespaciales.
     \item \textbf{Open Source y sin rate limits}: Alternativa libre a Mapbox GL (del cual es fork).
 \end{itemize}
@@ -59,8 +58,7 @@ A diferencia de Google Maps API o Leaflet, MapLibre GL JS se ha seleccionado por
 \midrule
 OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento.\\
 iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (preferred\_common\_name).\\
-WeatherAPI&WeatherAPI.com& Condiciones climáticas: velocidad/dirección del viento, temperatura del aire, precipitaciones.\\
-Stormglass&Stormglass.io& Datos oceanográficos: temperatura del agua, altura de olas, corrientes. \textbf{Rate limit}: 10 req/día (uso restringido).\\
+Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de API key y plan gratuito generosísimo.\\
 	\end{coolTable}
 	\caption{Resumen de APIs externas}
 \end{table*}
@@ -68,8 +66,7 @@ Stormglass&Stormglass.io& Datos oceanográficos: temperatura del agua, altura de
 \textbf{Estrategia de consumo}:
 \begin{itemize}
     \item \textbf{OBIS + iNaturalist}: Consultas bajo demanda mediante el botón "Scan Area" (evita rate limit innecesario).
-    \item \textbf{WeatherAPI}: Polling cada 30 minutos para actualizar capa de viento en el mapa.
-    \item \textbf{Stormglass}: Uso condicional (solo si el usuario solicita datos oceanográficos avanzados).
+    \item \textbf{Open-Meteo}: Polling cada 30 minutos para actualizar capas de viento y datos oceanográficos. Sin necesidad de API key y límites muy generosos (10,000 peticiones diarias en plan gratuito).
 \end{itemize}
 
 \subsection{Patrón Arquitectónico: Gateway API}
@@ -115,5 +112,5 @@ El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltipl
 \textbf{Decisiones arquitectónicas pendientes}:
 \begin{itemize}
     \item Estrategia de caching para respuestas de OBIS (considerar Redis si el rate limit se vuelve problemático).
-    \item Gestión de timeout en peticiones a Stormglass (timeout: 5s, fallback: omitir datos oceanográficos).
+    \item Estrategia de despliegue (considerar Firebase?).
 \end{itemize}

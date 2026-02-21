@@ -21,6 +21,7 @@
 - **APIs Integradas**:
   - **OBIS API**: Datos de ocurrencias reales de especies marinas
   - **iNaturalist API**: Fotos y nombres comunes de especies
+  - **Open-Meteo API**: Datos climáticos y oceanográficos (sin API key, plan gratuito generoso)
 
 ### 🎨 Frontend (React)
 - **Framework**: React 18 + TypeScript + Vite
@@ -31,7 +32,7 @@
 - **Estilos**: Tailwind CSS + PostCSS
 - **Build**: Vite con HMR
 
-## APIs de Datos Marinos
+## 🌐 APIs Integradas
 
 ### OBIS (Ocean Biodiversity Information System)
 - **Propósito**: Obtener ocurrencias reales de especies marinas por coordenadas
@@ -44,6 +45,14 @@
 - **Endpoint**: `https://api.inaturalist.org/v1/taxa`
 - **Datos**: Imágenes de especies, nombres vernáculos, información taxonómica
 - **Integración**: Mapeo automático con anotaciones `@JsonProperty`
+
+### Open-Meteo
+- **Propósito**: Datos climáticos y oceanográficos en tiempo real
+- **Endpoints**: 
+  - Marine: `https://marine-api.open-meteo.com/v1/marine`
+  - Weather: `https://api.open-meteo.com/v1/forecast`
+- **Datos**: Temperatura del agua, altura de olas, corrientes, viento, temperatura del aire
+- **Ventajas**: Sin necesidad de API key, plan gratuito generosísimo (10,000 peticiones/día)
 
 ## 🏗️ Estructura del Proyecto
 
