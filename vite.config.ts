@@ -2,10 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   plugins: [react()],
-  // Set base path for GitHub Pages deployment
-  base: mode === 'production' ? '/Scubex/' : '/',
+  base: '/',
   server: {
     proxy: {
       "/api": {
@@ -14,4 +13,4 @@ export default defineConfig(({ mode }) => ({
       }
     }
   }
-}))
+})
