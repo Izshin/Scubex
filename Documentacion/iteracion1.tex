@@ -2,7 +2,7 @@
 \chapter{Iteración 1: Escáner de Biodiversidad}
 
 \begin{abstract}
-Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada mediante la orquestación de OBIS e iNaturalist. He seguido un enfoque TDD para implementar la compleja lógica de transformación geométrica y filtrado cruzado de datos científicos.
+Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada mediante la orquestación de OBIS e iNaturalist. Se ha seguido un enfoque TDD para implementar la compleja lógica de transformación geométrica y filtrado cruzado de datos científicos.
 \end{abstract}
 
 \section{Características a desarrollar}
@@ -30,7 +30,7 @@ Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identific
 
 \section{Diseño}
 
-He centrado el diseño en resolver tres incompatibilidades críticas entre el modelo de interacción del usuario y las restricciones de las APIs científicas:
+El diseño se ha centrado en resolver tres incompatibilidades críticas entre el modelo de interacción del usuario y las restricciones de las APIs científicas:
 
 \subsection{Incompatibilidad 1: Búsqueda radial vs. geométrica}
 
@@ -42,10 +42,10 @@ He centrado el diseño en resolver tres incompatibilidades críticas entre el mo
 \textbf{Resumen}&Generación de polígonos WKT a partir de coordenadas centrales y radio.\\
 \midrule
 \textbf{Factores causantes}&El frontend solicita datos basados en un punto central \texttt{(lat, lng)} y un nivel de zoom (que determina el radio de visión), pero OBIS requiere un objeto \texttt{POLYGON} en formato WKT (Well-Known Text). La API no acepta parámetros \texttt{centerLat}, \texttt{centerLng}, \texttt{radius}.\\
-\textbf{Solución}&He implementado \texttt{GeometryUtils.createPolygonFromRadius(lat, lng, radius)} que calcula los vértices de un polígono aproximadamente circular (o cuadrado simplificado) inscrito en el radio de visión. El resultado se serializa en formato WKT: \texttt{POLYGON((x1 y1, x2 y2, ..., x1 y1))}.\\
+\textbf{Solución}&Se ha implementado \texttt{GeometryUtils.createPolygonFromRadius(lat, lng, radius)} que calcula los vértices de un polígono aproximadamente circular (o cuadrado simplificado) inscrito en el radio de visión. El resultado se serializa en formato WKT: \texttt{POLYGON((x1 y1, x2 y2, ..., x1 y1))}.\\
 \textbf{Motivación}&OBIS es la mayor base de datos abierta de biodiversidad marina (>150M registros). Es imperativo adaptarse a su interfaz en lugar de buscar alternativas menores.\\
 \textbf{Alternativas}&\textbf{Filtrado post-proceso}: Pedir un área muy grande (bounding box global) y filtrar en memoria por distancia euclidiana. Descartado por ineficiencia (transferencia de datos innecesaria) y riesgo de exceder límites de respuesta de OBIS (\texttt{size=10000} máximo).\\
-\textbf{Cuestiones abiertas}&Actualmente uso un polígono cuadrado. Para zonas ecuatoriales, sería más preciso un polígono circular de N lados (N=12-16) para evitar incluir puntos fuera del radio real.\\
+\textbf{Cuestiones abiertas}&Actualmente se utiliza un polígono cuadrado. Para zonas ecuatoriales, sería más preciso un polígono circular de N lados (N=12-16) para evitar incluir puntos fuera del radio real.\\
 	\end{coolTable}
 	\caption{Memorando técnico 001: Geometría}
 \end{table*}
@@ -146,7 +146,7 @@ En caso de que iNaturalist devuelva \texttt{total\_results > 0} pero \texttt{def
 
 \section{Implementación}
 
-He implementado \texttt{SpeciesService.scanSpecies(lat, lng, radius)} que:
+Se ha implementado \texttt{SpeciesService.scanSpecies(lat, lng, radius)} que:
 
 \begin{enumerate}
     \item Convierte coordenadas + radio a formato WKT POLYGON.
@@ -161,7 +161,7 @@ He implementado \texttt{SpeciesService.scanSpecies(lat, lng, radius)} que:
 
 \section{Pruebas}
 
-He implementado los siguientes casos antes del código productivo:
+Se han implementado los siguientes casos de prueba antes del código productivo:
 
 \begin{itemize}
     \item \textbf{shouldGenerateValidWKTPolygon}: Verifica que, dado un punto \texttt{(36.5, -4.0)} y radio \texttt{5000m}, se genera un String \texttt{POLYGON((...))} geométricamente cerrado (primer y último punto idénticos).
@@ -175,7 +175,7 @@ He implementado los siguientes casos antes del código productivo:
 
 \subsection{Documentación de API (TD1)}
 
-He integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
+Se ha integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
 \begin{itemize}
     \item \textbf{Interfaz interactiva}: Swagger UI en \texttt{http://localhost:8080/swagger-ui.html}
     \item \textbf{Especificación}: JSON/YAML generado automáticamente desde anotaciones
