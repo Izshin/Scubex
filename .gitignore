@@ -29,3 +29,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# LaTeX generated files
+Documentacion/tfg.pdf
+Documentacion/tfg.fdb_latexmk
+Documentacion/tfg.aux
+Documentacion/tfg.bbl
+Documentacion/tfg.blg
+Documentacion/tfg.brf
+Documentacion/tfg.fls
+Documentacion/tfg.lof
+Documentacion/tfg.lot
+Documentacion/tfg.toc
+Documentacion/tfg.acn
+Documentacion/tfg.glo
+Documentacion/tfg.glsdefs
+Documentacion/tfg.ist
+Documentacion/tfg.tdo
+Documentacion/tfg.synctex.gz
+Documentacion/tfg.thm
