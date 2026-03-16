@@ -72,7 +72,9 @@ Producción&Railway + Vercel&PostgreSQL (Railway)&\texttt{main}\\
     \item La separación replica el patrón habitual en equipos profesionales con este stack, donde el frontend y el backend se despliegan y escalan de forma independiente.
 \end{itemize}
 
-Spring Boot expone la configuración CORS necesaria para permitir peticiones desde el dominio de Vercel hacia Railway, centralizando en el backend el control de los orígenes autorizados.
+Spring Boot centraliza la configuración CORS en \texttt{SecurityConfig}, leyendo los orígenes permitidos desde la variable de entorno \texttt{CORS\_ALLOWED\_ORIGINS}. En Railway se configura con el dominio de Vercel; en local se usa el fallback \texttt{http://localhost:5173}. Esto permite que el mismo artefacto JAR funcione en cualquier entorno sin recompilación.
+
+La conexión a base de datos sigue el mismo patrón: \texttt{application.properties} lee las variables \texttt{SPRING\_DATASOURCE\_URL}, \texttt{SPRING\_DATASOURCE\_USERNAME} y \texttt{SPRING\_DATASOURCE\_PASSWORD} con fallback a H2 en memoria para desarrollo local. Railway inyecta automáticamente estas variables al conectar el servicio PostgreSQL con el servicio Spring Boot dentro del mismo proyecto.
 
 \subsection{Justificación de MapLibre GL JS}
 
@@ -139,12 +141,14 @@ El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltipl
     \item [OK] Arquitectura definida y documentada.
     \item [OK] Stack tecnológico seleccionado y justificado.
     \item [OK] APIs externas identificadas y contratos analizados.
-    \item [PENDIENTE] OAuth2 pendiente de implementación (TB1 en TODO).
-    \item [PENDIENTE] H2 Database pendiente de configuración.
+    \item [OK] Backend desplegado en Railway con PostgreSQL. Datasource configurado mediante variables de entorno con fallback a H2 para desarrollo local.
+    \item [OK] Frontend desplegado en Vercel. CORS configurado dinámicamente desde variable de entorno en Spring Security.
+    \item [OK] Escáner de especies funcional en producción: \texttt{https://scubex.vercel.app}.
+    \item [PENDIENTE] OAuth2 pendiente de implementación.
 \end{itemize}
 
 \textbf{Decisiones arquitectónicas pendientes}:
 \begin{itemize}
     \item Estrategia de caching para respuestas de OBIS (considerar cache en memoria con Spring Cache si el rate limit se vuelve problemático).
-    \item Migración del esquema H2 a PostgreSQL mediante scripts de inicialización (Liquibase o Flyway).
+    \item Migración del esquema con Flyway para gestionar cambios incrementales en PostgreSQL.
 \end{itemize}
