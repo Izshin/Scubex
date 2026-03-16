@@ -21,10 +21,12 @@ interface FrontendSpeciesData {
   phylum?: string;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+
 // Test function to check if backend is running
 export async function testBackendConnection(): Promise<boolean> {
   try {
-    const response = await fetch('http://localhost:8080/api/species?lat=36.52&lng=-5.98&radius=1000', {
+    const response = await fetch(`${API_BASE_URL}/api/species?lat=36.52&lng=-5.98&radius=1000`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -40,7 +42,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
   // Test backend connection first
   const isBackendRunning = await testBackendConnection();
   if (!isBackendRunning) {
-    console.warn('⚠️ Backend is not running or not accessible at http://localhost:8080');
+    console.warn(`⚠️ Backend is not running or not accessible at ${API_BASE_URL}`);
   }
   
   try {
@@ -51,7 +53,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
       radius: scanData.radius.toString()
     });
     
-    const apiUrl = `http://localhost:8080/api/species?${params.toString()}`;
+    const apiUrl = `${API_BASE_URL}/api/species?${params.toString()}`;
     console.log('📡 API Call:', apiUrl);
     
     // Make the API call to your Spring Boot backend

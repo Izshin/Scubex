@@ -38,7 +38,7 @@ const MapPage = observer(() => {
     console.log('📍 Center:', { lat: center.lat.toFixed(6), lng: center.lng.toFixed(6) });
     console.log('🔍 Zoom Level:', zoom.toFixed(1));
     console.log('📏 Search Radius:', `${radius}m`);
-    console.log('🌊 Backend API Call will be:', `http://localhost:8080/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
+    console.log('🌊 Backend API Call will be:', `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
     
     // Update map state and fetch species data using MobX store
     mapStore.updateMapState(zoom, { lat: center.lat, lng: center.lng });
