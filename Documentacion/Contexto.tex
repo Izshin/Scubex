@@ -11,16 +11,18 @@ Vamos a dar una visión general del contexto en el que se desarrolla el proyecto
 
 \section{Redes sociales y exploración marina}
 
-Desde pequeño he vivido rodeado de mar, pero es solo ahora cuando he descubierto lo mucho que me gusta el buceo. Sin embargo, este viene con una serie de retos y problemas: ¿dónde me sumerjo?, ¿¡hará buen clima debajo del agua?, ¿podré llegar a la zona con mi equipo o hará mucho viento? 
+Desde pequeño he vivido rodeado de mar, pero es solo ahora cuando he descubierto lo mucho que me gusta el buceo. Sin embargo, este viene con una serie de retos y problemas: ¿Dónde me sumerjo?, ¿Hará buen clima debajo del agua?, ¿Podré llegar a la zona con mi equipo o hará mucho viento? y, si voy, ¿Qué especies podré ver?
 
-Con este proyecto busco dar una solución a estos problemas de una forma tanto estadística como personal, permitiendo a las personas ver datos recopilados a lo largo de los años sobre zonas de buceo, su ecosistema y condiciones climatológicas y, a la vez, dándoles libertad para que puedan compartir sus propias experiencias. Para que el usuario sea el que decida si quiere guiarse por los datos o por la experiencia de otros.
-
+Con este proyecto busco dar una solución a estos problemas desde dos perspectivas. Estadística y personal, con esto me refiero a que el usuario podrá basarse en cientos de datos ya recopilados de una zona. O simplemente podrá basarse en la experiencia de otros buceadores de esta misma zona.
 \section{Aplicaciones y tecnologías similares}
 
-Hoy en día las aplicaciones existen a montones, para nichos sorprendentemente específicos. Scubex no es nada revolucionario, pues varias aplicaciones de las que se inspira y apoya ya incluyen algunas de sus funcionalidades. Sin embargo, ninguna de ellas las integra de forma intuitiva, centralizada y orientada únicamente a buceadores. Son tres las aplicaciones que he podido ver que son similares a Scubex.
+No tendría sentido desarrollar un proyecto que ya existe, por ello he buscado aplicaciones que hagan algo similar a la propuesta de Scubex. Que basicámente se basa en dar respuesta a las preguntas preguntas que he mecionado, para ello hay que dar información de: Que condiciones climatológicas hay en una zona, que especies marinas podrás ver y como está el mar ese día concreto en esa zona específica. Esto debe hacerse usando tanto datos recopilados a lo largo de los años de una zona, como dejando a los usuarios
+compartir sus experiencias personales. Buscando aplicaciones que den respuesta a estas preguntas he econtrado tres: 
 
-La primera es \textbf{Dive Mate}: Una aplicación que te muestra especies que has visto tú en una zona y que te da estimaciones climatológicas precisas. Sin embargo, tanto la interfaz como la posibilidad de compartir experiencias son muy limitadas; la aplicación denota torpeza en su diseño, razón por la cual nuevos y antiguos buceadores podrían no sentirse atraídos por ella.
+La primera es \textbf{Dive Mate}: Una aplicación que te muestra especies que has visto tú en una zona y que te da estimaciones climatológicas precisas. Sin embargo, la interfaz es tosca. Y no es posible compartir experiencias personales, un usuario no puede interactuar con otros ni registrar sus propias observaciones.
 
-La segunda es \textbf{iNaturalist}: Una aplicación que te permite ver, en un mapa, avistamientos de especies en esa zona. Sus fotos e información de avistamientos son increíblemente ricas y útiles. Sin embargo, no está centralizada en buceadores y no incluye información climatológica para el mar de la zona. Es por ello que (detalles más adelante) usaremos su API para recopilar información sobre una zona y mostrarla al usuario.
+La segunda es \textbf{iNaturalist}: Una aplicación que te permite ver, en un mapa, avistamientos de especies en esa zona. Sus fotos e información de avistamientos son increíblemente ricas y útiles. Sin embargo, no está centralizada en buceadores y no incluye información climatológica para el mar de la zona.
 
-La última es \textbf{DiveApp}: Una aplicación orientada a los avistamientos y preparación de viajes que incluye componentes de red social. Sin embargo, estos están orientados únicamente a la experiencia, por lo que no incluye ni información recopilada ni información climatológica, basándose únicamente en la experiencia de los usuarios.
+La última es \textbf{DiveApp}: Una aplicación orientada a los avistamientos y preparación de viajes que incluye componentes de red social. Tiene el problema contrario a Dive Mate, incluye experiencia personal a modo de publicaciones y clima sobre la zona. Pero sin embargo no incluye datos ya recopilados sobre la zona en la que pretendes sumergirte.
+
+Como podemos ver, cada una de estas aplicaciones tienen sus pros y sus contras. Y ofrecen funcionalidades parecidas a las de Scubex, sin embargo, ninguna las ofrece todas en una sola aplicación. Y es por ello que me he planteado hacer este proyecto.  

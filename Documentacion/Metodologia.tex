@@ -28,26 +28,26 @@ El tutor del proyecto ha proporcionado la supervisión técnica y académica, va
 Se ha adoptado \textbf{Feature-Driven Development} como metodología central debido a sus características idóneas para proyectos de alcance medio con requisitos funcionales bien definidos:
 
 \begin{itemize}
-    \item \textbf{Orientación a características}: Cada funcionalidad (escáner de especies, integración climática, red social) se desarrolla como una unidad atómica documentable.
-    \item \textbf{Trazabilidad}: Mapeo directo entre requisitos funcionales, código y documentación académica.
-    \item \textbf{Escalabilidad}: Facilita la adición de nuevas características (clima, oceanografía, social) sin refactorizar el núcleo existente.
+    \item \textbf{Orientación a características}: Cada funcionalidad (escáner de especies, integración climática, red social) se desarrolla como una única unidad. Lo que significa que se realizará el código y hasta que no esté documentada y acabada, no se pasará a la siguiente.
+    \item \textbf{Trazabilidad}: Al forzar la compleción completa de una característica hay una relacion estrecha y directa entre requisitos, código y documentación. Esto hace que sea facil trazar un camino claro del avance del proyecto
+    \item \textbf{Escalabilidad}: Gracias a este enfoque es relativamente añadir nuevas características en el futuro. Ya que simplemente hay que añadir una característica a la lista y tratarla como esa unidad que previamente hemos mencionado
 \end{itemize}
 
-En resumen, esta metodología permite estructurar el desarrollo con una lista de características claras y priorizadas empleando un lenguaje sencillo. Es especialmente adecuada para proyectos individuales en los que existe un único desarrollador responsable del estilo y la arquitectura del sistema.
+En resumen, esta metodología permite estructurar el desarrollo con una lista de características claras y priorizadas. Lo que ayuda a mantener una organización coherente y simple en un equipo pequeño o individual.
 \subsection{Adaptación del ciclo FDD para Scubex}
 
 El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha adaptado la secuencia, unificando la fase de diseño y añadiendo una fase de documentación:
 
 \begin{enumerate}
-    \item \textbf{Construir un modelo global}: Diseño inicial de la arquitectura del sistema (capítulo de Arranque).
-    
     \item \textbf{Desarrollar la lista de características}: Identificación y priorización de funcionalidades nucleares (Gestión de usuarios OAuth2, Escáner de especies, Exploración climática, Red social).
     
-    \item \textbf{Planificar por característica}: Estimación tecnológica y limitaciones y consecuente diseño del flujo de datos.
+    \item \textbf{Construir un modelo global}: Diseño de la arquitectura del sistema a partir de las características identificadas (capítulo de Arranque).
+    
+    \item \textbf{Planificar por característica}: Estimación tecnológica, limitaciones y consecuente diseño del flujo de datos.
     
     \item \textbf{Construir por característica}: Implementación incremental con validación mediante pruebas constantes.
     
-    \item \textbf{Documentar la característica}: Redacción académica de cada iteración en LaTeX, incluyendo justificación de decisiones técnicas y lecciones aprendidas.
+    \item \textbf{Documentar la característica}: Redacción académica de cada característica en LaTeX, incluyendo justificación de decisiones técnicas y lecciones aprendidas.
 \end{enumerate}
 
 \subsection{Herramientas de desarrollo}
@@ -66,8 +66,8 @@ El progreso del proyecto se ha monitorizado mediante:
 
 \begin{itemize}
     \item \textbf{Archivo TODO}: Lista priorizada de tareas pendientes con urgencias marcadas (!).
-    \item \textbf{Commits semánticos}: Mensajes casi siempre estructurados (feat, fix, docs, refactor) para trazabilidad histórica.
-    \item \textbf{Reuniones de seguimiento}: Sesiones quincenales con el tutor para validar decisiones arquitectónicas y resolver bloqueos técnicos.
+    \item \textbf{Commits semánticos}: Mensajes (casi siempre) estructurados (feat, fix, docs, refactor) para trazabilidad histórica.
+    \item \textbf{Reuniones de seguimiento}: Sesiones cada tres semanas con el tutor para validar decisiones arquitectónicas y resolver bloqueos técnicos.
     \item \textbf{Documentación incremental}: Redacción de capítulos inmediatamente tras completar cada característica dentro de la aplicación.
 \end{itemize}
 

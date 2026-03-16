@@ -14,13 +14,13 @@ En este capítulo se realiza el desglose de los costes asociados al proyecto, ba
 	\centering
 	\begin{coolTable}{ll}{2}
 {Resumen del proyecto}
-	\textbf{Costes de personal}&9.750 \euro\\
-	Salario bruto proporcional&7.500 \euro\\
-	Costes sociales (30\%)&2.250 \euro\\
+	\textbf{Costes de personal}&14.950 \euro\\
+	Desarrollador Full-Stack&9.750 \euro\\
+	Becario Documentaci\'{o}n&5.200 \euro\\
 	\textbf{Costes materiales}&50 \euro\\
-	\textbf{Costes indirectos}&980 \euro\\
+	\textbf{Costes indirectos}&1.500 \euro\\
 	\midrule
-	\textbf{TOTAL}&10.780 \euro\\
+	\textbf{TOTAL}&16.500 \euro\\
 	\end{coolTable}
 	\caption{Tabla resumen de costes del proyecto}
 \end{table*}
@@ -29,9 +29,13 @@ En este capítulo se realiza el desglose de los costes asociados al proyecto, ba
 
 Para el cálculo de los costes de personal se han consultado los datos de la \textbf{Guía Salarial 2026} de Manfred\footnote{\url{https://www.getmanfred.com/blog/guia-salarial-2026-salarios-en-tecnologia-espana-manfred}}, que recopila información salarial de más de 120.000 profesionales de tecnología en España.
 
-Dado que el desarrollo de Scubex ha requerido asumir múltiples roles (Arquitecto de Software y Desarrollador Full-Stack), se ha considerado como referencia el salario de \textbf{Desarrollador Full-Stack} con experiencia de 5-10 años, cuyo rango salarial se sitúa entre 41.000-50.000\euro{} anuales según dicha guía. Se ha tomado un valor medio de \textbf{45.000\euro{} brutos anuales}.
+Dado que el desarrollo de Scubex ha requerido asumir múltiples roles y tareas, se han considerado dos perfiles:
 
-\subsection{Cálculo proporcional al tiempo dedicado}
+\subsection{Desarrollador Full-Stack (Arquitectura e Implementación)}
+
+Se ha considerado como referencia el salario de \textbf{Desarrollador Full-Stack} con experiencia de 5-10 años, cuyo rango salarial se sitúa entre 41.000-50.000\euro{} anuales según dicha guía. Se ha tomado un valor medio de \textbf{45.000\euro{} brutos anuales}.
+
+\subsubsection{Cálculo proporcional al tiempo dedicado}
 
 La carga de trabajo estimada para el TFG es de \textbf{300 horas}, frente a una jornada laboral anual estándar de \textbf{1.800 horas}. Por tanto, el coste proporcional se calcula como:
 
@@ -39,7 +43,7 @@ La carga de trabajo estimada para el TFG es de \textbf{300 horas}, frente a una 
 	\text{Salario proporcional} = \frac{45.000\text{\euro}}{6} = 7.500\text{\euro}
 \end{equation}
 
-\subsection{Costes sociales}
+\subsubsection{Costes sociales}
 
 A este salario bruto se le añaden los \textbf{costes sociales} (Seguridad Social, contingencias comunes, desempleo, formación profesional, etc.) que suponen aproximadamente el \textbf{30\%} del salario bruto:
 
@@ -47,10 +51,39 @@ A este salario bruto se le añaden los \textbf{costes sociales} (Seguridad Socia
 	\text{Costes sociales} = 7.500\text{\euro} \times 0.30 = 2.250\text{\euro}
 \end{equation}
 
-\subsection{Total costes de personal}
+\subsubsection{Total Desarrollador Full-Stack}
 
 \begin{equation}
 	\text{Total} = 7.500\text{\euro} + 2.250\text{\euro} = 9.750\text{\euro}
+\end{equation}
+
+\subsection{Becario Junior (Redacción de Documentación)}
+
+Para la redacción de la memoria académica y documentación técnica se ha considerado el perfil de un \textbf{becario junior} con experiencia menor a 2 años. Según la guía salarial, los desarrolladores junior se sitúan en el rango de 20.000-30.000\euro{} anuales. Se ha tomado un valor de \textbf{24.000\euro{} brutos anuales}.
+
+\subsubsection{Cálculo proporcional al tiempo dedicado}
+De la misma forma que se ha calculado anteriormente:
+
+\begin{equation}
+	\text{Salario proporcional} = \frac{24.000\text{\euro}}{6} = 4.000\text{\euro}
+\end{equation}
+
+\subsubsection{Costes sociales}
+
+\begin{equation}
+	\text{Costes sociales} = 4.000\text{\euro} \times 0.30 = 1.200\text{\euro}
+\end{equation}
+
+\subsubsection{Total Becario}
+
+\begin{equation}
+	\text{Total} = 4.000\text{\euro} + 1.200\text{\euro} = 5.200\text{\euro}
+\end{equation}
+
+\subsection{Total costes de personal}
+
+\begin{equation}
+	\text{Total} = 9.750\text{\euro} + 5.200\text{\euro} = 14.950\text{\euro}
 \end{equation}
 
 \section{Costes materiales}
@@ -84,12 +117,12 @@ Una vez finalizado el TFG y ante un posible despliegue futuro, se estiman los si
 
 \section{Costes indirectos}
 
-Los costes indirectos incluyen gastos generales asociados al desarrollo del proyecto que no se imputan directamente: electricidad, conexión a internet, espacio de trabajo, licencias de software (IDEs, herramientas de desarrollo), etc.
+Los costes indirectos incluyen gastos generales asociados al desarrollo del proyecto que no se imputan directamente: electricidad, conexión a internet, espacio de trabajo, cuotas mensuales de asistentes de IA, etc.
 
 Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y materiales:
 
 \begin{equation}
-	\text{Costes indirectos} = (9.750\text{\euro} + 50\text{\euro}) \times 0.10 = 980\text{\euro}
+	\text{Costes indirectos} = (14.950\text{\euro} + 50\text{\euro}) \times 0.10 = 1.500\text{\euro}
 \end{equation}
 
 \section{Coste total del proyecto}
@@ -100,11 +133,13 @@ Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y
 {Desglose de costes}
 	\textbf{Concepto}&\textbf{Importe}\\
 	\midrule
-	Costes de personal&9.750\euro\\
+	Costes de personal&14.950\euro\\
+	\quad Desarrollador Full-Stack&9.750\euro\\
+	\quad Becario Documentaci\'{o}n&5.200\euro\\
 	Costes materiales&50\euro\\
-	Costes indirectos&980\euro\\
+	Costes indirectos&1.500\euro\\
 	\midrule
-	\textbf{TOTAL PROYECTO}&\textbf{10.780\euro}\\
+	\textbf{TOTAL PROYECTO}&\textbf{16.500\euro}\\
 	\end{coolTable}
 	\caption{Coste total del proyecto Scubex}
 \end{table*}

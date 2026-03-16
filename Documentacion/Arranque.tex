@@ -6,32 +6,35 @@ The best way to get started is to quit talking and begin doing.
 \end{quotation}
 
 \begin{abstract}
-Este capítulo define la arquitectura base del proyecto Scubex y la lista inicial de características priorizadas para el desarrollo del Producto Mínimo Viable (MVP), centrado en la exploración de biodiversidad marina y condiciones climáticas en tiempo real.
+Este capítulo define la lista inicial de características priorizadas del proyecto Scubex y, a partir de ellas, la arquitectura base necesaria para soportarlas. Se sigue el orden natural del ciclo FDD: primero se establece qué se va a construir, y solo entonces se diseña cómo.
 \end{abstract}
 
 \section{Lista de características}
 
-Siguiendo la fase 2 de FDD (Desarrollar lista de características), se han identificado las siguientes funcionalidades nucleares priorizadas por su valor técnico y experiencia de usuario:
+Siguiendo la fase 1 de FDD (Desarrollar lista de características) y los objetivos definidos para el proyecto, se han identificado las siguientes funcionalidades nucleares priorizadas por valor para el usuario:
 
 \begin{enumerate}
-    \item \textbf{Gestión de Usuarios (OAuth2 + H2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto, preferencias).
-    \item \textbf{Exploración Geográfica}: Visualización de mapa interactivo mediante MapLibre GL JS con controles de zoom y navegación.
-    \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas.
-    \item \textbf{Datos Climáticos y Oceanográficos}: Integración completa mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos).
-    \item \textbf{Red Social Geoespacial}: Sistema de posts geolocalizados con likes y comentarios (feature futura).
+    \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto, historial de avistamientos).
+    \item \textbf{Mapa Interactivo}: Visualización de un mapa navegable mediante MapLibre GL JS como superficie central de interacción con la aplicación.
+    \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas (OBIS + iNaturalist).
+    \item \textbf{Datos Climáticos y Oceanográficos}: Condiciones de la zona en tiempo real mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos).
+    \item \textbf{Registro de Avistamientos}: Posibilidad de registrar un avistamiento de especie directamente en el mapa, geolocalizando la observación con fecha, foto y descripción opcionales.
+    \item \textbf{Red Social Geoespacial}: Visualización de avistamientos de otros usuarios en el mapa, con interacción mediante likes y comentarios.
+    \item \textbf{Perfil y Compartición}: Historial personal de avistamientos con la posibilidad de generar enlaces compartibles para que otros usuarios puedan consultar los descubrimientos.
 \end{enumerate}
 
 \textbf{Justificación de priorización}:
 \begin{itemize}
-    \item OAuth2 se implementa primero para establecer el modelo de autenticación antes de añadir persistencia de datos de usuario.
-    \item El escáner de especies, clima y publicación de avistamientos constituyen el MVP funcional mínimo que justifica el proyecto, pues no hay alternativas con interfaces intuitivas.
-    \item El resto de funciones sociales son el punto de extensión para añadir valor al producto de manera incremental.
+    \item La autenticación se implementa primero ya que el resto de funcionalidades (avistamientos, perfil, red social) dependen de la identidad del usuario.
+    \item El mapa es la superficie central de la aplicación: sin él no tiene sentido geolocalizar especies, condiciones climáticas ni avistamientos.
+    \item El escáner de especies y los datos climáticos constituyen el MVP funcional mínimo: son las dos propuestas de valor diferenciales respecto a las aplicaciones analizadas en el capítulo de Contexto.
+    \item El registro de avistamientos, la red social y el perfil compartible son las funcionalidades de comunidad que convierten la herramienta en una red social de buceadores.
 \end{itemize}
 
 \section{Diseño arquitectónico}
 \label{sec:arquitectura}
 
-El sistema sigue una arquitectura de \textbf{cliente-servidor desacoplada} con Gateway de APIs científicas.
+Con las características identificadas, el sistema requiere una arquitectura capaz de orquestar múltiples APIs externas, gestionar identidad de usuario y servir una interfaz cartográfica interactiva. Se ha optado por una \textbf{arquitectura cliente-servidor desacoplada} con patrón Gateway de APIs.
 
 \subsection{Stack Tecnológico}
 
@@ -39,10 +42,37 @@ El sistema sigue una arquitectura de \textbf{cliente-servidor desacoplada} con G
     \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas, orquestador de peticiones asíncronas y gestor de autenticación.
     \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil.
     \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
-    \item \textbf{Base de Datos}: H2 (Embebida) para datos de usuario (perfiles, posts, likes). Sin persistencia de datos biológicos (consumo en tiempo real desde APIs).
+    \item \textbf{Base de Datos}: H2 en memoria para el entorno de desarrollo y tests unitarios. PostgreSQL 16 para preproducción y producción, gestionado como servicio en Railway.
     \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
     \item \textbf{Documentación de API}: OpenAPI 3.0 (Swagger UI) con anotaciones automáticas.
+    \item \textbf{Despliegue}: Railway (backend + PostgreSQL) y Vercel (frontend).
 \end{itemize}
+
+\subsection{Estrategia de entornos}
+
+Se han definido tres entornos que reflejan el ciclo de vida del software desde el desarrollo local hasta la puesta en producción:
+
+\begin{table*}[htb]
+    \centering
+    \begin{coolTable}{p{3cm}p{3cm}p{3cm}p{\textwidth-9.5cm}}{4}
+{Estrategia de entornos de Scubex}
+\textbf{Entorno}&\textbf{Infraestructura}&\textbf{Base de datos}&\textbf{Rama Git}\\
+\midrule
+Desarrollo&Local&H2 en memoria&Cualquiera\\
+Preproducción&Railway + Vercel&PostgreSQL (Railway)&\texttt{develop}\\
+Producción&Railway + Vercel&PostgreSQL (Railway)&\texttt{main}\\
+    \end{coolTable}
+    \caption{Estrategia de entornos del proyecto}
+\end{table*}
+
+\textbf{Justificación de la separación entre plataformas}:
+\begin{itemize}
+    \item \textbf{Vercel} gestiona el frontend React/Vite: despliegue automático en cada \texttt{push}, CDN global y previews por rama sin configuración adicional. Es la solución de referencia para aplicaciones estáticas y frameworks JavaScript.
+    \item \textbf{Railway} gestiona el backend Spring Boot y PostgreSQL en el mismo proyecto, simplificando la conexión entre ambos servicios y el aprovisionamiento de variables de entorno.
+    \item La separación replica el patrón habitual en equipos profesionales con este stack, donde el frontend y el backend se despliegan y escalan de forma independiente.
+\end{itemize}
+
+Spring Boot expone la configuración CORS necesaria para permitir peticiones desde el dominio de Vercel hacia Railway, centralizando en el backend el control de los orígenes autorizados.
 
 \subsection{Justificación de MapLibre GL JS}
 
@@ -102,7 +132,7 @@ El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltipl
 
 \section{Seguimiento y control}
 
-\textbf{Fase del proyecto}: Arranque (Fase 1 de FDD: Modelo Global).
+\textbf{Fase del proyecto}: Arranque (Fases 1-2 de FDD: Lista de características y Modelo Global).
 
 \textbf{Estado}:
 \begin{itemize}
@@ -115,6 +145,6 @@ El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltipl
 
 \textbf{Decisiones arquitectónicas pendientes}:
 \begin{itemize}
-    \item Estrategia de caching para respuestas de OBIS (considerar Redis si el rate limit se vuelve problemático).
-    \item Estrategia de despliegue (considerar Firebase?).
+    \item Estrategia de caching para respuestas de OBIS (considerar cache en memoria con Spring Cache si el rate limit se vuelve problemático).
+    \item Migración del esquema H2 a PostgreSQL mediante scripts de inicialización (Liquibase o Flyway).
 \end{itemize}
