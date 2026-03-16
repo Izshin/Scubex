@@ -3,6 +3,7 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { useState, type ReactNode } from 'react'
 import Home from './pages/Home'
 import MapPage from './pages/Map'
+import Profile from './pages/Profile'
 import { TransitionContext, useWaveTransition } from './lib/transition'
 
 
@@ -214,6 +215,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<motion.div><Home /></motion.div>} />
         <Route path="/map" element={<motion.div><MapPage /></motion.div>} />
+        <Route path="/profile" element={<motion.div><Profile /></motion.div>} />
       </Routes>
     </AnimatePresence>
   )

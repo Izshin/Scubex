@@ -1,5 +1,138 @@
 %!TEX root =  tfg.tex
-\chapter{Costes}
+\chapter{Iteración 1: Autenticación OAuth2 con Google}
+
+\begin{abstract}
+En esta primera iteración se implementa el sistema de autenticación de usuarios mediante OAuth2 con Google. El objetivo es permitir que los usuarios inicien sesión con su cuenta de Google, obtener y almacenar su información básica de perfil (nombre, email y foto), y proteger los recursos de la API con un token JWT propio emitido por el backend.
+\end{abstract}
+
+\section{Características a desarrollar}
+
+\begin{enumerate}
+\item Autenticación OAuth2 con Google (flujo de ID Token). Ver Tabla \ref{tab:valorAportado1}.
+\item Emisión y validación de JWT propio desde el backend.
+\item Página de perfil de usuario con nombre y foto.
+\item Almacenamiento del token JWT en el frontend (localStorage + MobX).
+\end{enumerate}
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado 0001}
+\textbf{Propuesta}&Autenticación de usuarios mediante Google OAuth2\\
+\midrule
+\textbf{Valor}&Permite identificar a los usuarios de forma segura sin gestionar contraseñas. Usa la infraestructura de Google, lo que simplifica el flujo de registro y evita almacenar credenciales sensibles.\\
+\textbf{Coste}&Requiere configurar un proyecto en Google Cloud Console, añadir la librería \texttt{@react-oauth/google} al frontend y JJWT al backend. Coste en esfuerzo: bajo. Coste económico: nulo (servicio gratuito).\\
+\textbf{Opciones}&Otras opciones consideradas: Auth0 (servicio de terceros, introduce dependencia externa), Keycloak (alta complejidad de despliegue), gestión propia de usuarios con contraseñas (mayor superficie de ataque).\\
+\textbf{Riesgos}&Cambios en la API de Google. Expiración del token de Google en frontend. La URL de callback debe actualizarse en Google Cloud al cambiar de dominio.\\
+\textbf{Deuda técnica}&El token JWT se almacena en localStorage, lo que es susceptible a ataques XSS. Una mejora futura sería usar cookies HttpOnly.\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado 0001\label{tab:valorAportado1}}
+\end{table*}
+
+\section{Diseño}
+
+El flujo de autenticación implementado es el siguiente:
+
+\begin{enumerate}
+    \item El usuario pulsa el botón ``Iniciar sesión con Google'' en la página principal.
+    \item El frontend obtiene un \textit{ID Token} de Google mediante la librería \texttt{@react-oauth/google}.
+    \item El frontend envía el ID Token al endpoint \texttt{POST /api/auth/google} del backend.
+    \item El backend valida el token llamando al endpoint público de Google \texttt{tokeninfo} y verifica que el \textit{audience} coincide con el Client ID de la aplicación.
+    \item Si el token es válido, el backend crea o recupera el usuario en base de datos y genera un JWT propio firmado con HMAC-SHA256.
+    \item El frontend almacena el JWT y los datos del usuario en el \texttt{UserStore} (MobX) y en \texttt{localStorage} para persistencia entre sesiones.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\begin{center}
+\missingfigure{Diagrama de secuencia: flujo OAuth2 Google + emisión JWT propio}
+\caption{Diagrama de flujo de autenticación OAuth2 con Google}
+\label{fig:diseno01}
+\end{center}
+\end{figure}
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 0001}
+\textbf{Asunto}&Elección del flujo de autenticación: Frontend-driven vs. Backend-driven\\
+\textbf{Resumen}&Se utiliza el flujo \textit{frontend-driven}: el frontend obtiene el ID Token de Google y lo envía al backend para validación, en lugar del flujo tradicional con redirecciones OAuth2 server-side.\\
+\midrule
+\textbf{Factores causantes}&La aplicación es una SPA desplegada en Vercel con un backend desacoplado en Railway. El flujo server-side con redirecciones requeriría configurar correctamente las URIs de callback en ambas plataformas y gestionar cookies cross-domain, lo que introduce complejidad adicional.\\
+\textbf{Solución}&El frontend usa \texttt{GoogleLogin} de \texttt{@react-oauth/google}, que devuelve un ID Token (JWT firmado por Google). Este token se envía al backend, que lo valida contra el endpoint \texttt{https://oauth2.googleapis.com/tokeninfo} y emite un JWT propio.\\
+\textbf{Motivación}&Simplicidad de implementación, compatibilidad con arquitecturas SPA + API REST, y eliminación de problemas de CORS con cookies en dominios distintos.\\
+\textbf{Cuestiones abiertas}&El almacenamiento del JWT en \texttt{localStorage} es vulnerable a XSS. Se podría mejorar con cookies HttpOnly en una iteración futura.\\
+\textbf{Alternativas}&Spring Security OAuth2 Resource Server (más complejo, requiere integración Spring Security completa); Auth0 (introduce dependencia de terceros y coste potencial).\\
+	\end{coolTable}
+	\caption{Memorando técnico 0001}
+\end{table*}
+
+\section{Implementación}
+
+\subsection{Backend}
+
+Se añaden las siguientes clases al proyecto Spring Boot:
+
+\begin{itemize}
+    \item \texttt{User}: entidad JPA que almacena \texttt{googleId}, \texttt{email}, \texttt{name} y \texttt{pictureUrl}.
+    \item \texttt{UserRepository}: repositorio Spring Data JPA con método \texttt{findByGoogleId}.
+    \item \texttt{UserService}: servicio que implementa el patrón \textit{find-or-create} al autenticar.
+    \item \texttt{JwtService}: genera y valida tokens JWT firmados con HMAC-SHA256 usando la librería JJWT 0.12.6. El secreto se inyecta desde la variable de entorno \texttt{JWT\_SECRET}.
+    \item \texttt{JwtAuthFilter}: filtro \texttt{OncePerRequestFilter} que extrae el token del header \texttt{Authorization: Bearer} y establece el contexto de seguridad de Spring.
+    \item \texttt{AuthController}: expone \texttt{POST /api/auth/google}. Valida el ID Token con Google, crea el usuario y devuelve el JWT propio.
+\end{itemize}
+
+La configuración de seguridad (\texttt{SecurityConfig}) se actualiza para registrar el \texttt{JwtAuthFilter} antes de \texttt{UsernamePasswordAuthenticationFilter} y establecer la política de sesión como \texttt{STATELESS}.
+
+\begin{asigResponsabilidad}{AUTH001}{AuthController}
+{ResponseEntity<?> loginWithGoogle(Map<String,String> body)}
+\pasoPseudo{1. Extraer campo \texttt{credential} del body.}
+\pasoPseudo{2. Llamar a \texttt{https://oauth2.googleapis.com/tokeninfo?id\_token=\{credential\}}.}
+\pasoPseudo{3. Verificar que el campo \texttt{aud} o \texttt{azp} coincide con el Client ID configurado.}
+\pasoPseudo{4. Llamar a \texttt{UserService.findOrCreate()} con \texttt{sub}, \texttt{email}, \texttt{name}, \texttt{picture}.}
+\pasoPseudo{5. Generar JWT con \texttt{JwtService.generateToken(user)}.}
+\pasoPseudo{6. Devolver \texttt{\{token, user\}} con HTTP 200.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{2}{RestTemplate}{getForObject(url, Map.class)}{001}{SI}
+\pasoCodigo{4}{UserService}{findOrCreate(googleId, email, name, picture)}{001}{SI}
+\pasoCodigo{5}{JwtService}{generateToken(user)}{001}{SI}
+\end{asigResponsabilidad}
+
+\subsection{Frontend}
+
+Se añaden los siguientes elementos:
+
+\begin{itemize}
+    \item \texttt{UserStore}: store MobX con campos \texttt{user} y métodos \texttt{setUser}, \texttt{logout}. Persiste en \texttt{localStorage} para mantener la sesión entre recargas.
+    \item \texttt{RootStore}: se añade \texttt{userStore} junto a \texttt{speciesStore} y \texttt{mapStore}.
+    \item \texttt{GoogleOAuthProvider}: envuelve la aplicación en \texttt{main.tsx} con el Client ID configurado en la variable de entorno \texttt{VITE\_GOOGLE\_CLIENT\_ID}.
+    \item \texttt{Home.tsx}: se añade el botón de Google Login en la esquina superior derecha. Si el usuario ya está autenticado, se muestra su avatar y nombre con enlace al perfil.
+    \item \texttt{Profile.tsx}: página de perfil que muestra foto, nombre y email del usuario, con opción de cerrar sesión.
+\end{itemize}
+
+\section{Pruebas}
+
+Las pruebas de esta iteración se realizan de forma manual:
+
+\begin{enumerate}
+    \item Verificar que el botón de Google Login aparece en la Home cuando no hay sesión activa.
+    \item Iniciar sesión con una cuenta Google válida y comprobar que aparece el avatar del usuario.
+    \item Navegar a la página de perfil y verificar que se muestran nombre, email y foto.
+    \item Cerrar sesión y comprobar que se borra el estado y se redirige a la Home.
+    \item Recargar la página con sesión activa y verificar que se restaura desde \texttt{localStorage}.
+    \item Enviar un token inválido al endpoint \texttt{/api/auth/google} y verificar que devuelve HTTP 401.
+\end{enumerate}
+
+\section{Despliegue}
+
+Se añaden las siguientes variables de entorno en los entornos de producción y staging:
+
+\begin{itemize}
+    \item Backend (Railway): \texttt{GOOGLE\_CLIENT\_ID} y \texttt{JWT\_SECRET}.
+    \item Frontend (Vercel): \texttt{VITE\_GOOGLE\_CLIENT\_ID}.
+\end{itemize}
+
+Los orígenes \texttt{https://scubex.vercel.app} y \texttt{https://scubex-git-develop-izshins-projects.vercel.app} se registran como orígenes autorizados en el proyecto de Google Cloud Console.
+
 
 \begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
 The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.

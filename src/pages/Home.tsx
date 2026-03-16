@@ -1,16 +1,36 @@
 import { motion } from 'framer-motion';
-import { useWaveTransition } from '../lib/transition'; // Importar el hook
+import { observer } from 'mobx-react-lite';
+import { GoogleLogin } from '@react-oauth/google';
+import { useWaveTransition } from '../lib/transition';
+import { useUserStore } from '../lib/stores';
+import { loginWithGoogle } from '../lib/api';
 
-export default function Home() {
+const Home = observer(function Home() {
   const { startWaveTransition } = useWaveTransition();
+  const userStore = useUserStore();
 
   const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     startWaveTransition('/map');
   };
 
+  const handleProfileClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    startWaveTransition('/profile');
+  };
+
   const handleCreatureClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleGoogleSuccess = async (response: { credential?: string }) => {
+    if (!response.credential) return;
+    try {
+      const data = await loginWithGoogle(response.credential);
+      userStore.setUser({ ...data.user, token: data.token });
+    } catch (e) {
+      console.error('Login failed', e);
+    }
   };
 
   return (
@@ -520,6 +540,31 @@ export default function Home() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-16 flex items-center justify-center min-h-screen">
+
+        {/* Auth button — top right */}
+        <div className="fixed top-5 right-5 z-50">
+          {userStore.isLoggedIn ? (
+            <a href="/profile" onClick={handleProfileClick} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 transition-all">
+              {userStore.user?.picture ? (
+                <img src={userStore.user.picture} alt={userStore.user.name} className="w-8 h-8 rounded-full" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm font-bold">
+                  {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <span className="text-white text-sm font-medium">{userStore.user?.name}</span>
+            </a>
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => console.error('Google login error')}
+              shape="pill"
+              theme="filled_blue"
+              text="signin_with"
+              locale="es"
+            />
+          )}
+        </div>
         <div className="text-center">
           <motion.h1 
             className="text-8xl font-bold text-white mb-12 drop-shadow-2xl"
@@ -554,4 +599,6 @@ export default function Home() {
       </div>
     </div>
   );
-}
+});
+
+export default Home;

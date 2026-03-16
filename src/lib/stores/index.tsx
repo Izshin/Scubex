@@ -24,3 +24,4 @@ export const useStore = (): RootStore => {
 // Convenience hooks for individual stores
 export const useSpeciesStore = () => useStore().speciesStore;
 export const useMapStore = () => useStore().mapStore;
+export const useUserStore = () => useStore().userStore;
