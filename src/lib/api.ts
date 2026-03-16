@@ -118,7 +118,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
           taxon_id: "error_1",
           common_name: isConnectionError ? "Error de conexión" : "Error del servidor",
           scientific_name: isConnectionError ? 
-            "Verifique que el backend esté ejecutándose en http://localhost:8080" : 
+            `Verifique que el backend esté ejecutándose en ${API_BASE_URL}` : 
             `Error: ${errorMessage}`,
           records: 0,
           last_record: "N/A"
