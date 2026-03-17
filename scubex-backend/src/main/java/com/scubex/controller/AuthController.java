@@ -17,13 +17,15 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final RestTemplate restTemplate;
 
     @Value("${google.client.id}")
     private String googleClientId;
 
-    public AuthController(UserService userService, JwtService jwtService) {
+    public AuthController(UserService userService, JwtService jwtService, RestTemplate restTemplate) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.restTemplate = restTemplate;
     }
 
     @PostMapping("/google")
@@ -34,7 +36,6 @@ public class AuthController {
         }
 
         try {
-            RestTemplate restTemplate = new RestTemplate();
             String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + credential;
 
             @SuppressWarnings("unchecked")

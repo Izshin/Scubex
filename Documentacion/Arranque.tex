@@ -67,18 +67,16 @@ Producción&Railway + Vercel&PostgreSQL (Railway)&\texttt{main}\\
 
 \textbf{Justificación de la separación entre plataformas}:
 \begin{itemize}
-    \item \textbf{Vercel} gestiona el frontend React/Vite: despliegue automático en cada \texttt{push}, CDN global y previews por rama sin configuración adicional. Es la solución de referencia para aplicaciones estáticas y frameworks JavaScript.
-    \item \textbf{Railway} gestiona el backend Spring Boot y PostgreSQL en el mismo proyecto, simplificando la conexión entre ambos servicios y el aprovisionamiento de variables de entorno.
-    \item La separación replica el patrón habitual en equipos profesionales con este stack, donde el frontend y el backend se despliegan y escalan de forma independiente.
+    \item \textbf{Vercel} gestiona el frontend React/Vite: Se despliega automáticamente en cada \texttt{push}. Se cuenta con previews por rama sin configuración adicional, más que establecer las direcciones de backend de producción y preproducción.
+    \item \textbf{Railway} gestiona el backend Spring Boot y PostgreSQL en el mismo proyecto. Permite tener varios entornos distintos de una misma aplicación desplegados simultaneamente, lo que la hace idonéa para combinarla con Vercel.
+    \item La separación permite desplegar frontend y backend de forma independiente. Gracias a esto pueden escalarse independientemente y no solo eso. Debido a la separación se cuenta con mas memoria de los planes gratuitos de ambas aplicaciones, reduciendo costes. 
 \end{itemize}
 
-Spring Boot centraliza la configuración CORS en \texttt{SecurityConfig}, leyendo los orígenes permitidos desde la variable de entorno \texttt{CORS\_ALLOWED\_ORIGINS}. En Railway se configura con el dominio de Vercel; en local se usa el fallback \texttt{http://localhost:5173}. Esto permite que el mismo artefacto JAR funcione en cualquier entorno sin recompilación.
-
-La conexión a base de datos sigue el mismo patrón: \texttt{application.properties} lee las variables \texttt{SPRING\_DATASOURCE\_URL}, \texttt{SPRING\_DATASOURCE\_USERNAME} y \texttt{SPRING\_DATASOURCE\_PASSWORD} con fallback a H2 en memoria para desarrollo local. Railway inyecta automáticamente estas variables al conectar el servicio PostgreSQL con el servicio Spring Boot dentro del mismo proyecto.
+La configuración CORS se ha establecido manualmente mediante la variable \texttt{CORS\_ALLOWED\_ORIGIN} en Railway, y \texttt{VITE\_API\_BASE\_URL} en Vercel, configuradas con las respectivas URL del backend correspondientes a preproducción y producción.
 
 \subsection{Justificación de MapLibre GL JS}
 
-A diferencia de Google Maps API o Leaflet, MapLibre GL JS se ha seleccionado por:
+MapLibre GL JS se ha seleccionado porque:
 \begin{itemize}
     \item \textbf{Sin necesidad de geocodificación}: El proyecto no requiere búsqueda de direcciones ni rutas, solo visualización de capas geoespaciales.
     \item \textbf{Open Source y sin rate limits}: Alternativa libre a Mapbox GL (del cual es fork).
