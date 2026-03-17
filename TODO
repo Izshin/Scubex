@@ -1,11 +1,11 @@
 
 Frontend:
-TF1. Related to TB1, implement login screen for when oAuth2 is implemented
-TF2. Create a zoom popup so if zoom is >8 species panel says "Too much zoom!"
+TF1. Create a zoom popup so if zoom is >8 species panel says "Too much zoom!"
+TFX. When implementing climate and posts, add toggles to select info
+TFX1. Animations of animals are on the same height 
 
 Backend:
-TB1. Implement oAuth2 autentification for google login, security config probably will be changed
-TB2. Implement Open-Meteo API for weather (wind, temperature) and marine conditions (waves, currents, water temp)
+TB1. Implement Open-Meteo API for weather (wind, temperature) and marine conditions (waves, currents, water temp)
 
 Docs:
 TD1(!). Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval
@@ -14,7 +14,8 @@ TD2(!). Related to TD1, How the frontend handles such petitions, talk about mapV
 
 TD3. Talk about project configuration, such as application properties and security configuration
 
-
+Considering:
+Security if deployed on appstore.
 
 Glossary:
 (!): Means it's a urgent task (needed to be done before all others), the more "!" the more urgent it is XD
