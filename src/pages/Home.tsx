@@ -561,7 +561,6 @@ const Home = observer(function Home() {
               shape="pill"
               theme="filled_blue"
               text="signin_with"
-              locale="es"
             />
           )}
         </div>
