@@ -1,10 +1,38 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import maplibregl, { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+/** Generate a GeoJSON polygon circle (64 points) given center and radius in meters */
+function createCircleGeoJSON(center: [number, number], radiusMeters: number): GeoJSON.Feature<GeoJSON.Polygon> {
+  const points = 64;
+  const coords: [number, number][] = [];
+  const earthRadius = 6371000;
+  const lat = (center[1] * Math.PI) / 180;
+  const lng = (center[0] * Math.PI) / 180;
+
+  for (let i = 0; i <= points; i++) {
+    const angle = (i * 2 * Math.PI) / points;
+    const dLat = (radiusMeters / earthRadius) * Math.cos(angle);
+    const dLng = (radiusMeters / earthRadius) * Math.sin(angle) / Math.cos(lat);
+    coords.push([
+      ((lng + dLng) * 180) / Math.PI,
+      ((lat + dLat) * 180) / Math.PI,
+    ]);
+  }
+
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "Polygon", coordinates: [coords] },
+  };
+}
+
 interface MapRenderProps {
   onViewportIdle?: (bbox: number[]) => void;
+  onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   isScanning?: boolean;
+  scanCenter?: { lat: number; lng: number } | null;
+  scanRadius?: number;
 }
 
 export type MapRenderRef = { 
@@ -12,9 +40,11 @@ export type MapRenderRef = {
   getContainer: () => HTMLDivElement | null;
 };
 
-export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, isScanning = false }, forwardedRef) {
+export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, onMapClick, isScanning = false, scanCenter, scanRadius = 2000 }, forwardedRef) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  const onMapClickRef = useRef(onMapClick);
+  onMapClickRef.current = onMapClick;
 
   useImperativeHandle(forwardedRef, () => ({
     getMap: () => mapRef.current,
@@ -107,6 +137,40 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
       map.setPaintProperty("Water", "fill-color", "#008ff5ff");
     });
 
+    // Click handler for scan
+    map.on("click", (e) => {
+      if (onMapClickRef.current) {
+        onMapClickRef.current({ lng: e.lngLat.lng, lat: e.lngLat.lat });
+      }
+    });
+
+    // Add scan circle source (empty initially)
+    map.on("load", () => {
+      map.addSource("scan-circle", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "scan-circle-fill",
+        type: "fill",
+        source: "scan-circle",
+        paint: {
+          "fill-color": "#06b6d4",
+          "fill-opacity": 0.12,
+        },
+      });
+      map.addLayer({
+        id: "scan-circle-border",
+        type: "line",
+        source: "scan-circle",
+        paint: {
+          "line-color": "#06b6d4",
+          "line-width": 2,
+          "line-dasharray": [3, 2],
+        },
+      });
+    });
+
     return () => { 
       map.remove(); 
     };
@@ -141,6 +205,22 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     };
   }, [onViewportIdle]);
 
+  // Update scan circle when center/radius change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource("scan-circle") as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+
+    if (scanCenter) {
+      const circle = createCircleGeoJSON([scanCenter.lng, scanCenter.lat], scanRadius);
+      source.setData({ type: "FeatureCollection", features: [circle] });
+    } else {
+      source.setData({ type: "FeatureCollection", features: [] });
+    }
+  }, [scanCenter, scanRadius]);
+
   // Control map interactions based on scanning state
   useEffect(() => {
     if (!mapRef.current) return;
@@ -162,5 +242,5 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     }
   }, [isScanning]);
 
-  return <div className="w-full h-full" ref={containerRef} />;
+  return <div className="w-full h-full cursor-crosshair" ref={containerRef} />;
 });

@@ -99,33 +99,33 @@ Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperat
 
 \textbf{Estrategia de consumo}:
 \begin{itemize}
-    \item \textbf{OBIS + iNaturalist}: Consultas bajo demanda mediante el botón "Scan Area" (evita rate limit innecesario).
-    \item \textbf{Open-Meteo}: Polling cada 30 minutos para actualizar capas de viento y datos oceanográficos. Sin necesidad de API key y límites muy generosos (10,000 peticiones diarias en plan gratuito).
+    \item \textbf{OBIS + iNaturalist}: Consultas de especies marinas mediante el botón de escaneo.
+    \item \textbf{Open-Meteo}: Polling cada 30 minutos que actualiza las condiciones climatológicas de la zona y el océano.
 \end{itemize}
 
 \subsection{Patrón Arquitectónico: Gateway API}
 
-El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltiples APIs externas y aplicando lógica de negocio antes de exponer un contrato simplificado al cliente React:
+El backend actua como director de orquesta de las API, gestionando la conexión entre las mismas. Pasándole al frontend unos datos ya procesados en formato JSON, que el frontend guarda en una store. Este es el flujo de datos desde el principio:
 
 \begin{enumerate}
-    \item \textbf{Cliente React} invoca \texttt{GET /api/species?lat=X\&lng=Y\&radius=Z}.
-    \item \textbf{SpeciesService} (backend) ejecuta:
+    \item \textbf{El usuario clicka una zona}. Y react realiza esta llamada \texttt{GET /api/species?lat=X\&lng=Y\&radius=Z}.
+    \item \textbf{SpeciesService} (backend) realiza:
     \begin{enumerate}
-        \item Transformación geométrica: \texttt{(lat, lng, radius)} $\rightarrow$ \texttt{WKT POLYGON}.
-        \item Petición a OBIS: \texttt{GET /occurrence?geometry=POLYGON(...)}.
-        \item Para cada especie única devuelta por OBIS:
+        \item Una transformación geométrica, convirtiendo el radio a un polígono: \texttt{(lat, lng, radius)} $\rightarrow$ \texttt{WKT POLYGON}. Esto se realiza porque en la...
+        \item Petición a OBIS, hace falta pasar un polígono de la zona. De la cual se extraeran los datos de las especies. La llamada a OBIS es la siguiente: \texttt{GET /occurrence?geometry=POLYGON(...)}.
+        \item Para cada especie única devuelta por OBIS se realiza un procesamiento de datos:
         \begin{itemize}
-            \item Petición a iNaturalist: \texttt{GET /taxa?q=<scientificName>}.
-            \item Filtrado: Si \texttt{total\_results == 0}, descartar especie.
-            \item Enriquecimiento: Extraer foto y nombre común.
+            \item Primero se hace una petición a iNaturalist: \texttt{GET /taxa?q=<scientificName>}. Esta llamada devuelve datos interesantes de la  especie que serviran mas adelante.
+            \item Segundo: Filtrado, si \texttt{total\_results == 0}, se descarta la especie por completo. La mayoría de especies que no se encuentran en iNaturalist son microorganismos sin interés para buceadores recreativos. 
+            \item Tercero: Aquí se extraen los datos interesantes. Una foto y nombre común. Para que todas las personas puedan saber que especie se ha registrado 
         \end{itemize}
     \end{enumerate}
-    \item \textbf{Respuesta JSON} unificada con modelo \texttt{SpeciesResponse}.
+    \item \textbf{Finalmente se unifica la respuesta y se crea un JSON para el frontend}. Se hace mediante el DTO \texttt{SpeciesResponse}.
 \end{enumerate}
 
 \textbf{Ventajas}:
 \begin{itemize}
-    \item El cliente React no necesita conocer la existencia de múltiples APIs.
+    \item React no necesita conocer la existencia de múltiples APIs.
     \item La lógica de filtrado (microorganismos, especies sin foto) se centraliza en el backend.
     \item Se evita exposición de API keys en el navegador.
 \end{itemize}
@@ -139,10 +139,10 @@ El backend actúa como \textbf{Backend for Frontend (BFF)}, orquestando múltipl
     \item [OK] Arquitectura definida y documentada.
     \item [OK] Stack tecnológico seleccionado y justificado.
     \item [OK] APIs externas identificadas y contratos analizados.
-    \item [OK] Backend desplegado en Railway con PostgreSQL. Datasource configurado mediante variables de entorno con fallback a H2 para desarrollo local.
-    \item [OK] Frontend desplegado en Vercel. CORS configurado dinámicamente desde variable de entorno en Spring Security.
+    \item [OK] Backend desplegado en Railway con PostgreSQL. Datasource configurado mediante variables de entorno con H2 para desarrollo local.
+    \item [OK] Frontend desplegado en Vercel. CORS configurado desde variable de entorno en Spring Security y Railway.
     \item [OK] Escáner de especies funcional en producción: \texttt{https://scubex.vercel.app}.
-    \item [PENDIENTE] OAuth2 pendiente de implementación.
+    \item [OK] OAuth2 implementado.
 \end{itemize}
 
 \textbf{Decisiones arquitectónicas pendientes}:

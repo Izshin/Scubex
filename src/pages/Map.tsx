@@ -6,12 +6,19 @@ import MapView, { type MapViewRef } from "../components/MapComponents/MapView.ts
 import SpeciesPanel from "../components/SpeciesPanel";
 import { useSpeciesStore, useMapStore } from "../lib/stores/index.tsx";
 
+const RADIUS_OPTIONS = [
+  { value: 500, label: "500m" },
+  { value: 1000, label: "1 km" },
+  { value: 2000, label: "2 km" },
+  { value: 5000, label: "5 km" },
+  { value: 10000, label: "10 km" },
+];
+
 const MapPage = observer(() => {
   const speciesStore = useSpeciesStore();
   const mapStore = useMapStore();
   const mapRef = useRef<MapViewRef>(null);
 
-  // Update zoom when map viewport changes - useCallback to prevent map re-initialization
   const handleViewportChange = useCallback((bbox: number[]) => {
     const map = mapRef.current?.getMap();
     if (map) {
@@ -21,33 +28,29 @@ const MapPage = observer(() => {
     }
   }, [mapStore]);
 
-  // 🎯 MUCH SIMPLER: Radar animation syncs directly with actual loading state!
   const isScanning = speciesStore.isScanning;
 
-  const handleScan = useCallback(async () => {
-    const map = mapRef.current?.getMap();
-    if (!map) return;
+  // Click on map → only place the scan target (don't scan yet)
+  const handleMapClick = useCallback((lngLat: { lng: number; lat: number }) => {
+    if (isScanning) return;
+    const lat = Number(lngLat.lat.toFixed(6));
+    const lng = Number(lngLat.lng.toFixed(6));
+    mapStore.setScanCenter({ lat, lng });
+  }, [mapStore, isScanning]);
 
-    // Get current map data
-    const zoom = map.getZoom();
-    const center = map.getCenter();
-    const radius = mapStore.zoomRadius;
-    
-    // Log the scan parameters
-    console.log('🗺️ MobX Map Scan initiated:');
-    console.log('📍 Center:', { lat: center.lat.toFixed(6), lng: center.lng.toFixed(6) });
-    console.log('🔍 Zoom Level:', zoom.toFixed(1));
-    console.log('📏 Search Radius:', `${radius}m`);
-    console.log('🌊 Backend API Call will be:', `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}/api/species?lat=${center.lat}&lng=${center.lng}&radius=${radius}`);
-    
-    // Update map state and fetch species data using MobX store
-    mapStore.updateMapState(zoom, { lat: center.lat, lng: center.lng });
+  // Scan button triggers the actual API call
+  const handleScan = useCallback(async () => {
+    if (!mapStore.scanCenter || isScanning) return;
     await speciesStore.fetchSpecies({
-      lat: Number(center.lat.toFixed(6)), // Round to 6 decimal places for precision
-      lng: Number(center.lng.toFixed(6)), 
-      radius: radius
+      lat: mapStore.scanCenter.lat,
+      lng: mapStore.scanCenter.lng,
+      radius: mapStore.scanRadius,
     });
-  }, [mapStore, speciesStore]);
+  }, [mapStore, speciesStore, isScanning]);
+
+  const handleRadiusChange = useCallback((radius: number) => {
+    mapStore.setScanRadius(radius);
+  }, [mapStore]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -65,93 +68,81 @@ const MapPage = observer(() => {
             ref={mapRef} 
             isScanning={isScanning}
             onViewportIdle={handleViewportChange}
+            onMapClick={handleMapClick}
+            scanCenter={mapStore.scanCenter}
+            scanRadius={mapStore.scanRadius}
           />
-          
 
-          {/* Scan Button */}
-          <motion.button
-            onClick={handleScan}
-            className={`group absolute bottom-5 left-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full p-4 shadow-lg border-2 border-white/20 backdrop-blur-sm transition-all duration-300 z-10 ${
-              isScanning ? 'scale-110' : 'hover:scale-105'
-            }`}
-            disabled={isScanning}
-            initial={{ opacity: 0, scale: 0.8, x: 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            whileHover={{ y: -2, boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}
-            whileTap={{ scale: 0.95 }}
+          {/* Controls bar: radius selector + scan button */}
+          <motion.div
+            className="absolute bottom-5 left-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-4 py-3 z-10 flex items-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
           >
-            <div className="relative">
-              {isScanning ? (
-                <motion.div 
-                  className="w-6 h-6 relative"
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ 
-                    duration: 1, 
-                    repeat: Infinity, 
-                    ease: "linear",
-                    repeatType: "loop"
-                  }}
-                  key="loading-spinner" // Force remount to ensure clean animation
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Radio</span>
+            <div className="flex gap-1">
+              {RADIUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleRadiusChange(opt.value)}
+                  disabled={isScanning}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    mapStore.scanRadius === opt.value
+                      ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/30"
+                      : "text-gray-600 hover:bg-gray-100"
+                  } ${isScanning ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
-                  <div className="absolute inset-0 border-2 border-transparent border-t-white rounded-full"></div>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="w-px h-8 bg-gray-300" />
+
+            {/* Scan button */}
+            <motion.button
+              onClick={handleScan}
+              disabled={!mapStore.scanCenter || isScanning}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                mapStore.scanCenter && !isScanning
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-cyan-500/30 hover:from-blue-600 hover:to-cyan-600"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+              whileHover={mapStore.scanCenter && !isScanning ? { scale: 1.03 } : {}}
+              whileTap={mapStore.scanCenter && !isScanning ? { scale: 0.97 } : {}}
+            >
+              {isScanning ? (
+                <motion.div
+                  className="w-4 h-4"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="w-full h-full border-2 border-white/30 border-t-white rounded-full" />
                 </motion.div>
               ) : (
-                <motion.div 
-                  className="w-6 h-6 relative"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ rotate: 360 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  {/* Radar/Sonar icon */}
-                  <svg viewBox="0 0 24 24" fill="none" className="w-full h-full overflow-visible">
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="currentColor"/>
-                    <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.6"/>
-                    <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3"/>
-                    {/* Pulsating dot instead of spinning line */}
-                    <motion.circle 
-                      cx="12" 
-                      cy="2" 
-                      r="2"
-                      fill="currentColor"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ 
-                        scale: [0, 1.5, 0],
-                        opacity: [0, 1, 0]
-                      }}
-                      transition={{ 
-                        duration: 2, 
-                        repeat: Infinity, 
-                        ease: "easeInOut",
-                        repeatType: "loop"
-                      }}
-                    />
-                  </svg>
-                </motion.div>
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="currentColor"/>
+                  <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.6"/>
+                  <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3"/>
+                </svg>
               )}
-              
-              {/* Single continuous radar pulse */}
-              {isScanning && (
-                <motion.div 
-                  className="absolute inset-0 bg-white/25 rounded-full"
-                  animate={{ 
-                    scale: [0, 3], 
-                    opacity: [0, 0.7, 0] 
-                  }}
-                  transition={{ 
-                    duration: 1.8, 
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    repeatType: "loop"
-                  }}
-                  key="radar-pulse"
-                />
-              )}
-            </div>
-            
-           
-          </motion.button>
+              {isScanning ? "Escaneando..." : "Escanear"}
+            </motion.button>
+          </motion.div>
+
+          {/* Hint overlay */}
+          {!mapStore.scanCenter && !isScanning && !speciesStore.hasSpecies && (
+            <motion.div
+              className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1 }}
+            >
+              Haz click en el mapa para seleccionar una zona
+            </motion.div>
+          )}
         </div>
         
         <div className="bg-white shadow-xl border-l border-gray-200 flex flex-col min-h-0">

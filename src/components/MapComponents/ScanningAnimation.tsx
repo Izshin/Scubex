@@ -13,107 +13,104 @@ interface ScanningAnimationProps {
   isScanning: boolean;
   containerRef: { current: HTMLDivElement | null };
   mapRef: { current: Map | null };
+  scanCenter?: { lat: number; lng: number } | null;
+  scanRadius?: number;
 }
 
-export default function ScanningAnimation({ isScanning, containerRef, mapRef }: ScanningAnimationProps) {
+// Sweep duration must match the framer-motion rotate animation
+const SWEEP_DURATION_MS = 3000;
+
+export default function ScanningAnimation({ isScanning, containerRef, mapRef, scanCenter, scanRadius = 2000 }: ScanningAnimationProps) {
   const [oceanDots, setOceanDots] = useState<OceanDot[]>([]);
   const beamIntervalRef = useRef<number | null>(null);
   const scanStartTime = useRef<number>(Date.now());
 
+  // Convert scan center + radius to screen-space bounding box
+  const getScanScreenBounds = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !scanCenter) return null;
+
+    const centerPx = map.project([scanCenter.lng, scanCenter.lat]);
+
+    const earthRadius = 6371000;
+    const dLat = (scanRadius / earthRadius) * (180 / Math.PI);
+    const edgePx = map.project([scanCenter.lng, scanCenter.lat + dLat]);
+    const radiusPx = Math.abs(centerPx.y - edgePx.y);
+
+    return { cx: centerPx.x, cy: centerPx.y, r: radiusPx };
+  }, [mapRef, scanCenter, scanRadius]);
+
   const isPointOnOcean = useCallback((x: number, y: number): boolean => {
     if (!mapRef.current) return false;
-    
-    // Query rendered features at this point
     const features = mapRef.current.queryRenderedFeatures([x, y]);
-    
-    // Check if any feature belongs to ocean/water layers
     return features.some(feature => 
       feature.layer?.id?.toLowerCase().includes('ocean') ||
       feature.layer?.id?.toLowerCase().includes('water') ||
       feature.layer?.id?.toLowerCase().includes('sea') ||
-      feature.source === 'ocean' // Your bathymetry source
+      feature.source === 'ocean'
     );
   }, [mapRef]);
 
-  const createOceanDot = useCallback((beamX: number, scanElapsedTime: number) => {
-    if (!containerRef.current) return;
-    
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const containerHeight = containerRect.height;
-    
-    // Progressive dot density based on scan time
-    const baseDotsPerSweep = 1;
-    const maxDotsPerSweep = 12;
-    const rampUpTime = 30000; // 30 seconds to reach max density
+  // Current sweep angle in radians (0 = right / 3 o'clock, clockwise)
+  const getSweepAngle = useCallback(() => {
+    const elapsed = Date.now() - scanStartTime.current;
+    return ((elapsed % SWEEP_DURATION_MS) / SWEEP_DURATION_MS) * 2 * Math.PI;
+  }, []);
 
-    // Calculate current dot density (1 to 15 dots)
+  const createOceanDots = useCallback((scanElapsedTime: number) => {
+    const bounds = getScanScreenBounds();
+    if (!bounds || bounds.r < 5) return;
+
+    const { cx, cy, r } = bounds;
+    const sweepAngle = getSweepAngle();
+
+    // Dots spawn in a narrow sector just behind the sweep line
+    const sectorWidth = Math.PI / 4; // 45° band behind sweep
+
+    // Progressive dot density
+    const rampUpTime = 30000;
     const progress = Math.min(scanElapsedTime / rampUpTime, 1);
-    const currentMaxDots = Math.floor(baseDotsPerSweep + (progress * (maxDotsPerSweep - baseDotsPerSweep)));
-    
-    // Randomly decide how many dots to create (0 to currentMaxDots)
-    const dotsToCreate = Math.floor(Math.random() * (currentMaxDots + 1));
-    
-    // Generate random Y positions along the beam
+    const maxDots = Math.floor(1 + progress * 6);
+    const dotsToCreate = Math.floor(Math.random() * (maxDots + 1));
+
     for (let i = 0; i < dotsToCreate; i++) {
-      const randomY = Math.random() * containerHeight;
-      
-      if (isPointOnOcean(beamX, randomY)) {
+      // Angle within the sector just behind the sweep line
+      const offsetAngle = Math.random() * sectorWidth;
+      const dotAngle = sweepAngle - offsetAngle;
+      // Random distance from centre (uniform distribution inside circle)
+      const dist = Math.sqrt(Math.random()) * r;
+      const x = cx + dist * Math.cos(dotAngle);
+      const y = cy + dist * Math.sin(dotAngle);
+
+      if (isPointOnOcean(x, y)) {
         const newDot: OceanDot = {
           id: `dot-${Date.now()}-${i}`,
-          x: beamX,
-          y: randomY,
+          x,
+          y,
           timestamp: Date.now()
         };
-        
+
         setOceanDots(prev => [...prev, newDot]);
-        
-        // Progressive dot lifetime (longer scan = longer living dots)
-        const baseDotLifetime = 2000; // 2 seconds
-        const maxDotLifetime = 4000; // 4 seconds
-        const dotLifetime = baseDotLifetime + (progress * (maxDotLifetime - baseDotLifetime));
-        
+
+        // Dots fade after roughly one full sweep so they don't clutter
+        const dotLifetime = SWEEP_DURATION_MS * (0.8 + Math.random() * 0.4);
+
         setTimeout(() => {
           setOceanDots(prev => prev.filter(dot => dot.id !== newDot.id));
         }, dotLifetime);
       }
     }
-  }, [containerRef, isPointOnOcean]);
+  }, [getScanScreenBounds, getSweepAngle, isPointOnOcean]);
 
-  // Beam tracking for ocean dots (only when scanning)
   useEffect(() => {
-    if (isScanning) {
-      // Reset scan start time when scanning begins
+    if (isScanning && scanCenter) {
       scanStartTime.current = Date.now();
-      
+
       beamIntervalRef.current = window.setInterval(() => {
-        if (!containerRef.current) return;
-        
-        const containerWidth = containerRef.current.clientWidth;
-        const beamDuration = 4000; // 4 seconds as defined in animation
-        const currentTime = Date.now();
-        
-        // Synchronize with animation start time (not modulo)
-        const animationElapsed = currentTime - scanStartTime.current;
-        const cycleTime = animationElapsed % beamDuration;
-        const beamProgress = cycleTime / beamDuration;
-        
-        // Match visual beam position: from -50px to containerWidth + 50px
-        const beamStartX = -50;
-        const beamEndX = containerWidth + 50;
-        const beamX = beamStartX + (beamProgress * (beamEndX - beamStartX));
-        
-        // Only create dots when beam is within visible area
-        if (beamX >= 0 && beamX <= containerWidth) {
-          // Calculate elapsed time since scan started
-          const scanElapsedTime = currentTime - scanStartTime.current;
-          
-          // Create dots at beam position if it's on ocean (progressive density)
-          createOceanDot(beamX, scanElapsedTime);
-        }
-        
-      }, 100); // Check every 100ms for better precision
+        const scanElapsedTime = Date.now() - scanStartTime.current;
+        createOceanDots(scanElapsedTime);
+      }, 80);
     } else {
-      // Clear interval and dots when not scanning
       if (beamIntervalRef.current) {
         clearInterval(beamIntervalRef.current);
         beamIntervalRef.current = null;
@@ -127,9 +124,11 @@ export default function ScanningAnimation({ isScanning, containerRef, mapRef }: 
         beamIntervalRef.current = null;
       }
     };
-  }, [isScanning, containerRef, mapRef, createOceanDot]);
+  }, [isScanning, scanCenter, createOceanDots]);
 
-  if (!isScanning) return null;
+  if (!isScanning || !scanCenter) return null;
+
+  const bounds = getScanScreenBounds();
 
   return (
     <AnimatePresence>
@@ -139,75 +138,46 @@ export default function ScanningAnimation({ isScanning, containerRef, mapRef }: 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Scanning background overlay */}
-        <motion.div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%)',
-          }}
-          animate={{
-            opacity: [0.3, 0.7, 0.3],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        
-        {/* Main scanning beam */}
-        <motion.div
-          className="absolute top-0 h-full pointer-events-none"
-          style={{
-            width: '3px',
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(59, 130, 246, 0.4) 10%, rgba(59, 130, 246, 0.9) 30%, rgba(59, 130, 246, 1) 50%, rgba(59, 130, 246, 0.9) 70%, rgba(59, 130, 246, 0.4) 90%, transparent 100%)',
-            boxShadow: '0 0 25px rgba(59, 130, 246, 0.8), 0 0 50px rgba(59, 130, 246, 0.4)',
-          }}
-          initial={{ x: '-50px' }}
-          animate={{ x: 'calc(100vw + 50px)' }}
-          transition={{
-            duration: 4,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        />
-        
-        {/* Wide glow effect */}
-        <motion.div
-          className="absolute top-0 h-full pointer-events-none"
-          style={{
-            width: '60px',
-            background: 'linear-gradient(to right, transparent 0%, rgba(59, 130, 246, 0.1) 20%, rgba(59, 130, 246, 0.3) 50%, rgba(59, 130, 246, 0.1) 80%, transparent 100%)',
-            filter: 'blur(8px)',
-          }}
-          initial={{ x: '-80px' }}
-          animate={{ x: 'calc(100vw + 80px)' }}
-          transition={{
-            duration: 4,
-            ease: "easeInOut",
-            repeat: Infinity,
-            delay: 0.1
-          }}
-        />
-        
-        {/* Subtle secondary beam */}
-        <motion.div
-          className="absolute top-0 h-full pointer-events-none"
-          style={{
-            width: '1px',
-            background: 'rgba(255, 255, 255, 0.8)',
-            boxShadow: '0 0 10px rgba(255, 255, 255, 0.6)',
-          }}
-          initial={{ x: '-30px' }}
-          animate={{ x: 'calc(100vw + 30px)' }}
-          transition={{
-            duration: 4,
-            ease: "easeInOut",
-            repeat: Infinity,
-            delay: 0.05
-          }}
-        />
-        
+        {/* Pulsing circle overlay on the scan area */}
+        {bounds && (
+          <motion.div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              left: bounds.cx - bounds.r,
+              top: bounds.cy - bounds.r,
+              width: bounds.r * 2,
+              height: bounds.r * 2,
+              border: '2px solid rgba(6, 182, 212, 0.6)',
+              background: 'radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(6, 182, 212, 0.02) 70%, transparent 100%)',
+            }}
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(6, 182, 212, 0.3), inset 0 0 20px rgba(6, 182, 212, 0.05)',
+                '0 0 25px rgba(6, 182, 212, 0.6), inset 0 0 40px rgba(6, 182, 212, 0.1)',
+                '0 0 10px rgba(6, 182, 212, 0.3), inset 0 0 20px rgba(6, 182, 212, 0.05)',
+              ],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
+
+        {/* Rotating sweep line inside circle */}
+        {bounds && (
+          <motion.div
+            className="absolute pointer-events-none"
+            style={{
+              left: bounds.cx,
+              top: bounds.cy,
+              width: bounds.r,
+              height: 2,
+              transformOrigin: '0% 50%',
+              background: 'linear-gradient(to right, rgba(6, 182, 212, 0.8), transparent)',
+            }}
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          />
+        )}
+
         {/* Ocean Detection Dots */}
         <AnimatePresence>
           {oceanDots.map(dot => (
@@ -215,28 +185,16 @@ export default function ScanningAnimation({ isScanning, containerRef, mapRef }: 
               key={dot.id}
               className="absolute w-1.5 h-1.5 pointer-events-none"
               style={{
-                left: dot.x - 3, // Center the smaller dot
+                left: dot.x - 3,
                 top: dot.y - 3,
                 backgroundColor: '#87ceeb',
                 borderRadius: '50%',
                 boxShadow: '0 0 6px #87ceeb, 0 0 12px #87ceeb',
               }}
-              initial={{ 
-                scale: 0, 
-                opacity: 0.8,
-              }}
-              animate={{ 
-                scale: [1, 1.5, 0.8],
-                opacity: [0.8, 1, 0.3],
-              }}
-              exit={{ 
-                scale: 0, 
-                opacity: 0 
-              }}
-              transition={{
-                duration: 2,
-                ease: "easeOut"
-              }}
+              initial={{ scale: 0, opacity: 0.8 }}
+              animate={{ scale: [1, 1.5, 0.8], opacity: [0.8, 1, 0.3] }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 2, ease: "easeOut" }}
             />
           ))}
         </AnimatePresence>
