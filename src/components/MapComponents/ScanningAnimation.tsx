@@ -20,7 +20,7 @@ interface ScanningAnimationProps {
 // Sweep duration must match the framer-motion rotate animation
 const SWEEP_DURATION_MS = 3000;
 
-export default function ScanningAnimation({ isScanning, containerRef, mapRef, scanCenter, scanRadius = 2000 }: ScanningAnimationProps) {
+export default function ScanningAnimation({ isScanning, mapRef, scanCenter, scanRadius = 2000 }: ScanningAnimationProps) {
   const [oceanDots, setOceanDots] = useState<OceanDot[]>([]);
   const beamIntervalRef = useRef<number | null>(null);
   const scanStartTime = useRef<number>(Date.now());
