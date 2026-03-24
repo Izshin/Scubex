@@ -2,26 +2,26 @@
 \chapter{Iteración 1: Escáner de Biodiversidad}
 
 \begin{abstract}
-Esta iteración aborda el núcleo funcional de Scubex: la capacidad de identificar especies marinas en una zona determinada mediante la orquestación de OBIS e iNaturalist. Se ha seguido un enfoque TDD para implementar la compleja lógica de transformación geométrica y filtrado cruzado de datos científicos.
+Esta iteración aborda el MVP de Scubex: La capacidad de identificar especies marinas en una zona determinada e iodentificarte con OAuth.
 \end{abstract}
 
-\section{Características a desarrollar}
+\section{Características desarrolladas esta iteración}
 
 \begin{enumerate}
-\item Escáner de Especies bajo demanda (Backend). Ver Tabla \ref{tab:valorAportadoScan}.
-\item Filtrado automático de microorganismos y especies sin representación visual.
-\item Enriquecimiento de datos con fotografías y nombres comunes.
+\item Escáner de Especies con selección de zona en mapa y radio configurable. Ver Tabla \ref{tab:valorAportadoScan}.
+\item Enriquecimiento de datos con fotografías y nombres comunes mediante cruce OBIS/iNaturalist.
+\item Identificación de usuario con Google OAuth2 y JWT.
 \end{enumerate}
 
 \begin{table*}[htb]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Análisis de valor aportado: Escáner de Especies}
-\textbf{Propuesta}&Implementación de un endpoint REST que agregue datos de OBIS e iNaturalist para una zona geográfica definida por radio.\\
+\textbf{Propuesta}&Endpoint REST que agrega datos de OBIS e iNaturalist para una zona geográfica definida por radio, con interacción en dos pasos (click para situar centro + botón \emph{Escanear}) y radio configurable (500\,m -- 10\,km).\\
 \midrule
-\textbf{Valor}&Permite al usuario descubrir fauna marina real validada científicamente con representación visual, sin conocimientos técnicos ni acceso directo a bases de datos especializadas.\\
-\textbf{Coste}&Alto esfuerzo de integración. Requiere orquestar llamadas asíncronas, transformar formatos geométricos (coordenadas → WKT Polygon), gestionar inconsistencias entre APIs y aplicar filtrado de calidad.\\
-\textbf{Opciones}&\textbf{Opción 1}: Usar solo OBIS reduciría el coste, pero eliminaría el valor visual (fotos) y semántico (nombres comunes), haciendo la app inutilizable para turistas/buceadores recreativos. \textbf{Opción 2}: Usar solo iNaturalist (solo observaciones ciudadanas, sin validación científica OBIS).\\
+\textbf{Valor}&Permite al usuario descubrir fauna marina real validada científicamente con representación visual, sin conocimientos técnicos ni acceso directo a bases de datos especializadas. El flujo de dos pasos evita escaneos accidentales.\\
+\textbf{Coste}&Alto esfuerzo de integración. Requiere orquestar llamadas asíncronas, transformar formatos geométricos (coordenadas $\rightarrow$ WKT Polygon), gestionar inconsistencias entre APIs y aplicar filtrado de calidad. En frontend: círculo GeoJSON en MapLibre, animación radar con Framer Motion.\\
+\textbf{Opciones}&\textbf{Opción 1}: Usar solo OBIS reduciría el coste, pero eliminaría el valor visual (fotos) y semántico (nombres comunes). \textbf{Opción 2}: Usar solo iNaturalist (solo observaciones ciudadanas, sin validación científica OBIS). \textbf{Opción 3}: Escaneo automático al hacer click (descartada: generaba escaneos accidentales).\\
 \textbf{Riesgos}&Rate limits de APIs externas (OBIS: sin límite documentado, iNaturalist: 100 req/min). Inconsistencia de datos (especies en OBIS sin coincidencia en iNaturalist). Latencia acumulada por múltiples peticiones HTTP.\\
 \textbf{Deuda técnica}&Ausencia de caching (cada escaneo regenera peticiones a APIs). Falta de paginación (actualmente limitado a 50 especies). Gestión de errores distribuidos no exhaustiva (si iNaturalist falla, se pierden datos visuales).\\
 	\end{coolTable}
@@ -187,10 +187,10 @@ Se ha integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
 
 El frontend React consume el endpoint mediante:
 \begin{itemize}
-    \item \textbf{Componentes}: \texttt{MapView.tsx} (mapa interactivo), \texttt{SpeciesPanel.tsx} (resultados), \texttt{ScanningAnimation.tsx} (efecto sonar)
-    \item \textbf{Estado}: MobX gestiona especies, carga y errores globalmente
-    \item \textbf{Flujo}: Click en mapa → captura coordenadas/zoom → animación sonar → petición HTTP → actualización estado → renderizado panel
-    \item \textbf{Validación}: Zoom mínimo 8 para evitar áreas excesivamente grandes
+    \item \textbf{Componentes}: \texttt{MapView.tsx} (mapa interactivo con MapLibre GL JS), \texttt{MapRender.tsx} (renderizado de círculo GeoJSON y gestión de clicks), \texttt{SpeciesPanel.tsx} (resultados), \texttt{ScanningAnimation.tsx} (animación de radar con barrido rotatorio y puntos sincronizados)
+    \item \textbf{Estado}: MobX gestiona especies, carga, errores, centro de escaneo y radio configurado (\texttt{MapStore} + \texttt{SpeciesStore})
+    \item \textbf{Flujo}: Click en mapa $\rightarrow$ fija centro de escaneo y dibuja círculo GeoJSON $\rightarrow$ usuario selecciona radio (500\,m--10\,km) $\rightarrow$ pulsa \emph{Escanear} $\rightarrow$ animación de radar con puntos en sector sincronizado $\rightarrow$ petición HTTP $\rightarrow$ actualización estado $\rightarrow$ renderizado panel
+    \item \textbf{Animación}: Barrido rotatorio (3\,s/vuelta) implementado con Framer Motion. Los puntos de detección se generan cada 80\,ms únicamente en un sector de 45° justo detrás de la línea de barrido, usando \texttt{map.project()} para convertir coordenadas geográficas a píxeles. Los puntos desaparecen tras una rotación completa.
 \end{itemize}
 
 \subsection{Configuración del proyecto (TD3)}
@@ -200,7 +200,7 @@ El frontend React consume el endpoint mediante:
     \item \textbf{Puerto}: 8080 para el servidor.
     \item \textbf{APIs externas}: URLs de OBIS, iNaturalist y Open-Meteo configuradas en \texttt{application.properties}.
     \item \textbf{Base de datos}: H2 en memoria (\texttt{jdbc:h2:mem:scubexdb}) para desarrollo rápido sin persistencia.
-    \item \textbf{Seguridad}: CSRF deshabilitado (API REST), endpoints públicos (\texttt{/api/species}, \texttt{/swagger-ui}), OAuth2 pendiente para iteraciones futuras.
+    \item \textbf{Seguridad}: CSRF deshabilitado (API REST), endpoints públicos (\texttt{/api/species}, \texttt{/swagger-ui}). Google OAuth2 implementado con validación de tokens mediante \texttt{googleapis.com/tokeninfo} y generación de JWT (HMAC-SHA256, 7 días de expiración) con \texttt{JwtAuthFilter}.
     \item \textbf{CORS}: Frontend local (\texttt{localhost:5173}) permitido para desarrollo.
 \end{itemize}
 
@@ -232,6 +232,9 @@ En iteraciones futuras se planea despliegue en contenedores Docker y hosting en 
     \item [OK] Transformación geométrica (WKT Polygon) funcionando.
     \item [OK] Filtrado de microorganismos operativo.
     \item [OK] Enriquecimiento con iNaturalist completo (foto + nombre común).
+    \item [OK] Flujo de escaneo en dos pasos (click + botón) con radio configurable (500\,m--10\,km).
+    \item [OK] Animación de radar con barrido rotatorio y puntos sincronizados en sector.
+    \item [OK] Google OAuth2 con JWT implementado (login, persistencia en \texttt{localStorage}, página de perfil).
     \item [ADVERTENCIA] Latencia observable en zonas con >30 especies (5-7 segundos). Candidata a optimización en Iteración 3 (sistema de caché).
 \end{itemize}
 

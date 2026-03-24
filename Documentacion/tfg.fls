@@ -686,7 +686,6 @@ INPUT .\iteracion1.tex
 INPUT .\iteracion1.tex
 INPUT .\iteracion1.tex
 INPUT iteracion1.tex
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\tcrm1200.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbn8t.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\kpfonts\jkpttbn8t.vf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbn8r.tfm
@@ -784,8 +783,6 @@ INPUT .\tfg.out
 INPUT .\tfg.out
 INPUT .\tfg.brf
 INPUT .\tfg.brf
-INPUT C:\Users\ivanf\AppData\Local\MiKTeX\fonts\pk\ljfour\jknappen\ec\dpi600\tcrm1200.pk
-INPUT C:\Users\ivanf\AppData\Local\MiKTeX\fonts\pk\ljfour\jknappen\ec\dpi600\tcrm1200.pk
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmr10.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmr10.pfb
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmsy10.pfb

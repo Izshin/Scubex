@@ -5,12 +5,15 @@ import ScanningAnimation from "./ScanningAnimation";
 
 type Props = { 
   onViewportIdle?: (bbox: number[]) => void;
+  onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   isScanning?: boolean;
+  scanCenter?: { lat: number; lng: number } | null;
+  scanRadius?: number;
 };
 
 export type MapViewRef = { getMap: () => Map | null };
 
-export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, isScanning = false }, forwardedRef) {
+export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, onMapClick, isScanning = false, scanCenter, scanRadius }, forwardedRef) {
   const mapRenderRef = useRef<MapRenderRef>(null);
 
   useImperativeHandle(forwardedRef, () => ({
@@ -35,12 +38,17 @@ export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, 
       <MapRender 
         ref={mapRenderRef}
         onViewportIdle={onViewportIdle}
+        onMapClick={onMapClick}
         isScanning={isScanning}
+        scanCenter={scanCenter}
+        scanRadius={scanRadius}
       />
       <ScanningAnimation 
         isScanning={isScanning}
         containerRef={stableContainerRef}
         mapRef={stableMapRef}
+        scanCenter={scanCenter}
+        scanRadius={scanRadius}
       />
     </div>
   );

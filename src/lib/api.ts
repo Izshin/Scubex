@@ -23,12 +23,37 @@ interface FrontendSpeciesData {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
+function getAuthHeaders(): Record<string, string> {
+  const saved = localStorage.getItem('scubex_user');
+  if (saved) {
+    try {
+      const user = JSON.parse(saved);
+      if (user?.token) {
+        return { Authorization: `Bearer ${user.token}` };
+      }
+    } catch { /* ignored */ }
+  }
+  return {};
+}
+
+export async function loginWithGoogle(credential: string): Promise<{ token: string; user: { name: string; email: string; picture: string } }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+  });
+  if (!response.ok) {
+    throw new Error(`Auth failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 // Test function to check if backend is running
 export async function testBackendConnection(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/species?lat=36.52&lng=-5.98&radius=1000`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     });
     return response.ok;
   } catch {
@@ -61,6 +86,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders(),
       },
     });
     
