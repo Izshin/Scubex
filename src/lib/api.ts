@@ -194,3 +194,48 @@ export async function getPosts(bbox: number[]) {
   if (!res.ok) throw new Error("Failed posts fetch");
   return res.json();
 }
+
+// Weather types
+export interface WeatherData {
+  // Atmospheric
+  temperature: number | null;
+  humidity: number | null;
+  windSpeed: number | null;
+  windDirection: number | null;
+  precipitation: number | null;
+  precipitationProbability: number | null;
+  snowfall: number | null;
+  visibility: number | null;
+  weatherCode: number | null;
+  // Marine
+  waveHeight: number | null;
+  waveDirection: number | null;
+  wavePeriod: number | null;
+  seaSurfaceTemperature: number | null;
+  oceanCurrentVelocity: number | null;
+  oceanCurrentDirection: number | null;
+  swellWaveHeight: number | null;
+}
+
+export async function getWeather(lat: number, lng: number): Promise<WeatherData> {
+  const params = new URLSearchParams({
+    lat: lat.toString(),
+    lng: lng.toString(),
+  });
+
+  const apiUrl = `${API_BASE_URL}/api/weather?${params.toString()}`;
+  console.log('🌤️ Weather API Call:', apiUrl);
+
+  const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data: WeatherData = await response.json();
+  console.log('✅ Weather response:', data);
+  return data;
+}

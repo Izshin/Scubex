@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { observer } from "mobx-react-lite";
 import MapView, { type MapViewRef } from "../components/MapComponents/MapView.tsx";
 import SpeciesPanel from "../components/SpeciesPanel";
-import { useSpeciesStore, useMapStore } from "../lib/stores/index.tsx";
+import WeatherPanel from "../components/WeatherPanel";
+import { useSpeciesStore, useMapStore, useWeatherStore } from "../lib/stores/index.tsx";
 
 const RADIUS_OPTIONS = [
   { value: 500, label: "500m" },
@@ -17,6 +18,7 @@ const RADIUS_OPTIONS = [
 const MapPage = observer(() => {
   const speciesStore = useSpeciesStore();
   const mapStore = useMapStore();
+  const weatherStore = useWeatherStore();
   const mapRef = useRef<MapViewRef>(null);
 
   const handleViewportChange = useCallback((bbox: number[]) => {
@@ -41,12 +43,15 @@ const MapPage = observer(() => {
   // Scan button triggers the actual API call
   const handleScan = useCallback(async () => {
     if (!mapStore.scanCenter || isScanning) return;
-    await speciesStore.fetchSpecies({
-      lat: mapStore.scanCenter.lat,
-      lng: mapStore.scanCenter.lng,
-      radius: mapStore.scanRadius,
-    });
-  }, [mapStore, speciesStore, isScanning]);
+    const { lat, lng } = mapStore.scanCenter;
+    const radius = mapStore.scanRadius;
+
+    // Fetch species and weather in parallel
+    await Promise.all([
+      speciesStore.fetchSpecies({ lat, lng, radius }),
+      weatherStore.fetchWeather(lat, lng),
+    ]);
+  }, [mapStore, speciesStore, weatherStore, isScanning]);
 
   const handleRadiusChange = useCallback((radius: number) => {
     mapStore.setScanRadius(radius);
@@ -145,11 +150,16 @@ const MapPage = observer(() => {
           )}
         </div>
         
-        <div className="bg-white shadow-xl border-l border-gray-200 flex flex-col min-h-0">
+        <div className="bg-white shadow-xl border-l border-gray-200 flex flex-col min-h-0 overflow-auto custom-scrollbar">
           <SpeciesPanel 
             loading={speciesStore.isLoading} 
             data={speciesStore.speciesData || undefined} 
             zoom={mapStore.currentZoom} 
+          />
+          <WeatherPanel
+            data={weatherStore.weatherData}
+            loading={weatherStore.isLoading}
+            error={weatherStore.error}
           />
         </div>
       </div>
