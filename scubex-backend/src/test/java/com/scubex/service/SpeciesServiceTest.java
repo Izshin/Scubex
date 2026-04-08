@@ -5,6 +5,7 @@ import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
+import com.scubex.repository.CachedScanRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,8 +19,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +43,9 @@ class SpeciesServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private CachedScanRepository cachedScanRepository;
+
     @InjectMocks
     private SpeciesService speciesService;
 
@@ -48,6 +54,11 @@ class SpeciesServiceTest {
         // Inject properties that would normally come from application.properties
         ReflectionTestUtils.setField(speciesService, "obisApiUrl", "https://api.obis.org/v3");
         ReflectionTestUtils.setField(speciesService, "iNaturalistApiUrl", "https://api.inaturalist.org/v1");
+
+        // Default: no cache hits
+        when(cachedScanRepository.findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(
+                any(Double.class), any(Double.class), any(Double.class), any(Instant.class)))
+                .thenReturn(Optional.empty());
     }
 
     /**

@@ -1,13 +1,16 @@
 package com.scubex.service;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,10 +20,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.scubex.DTO.SpeciesResponse;
+import com.scubex.model.CachedScan;
+import com.scubex.model.CachedSpecies;
 import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
+import com.scubex.repository.CachedScanRepository;
 
 @Service
 public class SpeciesService {
@@ -28,13 +34,46 @@ public class SpeciesService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private CachedScanRepository cachedScanRepository;
+
     @Value("${obis.api.url}")
     private String obisApiUrl;
 
     @Value("${inaturalist.api.taxa}")
     private String iNaturalistApiUrl;
 
+    private static double roundCoord(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
     public List<SpeciesResponse> getSpeciesInSelectedArea(double lat, double lng, double radius) {
+        double roundedLat = roundCoord(lat);
+        double roundedLng = roundCoord(lng);
+
+        // Check cache first
+        Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
+        Optional<CachedScan> cached = cachedScanRepository
+                .findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(roundedLat, roundedLng, radius, cutoff);
+
+        if (cached.isPresent()) {
+            System.out.println("✅ Cache HIT for species scan at " + roundedLat + ", " + roundedLng);
+            return cached.get().getSpecies().stream()
+                    .map(cs -> SpeciesResponse.builder()
+                            .commonName(cs.getCommonName())
+                            .scientificName(cs.getScientificName())
+                            .photoUrl(cs.getPhotoUrl())
+                            .recordDate(cs.getRecordDate())
+                            .phylum(cs.getPhylum())
+                            .latitude(cs.getLatitude())
+                            .longitude(cs.getLongitude())
+                            .numberOfOccurrences(cs.getNumberOfOccurrences())
+                            .build())
+                    .toList();
+        }
+
+        System.out.println("⏳ Cache MISS for species scan at " + roundedLat + ", " + roundedLng);
+
         // 1. Create polygon from coordinates + radius
         String polygon = createPolygonFromRadius(lat, lng, radius);
 
@@ -65,6 +104,9 @@ public class SpeciesService {
                 System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
             }
         }
+
+        // Save to cache
+        saveToCache(roundedLat, roundedLng, radius, enrichedSpecies);
 
         return enrichedSpecies;
     }
@@ -292,5 +334,36 @@ public class SpeciesService {
         }
 
         return species;
+    }
+
+    private void saveToCache(double roundedLat, double roundedLng, double radius,
+            List<SpeciesResponse> speciesList) {
+        try {
+            CachedScan scan = CachedScan.builder()
+                    .roundedLat(roundedLat)
+                    .roundedLng(roundedLng)
+                    .radius(radius)
+                    .build();
+
+            List<CachedSpecies> cachedSpeciesList = speciesList.stream()
+                    .map(sr -> CachedSpecies.builder()
+                            .cachedScan(scan)
+                            .commonName(sr.getCommonName())
+                            .scientificName(sr.getScientificName())
+                            .photoUrl(sr.getPhotoUrl())
+                            .recordDate(sr.getRecordDate())
+                            .phylum(sr.getPhylum())
+                            .latitude(sr.getLatitude())
+                            .longitude(sr.getLongitude())
+                            .numberOfOccurrences(sr.getNumberOfOccurrences())
+                            .build())
+                    .toList();
+
+            scan.getSpecies().addAll(cachedSpeciesList);
+            cachedScanRepository.save(scan);
+            System.out.println("💾 Cached " + speciesList.size() + " species for " + roundedLat + ", " + roundedLng);
+        } catch (Exception e) {
+            System.err.println("⚠️ Failed to save species cache: " + e.getMessage());
+        }
     }
 }
