@@ -164,43 +164,43 @@ const MapPage = observer(() => {
             loading={weatherStore.isLoading}
             error={weatherStore.error}
           />
-        </div>
-        
-        {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}
-        {hasScanned && (
-          <>
-            {/* Toggle tab */}
-            <button
-              className="absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out"
-              style={{ right: sidebarOpen ? 400 : 0 }}
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <div className="w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
-                <svg
-                  width="10"
-                  height="14"
-                  viewBox="0 0 10 14"
-                  fill="none"
-                  className={`text-gray-500 transition-transform duration-300 ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
-                >
-                  <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </button>
 
-            {/* Sidebar panel — slides via transform, no layout reflow */}
-            <div
-              className="absolute top-0 right-0 h-full w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
-              style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
-            >
-              <SpeciesPanel 
-                loading={speciesStore.isLoading} 
-                data={speciesStore.speciesData || undefined} 
-                zoom={mapStore.currentZoom} 
-              />
-            </div>
-          </>
-        )}
+          {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}
+          {hasScanned && (
+            <>
+              {/* Toggle tab */}
+              <button
+                className="absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out"
+                style={{ right: sidebarOpen ? 400 : 0 }}
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <div className="w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
+                  <svg
+                    width="10"
+                    height="14"
+                    viewBox="0 0 10 14"
+                    fill="none"
+                    className={`text-gray-500 transition-transform duration-300 ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
+                  >
+                    <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Sidebar panel — slides via transform, no layout reflow */}
+              <div
+                className="absolute top-0 right-0 h-full w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
+                style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
+              >
+                <SpeciesPanel 
+                  loading={speciesStore.isLoading} 
+                  data={speciesStore.speciesData || undefined} 
+                  zoom={mapStore.currentZoom} 
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,9 @@ public interface CachedScanRepository extends JpaRepository<CachedScan, Long> {
     Optional<CachedScan> findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(
             Double roundedLat, Double roundedLng, Double radius, Instant after);
 
+    Optional<CachedScan> findFirstByRoundedLatAndRoundedLngAndRadiusGreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc(
+            Double roundedLat, Double roundedLng, Double radius, Instant after);
+
     List<CachedScan> findByCreatedAtBefore(Instant before);
 
     void deleteByCreatedAtBefore(Instant before);

@@ -43,22 +43,44 @@ public class SpeciesService {
     @Value("${inaturalist.api.taxa}")
     private String iNaturalistApiUrl;
 
-    private static double roundCoord(double value) {
-        return Math.round(value * 100.0) / 100.0;
+    /**
+     * Adaptive coordinate rounding based on scan radius.
+     * Larger radii use coarser rounding to maximize cache hits.
+     *   - radius <= 1000m  → 0.01° (~1.1 km tolerance)
+     *   - radius <= 2000m  → 0.05° (~5.5 km tolerance)
+     *   - radius >  2000m  → 0.1°  (~11 km tolerance)
+     */
+    private static double roundCoord(double value, double radius) {
+        double step;
+        if (radius <= 1000) {
+            step = 0.01;
+        } else if (radius <= 2000) {
+            step = 0.05;
+        } else {
+            step = 0.1;
+        }
+        return Math.round(value / step) * step;
     }
 
     public List<SpeciesResponse> getSpeciesInSelectedArea(double lat, double lng, double radius) {
-        double roundedLat = roundCoord(lat);
-        double roundedLng = roundCoord(lng);
+        double roundedLat = roundCoord(lat, radius);
+        double roundedLng = roundCoord(lng, radius);
 
-        // Check cache first
+        // Check cache: reuse any cached scan with radius >= requested radius
         Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
         Optional<CachedScan> cached = cachedScanRepository
-                .findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(roundedLat, roundedLng, radius, cutoff);
+                .findFirstByRoundedLatAndRoundedLngAndRadiusGreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc(
+                        roundedLat, roundedLng, radius, cutoff);
 
         if (cached.isPresent()) {
-            System.out.println("✅ Cache HIT for species scan at " + roundedLat + ", " + roundedLng);
-            return cached.get().getSpecies().stream()
+            CachedScan cachedScan = cached.get();
+            boolean needsFilter = cachedScan.getRadius() > radius;
+            System.out.println("✅ Cache HIT for species scan at " + roundedLat + ", " + roundedLng
+                    + " (requested r=" + radius + ", cached r=" + cachedScan.getRadius()
+                    + (needsFilter ? ", filtering by distance)" : ")"));
+            return cachedScan.getSpecies().stream()
+                    .filter(cs -> !needsFilter || isWithinRadius(lat, lng, radius,
+                            cs.getLatitude(), cs.getLongitude()))
                     .map(cs -> SpeciesResponse.builder()
                             .commonName(cs.getCommonName())
                             .scientificName(cs.getScientificName())
@@ -365,5 +387,21 @@ public class SpeciesService {
         } catch (Exception e) {
             System.err.println("⚠️ Failed to save species cache: " + e.getMessage());
         }
+    }
+
+    /**
+     * Haversine check: is the point (pLat, pLng) within radiusMeters of (centerLat, centerLng)?
+     */
+    private static boolean isWithinRadius(double centerLat, double centerLng, double radiusMeters,
+                                          Double pLat, Double pLng) {
+        if (pLat == null || pLng == null) return true; // keep species with no coords
+        double R = 6_371_000; // Earth radius in meters
+        double dLat = Math.toRadians(pLat - centerLat);
+        double dLng = Math.toRadians(pLng - centerLng);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                 + Math.cos(Math.toRadians(centerLat)) * Math.cos(Math.toRadians(pLat))
+                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return dist <= radiusMeters;
     }
 }
