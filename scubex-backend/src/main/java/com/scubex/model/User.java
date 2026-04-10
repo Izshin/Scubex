@@ -25,4 +25,19 @@ public class User {
     private String name;
 
     private String pictureUrl;
+
+    // Custom profile overrides (user-set, persisted independently of Google)
+    private String customName;
+
+    private String customPictureUrl;
+
+    /** Returns customName if set, otherwise the Google name. */
+    public String getDisplayName() {
+        return customName != null && !customName.isBlank() ? customName : name;
+    }
+
+    /** Returns customPictureUrl if set, otherwise the Google picture. */
+    public String getDisplayPicture() {
+        return customPictureUrl != null && !customPictureUrl.isBlank() ? customPictureUrl : pictureUrl;
+    }
 }

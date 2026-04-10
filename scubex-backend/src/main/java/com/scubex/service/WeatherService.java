@@ -58,6 +58,9 @@ public class WeatherService {
 
         WeatherResponse response = buildWeatherResponse(atmosphere, marine);
 
+        // Evaluate diving condition
+        response.setDivingCondition(evaluateDivingCondition(response));
+
         // Save to cache
         saveToCache(roundedLat, roundedLng, response);
 
@@ -103,7 +106,8 @@ public class WeatherService {
                     .queryParam("longitude", lng)
                     .queryParam("current", "wave_height,wave_direction,wave_period,"
                             + "sea_surface_temperature,ocean_current_velocity,"
-                            + "ocean_current_direction,swell_wave_height")
+                            + "ocean_current_direction,swell_wave_height,"
+                            + "sea_level_height_msl")
                     .queryParam("length_unit", "metric")
                     .build()
                     .encode()
@@ -152,10 +156,70 @@ public class WeatherService {
                     .seaSurfaceTemperature(marine.getSeaSurfaceTemperature())
                     .oceanCurrentVelocity(marine.getOceanCurrentVelocity())
                     .oceanCurrentDirection(marine.getOceanCurrentDirection())
-                    .swellWaveHeight(marine.getSwellWaveHeight());
+                    .swellWaveHeight(marine.getSwellWaveHeight())
+                    .seaLevelHeight(marine.getSeaLevelHeight());
         }
 
         return builder.build();
+    }
+
+    /**
+     * Evaluate diving conditions based on weighted scoring.
+     * Returns "good", "moderate", or "bad".
+     *
+     * Critical overrides: extreme values in key factors force "bad" immediately.
+     * Weights: waves=3, current=3, visibility=2, wind=2, weatherCode=2, precipProb=1
+     * Each factor scores 0 (bad), 1 (moderate), or 2 (good).
+     * Weighted average >= 1.5 → good, >= 0.8 → moderate, else bad.
+     */
+    private String evaluateDivingCondition(WeatherResponse wr) {
+        // Critical overrides — extreme values in important factors = immediate "bad"
+        if (wr.getWaveHeight() != null && wr.getWaveHeight() > 2.5) return "bad";
+        if (wr.getOceanCurrentVelocity() != null && wr.getOceanCurrentVelocity() > 5) return "bad";
+        if (wr.getWindSpeed() != null && wr.getWindSpeed() > 40) return "bad";
+        if (wr.getWeatherCode() != null && (wr.getWeatherCode() == 95 || wr.getWeatherCode() == 96 || wr.getWeatherCode() == 99)) return "bad";
+        if (wr.getVisibility() != null && wr.getVisibility() < 1000) return "bad";
+
+        int score = 0;
+        int weight = 0;
+
+        // Waves (m): <0.5 good, 0.5-1.5 moderate, >1.5 bad — weight 3
+        if (wr.getWaveHeight() != null) {
+            weight += 3;
+            score += (wr.getWaveHeight() < 0.5 ? 2 : wr.getWaveHeight() < 1.5 ? 1 : 0) * 3;
+        }
+        // Current (km/h): <1 good, 1-3 moderate, >3 bad — weight 3
+        if (wr.getOceanCurrentVelocity() != null) {
+            weight += 3;
+            score += (wr.getOceanCurrentVelocity() < 1 ? 2 : wr.getOceanCurrentVelocity() < 3 ? 1 : 0) * 3;
+        }
+        // Visibility (m): >10000 good, 2000-10000 moderate, <2000 bad — weight 2
+        if (wr.getVisibility() != null) {
+            weight += 2;
+            score += (wr.getVisibility() > 10000 ? 2 : wr.getVisibility() > 2000 ? 1 : 0) * 2;
+        }
+        // Wind (km/h): <15 good, 15-30 moderate, >30 bad — weight 2
+        if (wr.getWindSpeed() != null) {
+            weight += 2;
+            score += (wr.getWindSpeed() < 15 ? 2 : wr.getWindSpeed() < 30 ? 1 : 0) * 2;
+        }
+        // Weather code: storms (95,96,99) bad, rain (>=61) moderate, else good — weight 2
+        if (wr.getWeatherCode() != null) {
+            weight += 2;
+            int wc = wr.getWeatherCode();
+            score += (wc == 95 || wc == 96 || wc == 99 ? 0 : wc >= 61 ? 1 : 2) * 2;
+        }
+        // Precipitation probability: <20 good, 20-60 moderate, >60 bad — weight 1
+        if (wr.getPrecipitationProbability() != null) {
+            weight += 1;
+            score += (wr.getPrecipitationProbability() < 20 ? 2 : wr.getPrecipitationProbability() < 60 ? 1 : 0);
+        }
+
+        if (weight == 0) return "moderate";
+        double avg = (double) score / weight;
+        if (avg >= 1.5) return "good";
+        if (avg >= 0.8) return "moderate";
+        return "bad";
     }
 
     private WeatherResponse convertFromCache(CachedWeather cw) {
@@ -176,6 +240,8 @@ public class WeatherService {
                 .oceanCurrentVelocity(cw.getOceanCurrentVelocity())
                 .oceanCurrentDirection(cw.getOceanCurrentDirection())
                 .swellWaveHeight(cw.getSwellWaveHeight())
+                .seaLevelHeight(cw.getSeaLevelHeight())
+                .divingCondition(cw.getDivingCondition())
                 .build();
     }
 
@@ -200,6 +266,8 @@ public class WeatherService {
                     .oceanCurrentVelocity(wr.getOceanCurrentVelocity())
                     .oceanCurrentDirection(wr.getOceanCurrentDirection())
                     .swellWaveHeight(wr.getSwellWaveHeight())
+                    .seaLevelHeight(wr.getSeaLevelHeight())
+                    .divingCondition(wr.getDivingCondition())
                     .build();
 
             cachedWeatherRepository.save(cw);

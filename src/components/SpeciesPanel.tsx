@@ -131,22 +131,20 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   return (
     <div className="h-full flex flex-col">
       {/* Header del panel */}
-      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b">
-        <div className="text-sm text-gray-600 bg-white rounded-lg p-2 border space-y-1">
-          <div className="flex items-center justify-between">
-            <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies distintas</span>
-            {data.source && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                {data.source.join(", ")}
-              </span>
-            )}
-          </div>
-          {data.counts?.total_occurrences && (
-            <div className="text-xs text-gray-500">
-              🔢 <strong>{data.counts.total_occurrences.toLocaleString()}</strong> registros totales
-            </div>
+      <div className="p-4 ">
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies distintas</span>
+          {data.source && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              {data.source.join(", ")}
+            </span>
           )}
         </div>
+        {data.counts?.total_occurrences && (
+          <div className="text-xs text-gray-500 mt-1">
+            🔢 <strong>{data.counts.total_occurrences.toLocaleString()}</strong> registros totales
+          </div>
+        )}
       </div>
 
       {/* Lista de especies */}
@@ -184,11 +182,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                   delay: index * 0.1,
                   ease: "easeOut"
                 }}
-                whileHover={{ 
-                  scale: 1.02,
-                  y: -2,
-                  transition: { duration: 0.2 }
-                }}
+                
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex justify-between items-start mb-2">
@@ -246,13 +240,6 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
             ))
           )}
         </AnimatePresence>
-      </div>
-
-      {/* Footer del panel */}
-      <div className="bg-gray-50 p-4 border-t">
-        <p className="text-xs text-gray-500 text-center">
-          🌊 Datos de biodiversidad marina actualizados
-        </p>
       </div>
     </div>
   );

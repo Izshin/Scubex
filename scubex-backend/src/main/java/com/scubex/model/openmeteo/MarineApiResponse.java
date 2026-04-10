@@ -36,5 +36,8 @@ public class MarineApiResponse {
 
         @JsonProperty("swell_wave_height")
         private Double swellWaveHeight;
+
+        @JsonProperty("sea_level_height_msl")
+        private Double seaLevelHeight;
     }
 }

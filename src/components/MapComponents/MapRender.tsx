@@ -221,6 +221,31 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     }
   }, [scanCenter, scanRadius]);
 
+  // Pin marker at scan center
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    let marker: maplibregl.Marker | null = null;
+
+    if (scanCenter) {
+      const el = document.createElement('div');
+      el.innerHTML = `<svg width="28" height="40" viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.268 21.732 0 14 0z" fill="#06b6d4"/>
+        <circle cx="14" cy="14" r="6" fill="white"/>
+      </svg>`;
+      el.style.cursor = 'pointer';
+
+      marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([scanCenter.lng, scanCenter.lat])
+        .addTo(map);
+    }
+
+    return () => {
+      if (marker) marker.remove();
+    };
+  }, [scanCenter]);
+
   // Control map interactions based on scanning state
   useEffect(() => {
     if (!mapRef.current) return;

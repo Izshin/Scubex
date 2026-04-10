@@ -48,6 +48,18 @@ export async function loginWithGoogle(credential: string): Promise<{ token: stri
   return response.json();
 }
 
+export async function updateProfile(customName: string, customPictureUrl: string): Promise<{ token: string; user: { name: string; email: string; picture: string } }> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ customName, customPictureUrl }),
+  });
+  if (!response.ok) {
+    throw new Error(`Profile update failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 // Test function to check if backend is running
 export async function testBackendConnection(): Promise<boolean> {
   try {
@@ -215,6 +227,9 @@ export interface WeatherData {
   oceanCurrentVelocity: number | null;
   oceanCurrentDirection: number | null;
   swellWaveHeight: number | null;
+  seaLevelHeight: number | null;
+  // Diving condition (computed by backend)
+  divingCondition: 'good' | 'moderate' | 'bad' | null;
 }
 
 export async function getWeather(lat: number, lng: number): Promise<WeatherData> {

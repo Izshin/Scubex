@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { observer } from "mobx-react-lite";
@@ -20,6 +20,8 @@ const MapPage = observer(() => {
   const mapStore = useMapStore();
   const weatherStore = useWeatherStore();
   const mapRef = useRef<MapViewRef>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
 
   const handleViewportChange = useCallback((bbox: number[]) => {
     const map = mapRef.current?.getMap();
@@ -32,13 +34,14 @@ const MapPage = observer(() => {
 
   const isScanning = speciesStore.isScanning;
 
-  // Click on map → only place the scan target (don't scan yet)
+  // Click on map → place the scan target and fetch weather
   const handleMapClick = useCallback((lngLat: { lng: number; lat: number }) => {
     if (isScanning) return;
     const lat = Number(lngLat.lat.toFixed(6));
     const lng = Number(lngLat.lng.toFixed(6));
     mapStore.setScanCenter({ lat, lng });
-  }, [mapStore, isScanning]);
+    weatherStore.fetchWeather(lat, lng);
+  }, [mapStore, weatherStore, isScanning]);
 
   // Scan button triggers the actual API call
   const handleScan = useCallback(async () => {
@@ -51,7 +54,13 @@ const MapPage = observer(() => {
       speciesStore.fetchSpecies({ lat, lng, radius }),
       weatherStore.fetchWeather(lat, lng),
     ]);
-  }, [mapStore, speciesStore, weatherStore, isScanning]);
+
+    // Open sidebar on first scan
+    if (!hasScanned) {
+      setHasScanned(true);
+    }
+    setSidebarOpen(true);
+  }, [mapStore, speciesStore, weatherStore, isScanning, hasScanned]);
 
   const handleRadiusChange = useCallback((radius: number) => {
     mapStore.setScanRadius(radius);
@@ -67,8 +76,8 @@ const MapPage = observer(() => {
       </header>
 
       {/* Main content con altura fija */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 min-h-0">
-        <div className="relative">
+      <div className="flex-1 flex min-h-0">
+        <div className="relative flex-1">
           <MapView 
             ref={mapRef} 
             isScanning={isScanning}
@@ -148,20 +157,50 @@ const MapPage = observer(() => {
               Haz click en el mapa para seleccionar una zona
             </motion.div>
           )}
-        </div>
-        
-        <div className="bg-white shadow-xl border-l border-gray-200 flex flex-col min-h-0 overflow-auto custom-scrollbar">
-          <SpeciesPanel 
-            loading={speciesStore.isLoading} 
-            data={speciesStore.speciesData || undefined} 
-            zoom={mapStore.currentZoom} 
-          />
+
+          {/* Weather overlay on map */}
           <WeatherPanel
             data={weatherStore.weatherData}
             loading={weatherStore.isLoading}
             error={weatherStore.error}
           />
         </div>
+        
+        {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}
+        {hasScanned && (
+          <>
+            {/* Toggle tab */}
+            <button
+              className="absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out"
+              style={{ right: sidebarOpen ? 400 : 0 }}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <div className="w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
+                <svg
+                  width="10"
+                  height="14"
+                  viewBox="0 0 10 14"
+                  fill="none"
+                  className={`text-gray-500 transition-transform duration-300 ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
+                >
+                  <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Sidebar panel — slides via transform, no layout reflow */}
+            <div
+              className="absolute top-0 right-0 h-full w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
+              style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
+            >
+              <SpeciesPanel 
+                loading={speciesStore.isLoading} 
+                data={speciesStore.speciesData || undefined} 
+                zoom={mapStore.currentZoom} 
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

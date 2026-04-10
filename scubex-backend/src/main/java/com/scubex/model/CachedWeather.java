@@ -48,6 +48,8 @@ public class CachedWeather {
     private Double oceanCurrentVelocity;
     private Double oceanCurrentDirection;
     private Double swellWaveHeight;
+    private Double seaLevelHeight;
+    private String divingCondition;
 
     @PrePersist
     protected void onCreate() {

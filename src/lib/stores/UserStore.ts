@@ -1,4 +1,5 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
+import { updateProfile } from '../api';
 
 export interface UserData {
   name: string;
@@ -9,6 +10,8 @@ export interface UserData {
 
 class UserStore {
   user: UserData | null = null;
+  profileLoading = false;
+  profileError: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -42,6 +45,23 @@ class UserStore {
 
   get token() {
     return this.user?.token ?? null;
+  }
+
+  async updateProfile(customName: string, customPictureUrl: string) {
+    this.profileLoading = true;
+    this.profileError = null;
+    try {
+      const data = await updateProfile(customName, customPictureUrl);
+      runInAction(() => {
+        this.setUser({ ...data.user, token: data.token });
+        this.profileLoading = false;
+      });
+    } catch (e) {
+      runInAction(() => {
+        this.profileError = e instanceof Error ? e.message : 'Error updating profile';
+        this.profileLoading = false;
+      });
+    }
   }
 }
 

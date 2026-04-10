@@ -30,5 +30,9 @@ public class WeatherResponse {
     private Double oceanCurrentVelocity;
     private Double oceanCurrentDirection;
     private Double swellWaveHeight;
+    private Double seaLevelHeight;
+
+    // Diving condition evaluation
+    private String divingCondition;
 
 }
