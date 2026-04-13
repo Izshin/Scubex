@@ -181,7 +181,7 @@ const MapPage = observer(() => {
                   onClick={() => { setMode('scan'); setPublishCoords(null); }}
                   className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                     mode === 'scan'
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md -m-px rounded-lg'
+                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -191,7 +191,7 @@ const MapPage = observer(() => {
                   onClick={() => setMode('publish')}
                   className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                     mode === 'publish'
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md -m-px rounded-lg'
+                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
