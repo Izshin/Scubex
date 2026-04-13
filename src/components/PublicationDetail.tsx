@@ -295,6 +295,39 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                   </div>
                 </div>
 
+                {/* Delete button */}
+                {!confirmDelete ? (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="w-full px-4 py-2 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M1.5 3.5h11M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5M3 3.5l.5 8.5a1 1 0 001 1h5a1 1 0 001-1l.5-8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Eliminar publicación
+                  </button>
+                ) : (
+                  <div className="bg-red-50 rounded-xl p-3 space-y-2 border border-red-200">
+                    <p className="text-xs text-red-600 font-medium text-center">¿Seguro que quieres eliminar esta publicación?</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        disabled={saving}
+                        className="flex-1 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs transition-all disabled:opacity-50"
+                      >
+                        No, cancelar
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        disabled={saving}
+                        className="flex-1 px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {saving ? 'Eliminando...' : 'Sí, eliminar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => { setEditing(false); setConfirmDelete(false); }}
@@ -310,38 +343,6 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                   >
                     {saving ? 'Guardando...' : 'Guardar'}
                   </button>
-                </div>
-
-                {/* Delete zone */}
-                <div className="pt-3 border-t border-gray-100">
-                  {!confirmDelete ? (
-                    <button
-                      onClick={() => setConfirmDelete(true)}
-                      className="text-xs text-red-400 hover:text-red-500 transition-colors"
-                    >
-                      Eliminar publicación
-                    </button>
-                  ) : (
-                    <div className="bg-red-50 rounded-xl p-3 space-y-2">
-                      <p className="text-xs text-red-600 font-medium">¿Seguro que quieres eliminar esta publicación?</p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setConfirmDelete(false)}
-                          disabled={saving}
-                          className="flex-1 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs transition-all disabled:opacity-50"
-                        >
-                          No, cancelar
-                        </button>
-                        <button
-                          onClick={handleDelete}
-                          disabled={saving}
-                          className="flex-1 px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-all disabled:opacity-50"
-                        >
-                          {saving ? 'Eliminando...' : 'Sí, eliminar'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </>
             ) : (
