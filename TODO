@@ -118,6 +118,70 @@ TD11. Sistema de caché (backend) — 0% documentado
   - CachedWeather: TTL 30 min, redondeo a 2 decimales
   - Repositorios con queries por Instant cutoff
 
+TD12(!!). Sistema de interacciones (Fase 2) — 0% documentado
+  - Backend:
+    · PublicationLike entity: user + publication FK, unique constraint, Instant createdAt
+    · PublicationSave entity: user + publication FK, unique constraint, Instant createdAt
+    · Comment entity: text, user FK, publication FK, Instant createdAt
+    · PublicationLikeRepository: existsBy, countBy, findByUserAndPublication
+    · PublicationSaveRepository: existsBy, findByUserAndPublication, findByUserIdOrderByCreatedAtDesc
+    · CommentRepository: findByPublicationIdOrderByCreatedAtDesc, countByPublicationId
+    · InteractionService: toggleLike, toggleSave, addComment, deleteComment, getComments, counts, getSavedByUser
+    · InteractionController: endpoints bajo /api/publications/{pubId}/
+      - POST /like (toggle), GET /like/status
+      - POST /save (toggle), GET /save/status
+      - GET /comments, POST /comments, DELETE /comments/{commentId}
+    · PublicationController.toDto ampliado: incluye likeCount, commentCount
+  - Frontend:
+    · Tipos API: CommentData, LikeStatus, SaveStatus
+    · Funciones API: toggleLike, getLikeStatus, toggleSave, getSaveStatus, getComments, addComment, deleteComment
+    · PublicationDetail ampliado:
+      - Botón corazón (rojo al dar like) con contador
+      - Botón comentario (toggle sección) con contador
+      - Botón bookmark (cyan al guardar)
+      - Sección de comentarios: input, lista con avatar/nombre/fecha, eliminar propios
+    · Vista compacta: muestra likeCount/commentCount cuando > 0
+
+TD13(!!). Sistema social (Fase 3) — 0% documentado
+  - Backend:
+    · UserFollow entity: follower + followed ManyToOne a User, unique constraint, indexes, Instant createdAt
+    · UserFollowRepository: findBy, existsBy, countBy (followers/following), list followers/following
+    · FollowService: toggleFollow (previene auto-follow), isFollowing, getFollowerCount, getFollowingCount, getFollowers, getFollowing
+    · UserPublicController: endpoints bajo /api/users/
+      - GET /{email} — perfil público (nombre, foto, followerCount, followingCount, isFollowing, publicaciones)
+      - POST /{email}/follow — toggle follow, devuelve {following, followerCount}
+      - GET /{email}/followers — lista de seguidores (UserSummary DTOs)
+      - GET /{email}/following — lista de seguidos
+      - GET /me/saved — publicaciones guardadas del usuario autenticado
+    · SecurityConfig: GET /api/users/** permitAll, POST/DELETE autenticado
+    · UserRepository: findByEmail
+    · UserService: findByEmail, findById
+  - Frontend:
+    · Tipos API: PublicProfileData, UserSummary, FollowStatus
+    · Funciones API: getPublicProfile, toggleFollow, getFollowers, getFollowingList, getSavedPublications
+    · Página UserProfile.tsx (/user/:email):
+      - Avatar, nombre, email
+      - Stats: seguidores/siguiendo/publicaciones (clicables → modal lista)
+      - Botón seguir/dejar de seguir (gradiente vs outlined)
+      - Grid de publicaciones con imagen, likes, comentarios
+      - Modal seguidores/siguiendo: lista de usuarios navegables
+    · Página Profile.tsx rediseñada:
+      - Layout horizontal (desktop): avatar izquierda + info/stats/botones derecha
+      - Stats: publicaciones, seguidores (clicable), siguiendo (clicable)
+      - Tabs: "Publicaciones" (propias) / "Guardadas" (bookmarked)
+      - Grid publicaciones con likes/comentarios, en guardadas muestra autor
+      - Modal seguidores/siguiendo con navegación a perfiles
+      - Selector de transición integrado junto a botones de acción
+    · PublicationDetail: autores clicables (compact, expanded, comentarios) → navega a /user/{email}
+    · Ruta /user/:email en App.tsx con wave transition
+    · Map.tsx: focusPublication state → al venir del perfil, vuela a coordenadas de la publicación
+
+TD14. Geocoding inverso mejorado — 0% documentado
+  - PublicationPopup: cascade de Nominatim zoom 14 → 10 → 5
+  - Extrae: beach, tourism, natural, city, town, village, municipality, county, state
+  - Fallback "Mar abierto" si no encuentra nada
+  - Permite mostrar localización al crear publicación incluso en el agua
+
 === SECCIONES VACÍAS POR RELLENAR ===
 
 TD-MANUAL. Manual de usuario (Manual.tex) — 100% vacío
@@ -127,7 +191,7 @@ TD-MANUAL. Manual de usuario (Manual.tex) — 100% vacío
 TD-CONCL. Conclusiones (Conclusiones.tex) — 100% vacío
   - Post-mortem: qué fue bien / qué fue mal
   - Métricas reales vs estimadas
-  - Trabajos futuros (likes, comentarios, guardados — mencionados en UI)
+  - Trabajos futuros
   - Discusión
 
 TD-PLAN. Actualizar Planificación (Planificacion.tex) — fechas placeholder

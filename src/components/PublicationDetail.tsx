@@ -30,6 +30,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
 
+  // Place name from reverse geocoding
+  const [placeName, setPlaceName] = useState('');
+
   // Interaction state
   const userStore = useUserStore();
   const { startWaveTransition } = useWaveTransition();
@@ -50,6 +53,35 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
       getSaveStatus(publication.id).then(s => setSaved(s.saved)).catch(() => {});
     }
   }, [expanded, publication.id, userStore.isLoggedIn]);
+
+  // Reverse geocode when expanded
+  useEffect(() => {
+    if (!expanded || placeName) return;
+    const controller = new AbortController();
+    const opts = { signal: controller.signal };
+    const extractName = (data: { address?: Record<string, string>; display_name?: string; error?: string }) => {
+      if (data.error) return '';
+      const addr = data.address;
+      return addr?.beach || addr?.tourism || addr?.natural || addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || addr?.state || '';
+    };
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=14&accept-language=es`, opts)
+      .then(r => r.json())
+      .then(data => {
+        const name = extractName(data);
+        if (name) { setPlaceName(name); return; }
+        return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=10&accept-language=es`, opts)
+          .then(r => r.json())
+          .then(data2 => {
+            const name2 = extractName(data2);
+            if (name2) { setPlaceName(name2); return; }
+            return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=5&accept-language=es`, opts)
+              .then(r => r.json())
+              .then(data3 => { setPlaceName(extractName(data3) || 'Mar abierto'); });
+          });
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [expanded, publication.latitude, publication.longitude, placeName]);
 
   // Fetch comments when section opened
   useEffect(() => {
@@ -398,11 +430,14 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                   <img src={publication.imageUrl} alt="" className="w-full rounded-xl object-contain max-h-[60vh] bg-gray-50" />
                 )}
                 <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
                     <path d="M7 0C3.686 0 1 3.134 1 7c0 5.25 6 7 6 7s6-1.75 6-7c0-3.866-2.686-7-6-7z" fill="#06b6d4" opacity="0.3" />
                     <circle cx="7" cy="6.5" r="2" fill="#06b6d4" />
                   </svg>
-                  <span className="font-mono">{publication.latitude.toFixed(4)}, {publication.longitude.toFixed(4)}</span>
+                  <div className="flex flex-col gap-0.5">
+                    {placeName && <span className="text-cyan-600 font-medium">{placeName}</span>}
+                    <span className="font-mono">{publication.latitude.toFixed(4)}, {publication.longitude.toFixed(4)}</span>
+                  </div>
                 </div>
 
                 {/* Like / Save / Comment bar */}

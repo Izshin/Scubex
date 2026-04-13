@@ -225,9 +225,17 @@ const Profile = observer(function Profile() {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-8">
               {/* Avatar */}
               {user.picture ? (
-                <img src={user.picture} alt={user.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 shadow-lg object-cover flex-shrink-0" />
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white/30 shadow-lg object-cover flex-shrink-0 cursor-pointer"
+                  onClick={(e) => { e.currentTarget.classList.remove('animate-coin-spin'); void e.currentTarget.offsetWidth; e.currentTarget.classList.add('animate-coin-spin'); }}
+                />
               ) : (
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-cyan-500 flex items-center justify-center text-white text-4xl sm:text-5xl shadow-lg flex-shrink-0">
+                <div
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-cyan-500 flex items-center justify-center text-white text-4xl sm:text-5xl shadow-lg flex-shrink-0 cursor-pointer"
+                  onClick={(e) => { e.currentTarget.classList.remove('animate-coin-spin'); void e.currentTarget.offsetWidth; e.currentTarget.classList.add('animate-coin-spin'); }}
+                >
                   {user.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
               )}
@@ -254,8 +262,8 @@ const Profile = observer(function Profile() {
                 </div>
 
                 {/* Action buttons + transition */}
-                <div className="flex items-center justify-center sm:justify-between gap-3 mt-4 flex-wrap">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-5">
+                  <div className="flex items-center justify-center sm:justify-start gap-4">
                     <button
                       onClick={startEditing}
                       className="px-5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all"
@@ -269,14 +277,14 @@ const Profile = observer(function Profile() {
                       Cerrar sesión
                     </button>
                   </div>
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-white/30 text-[10px]">Transición</span>
-                    <div className="flex items-center gap-0.5 p-0.5 rounded-full bg-white/5 border border-white/10">
+                  <div className="flex flex-col items-center">
+                    <span className="text-white/30 text-[9px] mb-0.5">Transición</span>
+                    <div className="flex items-center gap-0.5 p-px rounded-full bg-white/5 border border-white/10">
                       {([['normal', 'Normal'], ['fast', 'Rápida'], ['none', 'Sin']] as const).map(([value, label]) => (
                         <button
                           key={value}
                           onClick={() => setTransitionSpeed(value)}
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] transition-all ${
+                          className={`px-2.5 py-1 rounded-full text-[10px] transition-all ${
                             transitionSpeed === value
                               ? 'bg-cyan-400 text-white font-semibold shadow'
                               : 'text-white/50 hover:text-white/70'

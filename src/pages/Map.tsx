@@ -175,9 +175,9 @@ const MapPage = observer(() => {
             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 transition-all"
           >
             {userStore.user?.picture ? (
-              <img src={userStore.user.picture} alt={userStore.user.name} className="w-7 h-7 rounded-full" />
+              <img src={userStore.user.picture} alt={userStore.user.name} className="w-7 h-7 rounded-full active:animate-coin-spin" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+              <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-bold active:animate-coin-spin">
                 {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
               </div>
             )}
