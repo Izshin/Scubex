@@ -9,7 +9,7 @@ class MapStore {
   
   // Scan target (where user clicked)
   scanCenter: { lat: number; lng: number } | null = null;
-  scanRadius = 2000; // meters, user-configurable
+  scanRadius = 500; // meters, user-configurable
   
   // UI state
   selectedSpecies: SpeciesData | null = null;
