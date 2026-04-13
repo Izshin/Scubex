@@ -125,7 +125,7 @@ const MapPage = observer(() => {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-dvh flex flex-col bg-gray-50 overflow-hidden">
       {/* Header fijo */}
       <header className="bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg h-16 flex items-center justify-between px-6 flex-shrink-0 z-20">
         <a
@@ -169,7 +169,7 @@ const MapPage = observer(() => {
 
           {/* Controls bar: mode toggle + radius selector + action button */}
           <motion.div
-            className="absolute bottom-5 left-4 right-4 sm:right-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-3 sm:px-4 py-3 z-10 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3"
+            className="absolute bottom-3 sm:bottom-5 left-3 sm:left-4 right-3 sm:right-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-3 sm:px-4 py-2.5 sm:py-3 z-10 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
@@ -343,15 +343,18 @@ const MapPage = observer(() => {
                 className="absolute top-0 right-0 h-full w-full sm:w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
                 style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
               >
-                {/* Mobile close button */}
-                <button
-                  className="sm:hidden absolute top-3 right-3 z-10 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </button>
+                {/* Mobile back button */}
+                <div className="sm:hidden flex items-center gap-2 px-3 py-2.5 border-b border-gray-200">
+                  <button
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M13 3L6 10L13 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <span className="text-sm font-semibold text-gray-700">Especies</span>
+                </div>
                 <SpeciesPanel 
                   loading={speciesStore.isLoading} 
                   data={speciesStore.speciesData || undefined} 

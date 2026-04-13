@@ -131,7 +131,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   return (
     <div className="h-full flex flex-col">
       {/* Header del panel */}
-      <div className="p-3 sm:p-4 pt-10 sm:pt-4">
+      <div className="p-3 sm:p-4">
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies distintas</span>
           {data.source && (
