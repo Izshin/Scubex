@@ -169,7 +169,7 @@ const MapPage = observer(() => {
 
           {/* Controls bar: mode toggle + radius selector + action button */}
           <motion.div
-            className="absolute bottom-5 left-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-4 py-3 z-10 flex items-center gap-3"
+            className="absolute bottom-5 left-4 right-4 sm:right-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-3 sm:px-4 py-3 z-10 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
@@ -201,18 +201,18 @@ const MapPage = observer(() => {
             )}
 
             {/* Divider — only when toggle is shown */}
-            {userStore.isLoggedIn && <div className="w-px h-8 bg-gray-300" />}
+            {userStore.isLoggedIn && <div className="w-px h-8 bg-gray-300 hidden sm:block" />}
 
             {mode === 'scan' ? (
               <>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Radio</span>
-                <div className="flex gap-1">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:inline">Radio</span>
+                <div className="flex gap-1 flex-wrap sm:flex-nowrap">
                   {RADIUS_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => handleRadiusChange(opt.value)}
                       disabled={isScanning}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                         mapStore.scanRadius === opt.value
                           ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/30"
                           : "text-gray-600 hover:bg-gray-100"
@@ -224,13 +224,13 @@ const MapPage = observer(() => {
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-8 bg-gray-300" />
+                <div className="w-px h-8 bg-gray-300 hidden sm:block" />
 
                 {/* Scan button */}
                 <motion.button
                   onClick={handleScan}
                   disabled={!mapStore.scanCenter || isScanning}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 w-full sm:w-auto justify-center ${
                     mapStore.scanCenter && !isScanning
                       ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-cyan-500/30 hover:from-blue-600 hover:to-cyan-600"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -319,9 +319,9 @@ const MapPage = observer(() => {
           {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}
           {hasScanned && (
             <>
-              {/* Toggle tab */}
+              {/* Toggle tab — hidden on mobile when sidebar is open (use close button instead) */}
               <button
-                className="absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out"
+                className={`absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out ${sidebarOpen ? 'hidden sm:block' : ''}`}
                 style={{ right: sidebarOpen ? 400 : 0 }}
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
@@ -338,11 +338,20 @@ const MapPage = observer(() => {
                 </div>
               </button>
 
-              {/* Sidebar panel — slides via transform, no layout reflow */}
+              {/* Sidebar panel — full width on mobile, 400px on sm+ */}
               <div
-                className="absolute top-0 right-0 h-full w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
+                className="absolute top-0 right-0 h-full w-full sm:w-[400px] z-20 bg-white shadow-xl border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out"
                 style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
               >
+                {/* Mobile close button */}
+                <button
+                  className="sm:hidden absolute top-3 right-3 z-10 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
                 <SpeciesPanel 
                   loading={speciesStore.isLoading} 
                   data={speciesStore.speciesData || undefined} 

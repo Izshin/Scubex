@@ -52,7 +52,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   if (loading) {
     return (
       <motion.div 
-        className="p-6 h-full"
+        className="p-4 sm:p-6 h-full"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -113,7 +113,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   
   if (!data) {
     return (
-      <div className="p-6 h-full flex flex-col items-center justify-center text-center">
+      <div className="p-4 sm:p-6 h-full flex flex-col items-center justify-center text-center">
         <div className="text-6xl mb-4">🌊</div>
         <h3 className="text-lg font-semibold text-gray-700 mb-2">Explora el océano</h3>
         <p className="text-gray-500 mb-4">
@@ -131,7 +131,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
   return (
     <div className="h-full flex flex-col">
       {/* Header del panel */}
-      <div className="p-4 ">
+      <div className="p-3 sm:p-4 pt-10 sm:pt-4">
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>📊 <strong>{data.counts?.total_taxa ?? 0}</strong> especies distintas</span>
           {data.source && (
@@ -148,7 +148,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
       </div>
 
       {/* Lista de especies */}
-      <div className="flex-1 overflow-auto p-4 space-y-3 custom-scrollbar">
+      <div className="flex-1 overflow-auto p-3 sm:p-4 space-y-2 sm:space-y-3 custom-scrollbar">
         <AnimatePresence>
           {data.species?.length === 0 ? (
             <motion.div 
@@ -173,7 +173,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
             data.species?.map((s, index) => (
               <motion.div 
                 key={s.taxon_id} 
-                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-default group"
+                className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-default group"
                 initial={{ opacity: 0, x: -20, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 20, scale: 0.95 }}
@@ -196,7 +196,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                   </div>
                   {/* Show photo if available, otherwise show phylum-specific emoji */}
                   <motion.div 
-                    className="w-16 h-16 flex-shrink-0"
+                    className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0"
                     whileHover={{ 
                       scale: 1.1,
                       transition: { duration: 0.2 }

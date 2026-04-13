@@ -8,58 +8,142 @@ Backend:
 TB1. Implement Open-Meteo API for weather (wind, temperature) and marine conditions (waves, currents, water temp)
 
 Docs:
-TD1(!). Document the OPEN API integration with swagger, the models, service, controller and DTO for species retrieval
+=== YA DOCUMENTADO (revisar/completar) ===
 
-TD2(!). Related to TD1, How the frontend handles such petitions, talk about mapView, animations and "scans".
+TD1(~80%). Documentación de Species Scanner (iteracion1.tex original):
+  - ✅ SpeciesService pseudo-código, SpeciesResponse DTO, Swagger
+  - ✅ Memos: geometría WKT, filtrado microorganismos
+  - ✅ Tests: 4 casos, 87% cobertura
+  - ❌ Falta: actualizar con el sistema de caché (CachedScan, rounding adaptativo, TTL 48h)
+  - ❌ Falta: documentar el endpoint GET /api/species/scan con params
 
-TD3. Talk about project configuration, such as application properties and security configuration
+TD2(~50%). Frontend del scanner de especies (iteracion1.tex original):
+  - ✅ MapView, MapRender, SpeciesPanel, ScanningAnimation (radar 45°, puntos cada 80ms)
+  - ✅ MobX stores (MapStore, SpeciesStore)
+  - ❌ Falta: flujo completo scan → publish mode toggle
+  - ❌ Falta: marcadores de publicaciones en el mapa
 
-TD4(!!). Documentar el sistema de información climatológica:
-  - Integración con Open-Meteo API (forecast + marine endpoints)
-  - Backend: WeatherService, WeatherController, WeatherData DTO
-  - Caché de 30 min (CachedWeather, CachedWeatherRepository)
-  - Frontend: WeatherPanel.tsx (códigos WMO, iconos, panel colapsable/expandible)
-  - Diseño de la UI del panel meteorológico
+TD3(~40%). Configuración del proyecto (Arranque.tex parcial):
+  - ✅ application.properties (puerto, H2/PostgreSQL, CORS)
+  - ✅ SecurityConfig mencionado
+  - ❌ Falta: variables de entorno (GOOGLE_CLIENT_ID, JWT_SECRET, DATABASE_URL)
+  - ❌ Falta: configuración Vercel (vite.config.ts, redirects)
+  - ❌ Falta: configuración Railway
 
-TD5(!!). Documentar la lógica de condiciones de buceo (DivingConditions):
-  - Sistema de puntuación ponderada (weighted scoring)
-  - Umbrales críticos (olas >2.5m, corriente >5km/h, viento >40km/h, tormentas, visibilidad <1000m)
-  - Pesos por factor: oleaje(3), corriente(3), visibilidad(2), viento(2), código meteorológico(2), probabilidad precipitación(1)
-  - Evaluación: ≥1.5 bueno, ≥0.8 moderado, <0.8 malo
-  - Justificación de los umbrales y pesos elegidos
+TD-AUTH(~30%). Autenticación OAuth2 (Documentacion_Nuevo/iteracion1.tex):
+  - ✅ Flujo OAuth2 frontend-driven, User entity, JwtService, AuthController
+  - ✅ Memo decisión: frontend-driven vs server-side
+  - ✅ 6 tests manuales
+  - ❌ Falta: JwtAuthFilter detallado (extractToken, validación cadena)
+  - ❌ Falta: SecurityConfig filterChain completo
+  - ❌ Falta: protección de endpoints (qué es público, qué autenticado)
+  - ⚠️ OJO: Este archivo es OTRO iteracion1.tex en Documentacion_Nuevo/
+  -    → Decidir si se fusiona con el original o se renombra
 
-TD6(!!). Documentar el sistema de publicaciones completo:
-  - Backend: Publication entity, PublicationService, PublicationController (CRUD)
-  - Subida de imágenes: UploadedImage entity, ImageController (multipart, 5MB max)
-  - Frontend: PublicationPopup (crear), PublicationDetail (ver compacto + expandido), PublicationStore
-  - Marcadores en el mapa (MapRender)
-  - Geocodificación inversa (Nominatim)
-  - Interacción entre modos scan/publish
+=== SIN DOCUMENTAR (por escribir) ===
 
-TD7(!). Documentar la seguridad y autenticación:
-  - Flujo OAuth2 con Google (GoogleAuthController)
-  - JwtService: generación y validación de tokens
-  - JwtAuthFilter: filtro en la cadena de seguridad
-  - SecurityConfig: CORS, CSRF desactivado, endpoints públicos vs autenticados
-  - Persistencia en localStorage (frontend)
-  - Protección de endpoints (publicaciones, imágenes, perfil)
+TD4(!!). Sistema de información climatológica — 0% documentado
+  - Backend: WeatherService (Open-Meteo forecast + marine), WeatherController GET /api/weather
+  - WeatherResponse DTO: 19 campos (temp, humedad, viento, olas, corriente, SST, visibilidad...)
+  - Caché: CachedWeather entity, TTL 30 min, redondeo coordenadas a 2 decimales
+  - Frontend: WeatherPanel.tsx (3 estados: minimizado, compacto, expandido con guía de buceo)
+  - Códigos WMO → iconos/texto (mapeo completo 0-99)
+  - Panel de información con explicación de cada propiedad
 
-TD8. Documentar el sistema de perfil de usuario:
-  - Edición de nombre y foto de perfil
-  - Subida de foto desde archivo local (reutiliza ImageController)
-  - UserController, UserService
+TD5(!!). Lógica de condiciones de buceo — 0% documentado
+  - WeatherService.evaluateDivingConditions()
+  - Umbrales críticos (override inmediato → "bad"):
+    · Olas > 2.5m, Corriente > 5 km/h, Viento > 40 km/h
+    · Tormentas (WMO 95/96/99), Visibilidad < 1000m
+  - Puntuación ponderada por factor:
+    · Oleaje (peso 3): <0.5m bueno / 0.5-1.5m mod / >1.5m malo
+    · Corriente (peso 3): <1 km/h / 1-3 km/h / >3 km/h
+    · Visibilidad (peso 2): >10km / 2-10km / <2km
+    · Viento (peso 2): <15 km/h / 15-30 / >30
+    · Código WMO (peso 2): despejado / lluvia / tormenta
+    · Precipitación (peso 1): <20% / 20-60% / >60%
+  - Evaluación: media ponderada ≥1.5 = bueno, ≥0.8 = moderado, <0.8 = malo
+  - Justificación técnica de umbrales y pesos
 
-TD9. Documentar la transición de ola (WaveTransition):
-  - TransitionContext, TransitionProvider
-  - 3 modos: normal (~2s), rápida (1.2s), sin transición
-  - Framer Motion clip-path animation
-  - Persistencia de preferencia en localStorage
+TD6(!!). Sistema de publicaciones completo — 0% documentado
+  - Publication entity: title, description, imageUrl, lat/lng, user FK, timestamps
+  - PublicationService: create, getAll, getByUser, getInArea, getById, update, delete
+  - PublicationController: 7 endpoints (POST, GET all, GET /area, GET /{id}, GET /mine, PUT, DELETE)
+  - Ownership check: solo el autor puede editar/borrar (compara user_id)
+  - Subida de imágenes: UploadedImage entity (BLOB), ImageController
+    · POST /api/images/upload (multipart, 5MB max, JPEG/PNG/GIF/WebP)
+    · GET /api/images/{id} (público, cache 1 año)
+  - Frontend:
+    · PublicationPopup: crear publicación (título, descripción, foto, geocoding inverso Nominatim)
+    · PublicationDetail: vista compacta (bocadillo) + expandida (modal con backdrop blur)
+    · Modo edición: campos editables + confirmación de borrado en 2 pasos
+    · PublicationStore: MobX CRUD
+    · MapRender: marcadores de publicaciones como pins en el mapa
+  - Interacción modos scan/publish, mutuamente exclusivos
 
-TD10. Documentar arquitectura frontend:
-  - React + Vite + TypeScript
-  - MobX stores (UserStore, SpeciesStore, PublicationStore, MapStore, WeatherStore)
-  - Componentes principales y su relación
-  - Tailwind CSS + Framer Motion
+TD7(!). Seguridad completa — fusionar con TD-AUTH
+  - Completar lo que falta de TD-AUTH (JwtAuthFilter, SecurityConfig filterChain)
+  - Documentar endpoints protegidos vs públicos:
+    · Públicos: GET /api/species/*, GET /api/weather, GET /api/publications/*, GET /api/images/*
+    · Autenticados: POST/PUT/DELETE publications, POST images/upload, GET/PUT /api/profile
+  - CORS: origins permitidos (localhost:5173, vercel URL)
+
+TD8. Sistema de perfil de usuario — 0% documentado
+  - User entity: campos originales (Google) + campos custom (customName, customPictureUrl)
+  - getDisplayName()/getDisplayPicture(): prioriza custom sobre Google
+  - ProfileController: GET /api/profile, PUT /api/profile
+  - Frontend Profile.tsx: edición nombre + subida foto (reutiliza ImageController)
+  - Token renovado tras actualizar perfil
+
+TD9. Transición de ola — 0% documentado
+  - TransitionContext/TransitionProvider en transition.ts
+  - WaveTransition: clip-path polygon animation con Framer Motion
+  - 3 modos configurables: normal (~2s), rápida (1.2s), sin transición
+  - Persistencia preferencia en localStorage
+  - Contenido visual: burbujas, espuma, partículas en bucle
+
+TD10. Arquitectura frontend — 0% documentado
+  - Stack: React 18 + Vite + TypeScript + Tailwind CSS + Framer Motion
+  - Estado: MobX stores (RootStore, UserStore, SpeciesStore, MapStore, WeatherStore, PublicationStore)
+  - Mapa: MapLibre GL JS con react-map-gl wrapper
+  - Routing: React Router con AnimatePresence
+  - API layer: api.ts centralizado con getAuthHeaders()
+
+TD11. Sistema de caché (backend) — 0% documentado
+  - CachedScan: TTL 48h, rounding adaptativo por radio:
+    · ≤1000m → 0.01° (~1.1km)
+    · ≤2000m → 0.05° (~5.5km)
+    · >2000m → 0.1° (~11km)
+  - Reutilización inteligente: cache con radio mayor sirve para query menor
+  - CachedWeather: TTL 30 min, redondeo a 2 decimales
+  - Repositorios con queries por Instant cutoff
+
+=== SECCIONES VACÍAS POR RELLENAR ===
+
+TD-MANUAL. Manual de usuario (Manual.tex) — 100% vacío
+  - Guía paso a paso para cada funcionalidad
+  - Capturas de pantalla
+
+TD-CONCL. Conclusiones (Conclusiones.tex) — 100% vacío
+  - Post-mortem: qué fue bien / qué fue mal
+  - Métricas reales vs estimadas
+  - Trabajos futuros (likes, comentarios, guardados — mencionados en UI)
+  - Discusión
+
+TD-PLAN. Actualizar Planificación (Planificacion.tex) — fechas placeholder
+  - Rellenar fechas reales de cada iteración
+  - Rellenar horas reales vs estimadas
+  - Vincular features concretas a cada iteración
+
+TD-COSTES. Completar Costes (costes.tex) — falta infraestructura
+  - Añadir costes Railway (hosting backend)
+  - Añadir costes Vercel (hosting frontend, plan free)
+  - APIs (todas gratuitas: OBIS, iNaturalist, Open-Meteo, Nominatim)
+
+⚠️ DECISIÓN PENDIENTE: Resolver conflicto entre las dos carpetas de documentación
+  - Documentacion/ tiene iteracion1 = Species Scanner
+  - Documentacion_Nuevo/ tiene iteracion1 = OAuth2
+  - Decidir estructura final: ¿fusionar? ¿renombrar iteraciones?
 
 Considering:
 Security if deployed on appstore.
