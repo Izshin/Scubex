@@ -1,13 +1,16 @@
 package com.scubex.service;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,10 +20,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.scubex.DTO.SpeciesResponse;
+import com.scubex.model.CachedScan;
+import com.scubex.model.CachedSpecies;
 import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
+import com.scubex.repository.CachedScanRepository;
 
 @Service
 public class SpeciesService {
@@ -28,13 +34,68 @@ public class SpeciesService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private CachedScanRepository cachedScanRepository;
+
     @Value("${obis.api.url}")
     private String obisApiUrl;
 
     @Value("${inaturalist.api.taxa}")
     private String iNaturalistApiUrl;
 
+    /**
+     * Adaptive coordinate rounding based on scan radius.
+     * Larger radii use coarser rounding to maximize cache hits.
+     *   - radius <= 1000m  → 0.01° (~1.1 km tolerance)
+     *   - radius <= 2000m  → 0.05° (~5.5 km tolerance)
+     *   - radius >  2000m  → 0.1°  (~11 km tolerance)
+     */
+    private static double roundCoord(double value, double radius) {
+        double step;
+        if (radius <= 1000) {
+            step = 0.01;
+        } else if (radius <= 2000) {
+            step = 0.05;
+        } else {
+            step = 0.1;
+        }
+        return Math.round(value / step) * step;
+    }
+
     public List<SpeciesResponse> getSpeciesInSelectedArea(double lat, double lng, double radius) {
+        double roundedLat = roundCoord(lat, radius);
+        double roundedLng = roundCoord(lng, radius);
+
+        // Check cache: reuse any cached scan with radius >= requested radius
+        Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
+        Optional<CachedScan> cached = cachedScanRepository
+                .findFirstByRoundedLatAndRoundedLngAndRadiusGreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc(
+                        roundedLat, roundedLng, radius, cutoff);
+
+        if (cached.isPresent()) {
+            CachedScan cachedScan = cached.get();
+            boolean needsFilter = cachedScan.getRadius() > radius;
+            System.out.println("✅ Cache HIT for species scan at " + roundedLat + ", " + roundedLng
+                    + " (requested r=" + radius + ", cached r=" + cachedScan.getRadius()
+                    + (needsFilter ? ", filtering by distance)" : ")"));
+            return cachedScan.getSpecies().stream()
+                    .filter(cs -> !needsFilter || isWithinRadius(lat, lng, radius,
+                            cs.getLatitude(), cs.getLongitude()))
+                    .map(cs -> SpeciesResponse.builder()
+                            .commonName(cs.getCommonName())
+                            .scientificName(cs.getScientificName())
+                            .photoUrl(cs.getPhotoUrl())
+                            .recordDate(cs.getRecordDate())
+                            .phylum(cs.getPhylum())
+                            .latitude(cs.getLatitude())
+                            .longitude(cs.getLongitude())
+                            .numberOfOccurrences(cs.getNumberOfOccurrences())
+                            .build())
+                    .toList();
+        }
+
+        System.out.println("⏳ Cache MISS for species scan at " + roundedLat + ", " + roundedLng);
+
         // 1. Create polygon from coordinates + radius
         String polygon = createPolygonFromRadius(lat, lng, radius);
 
@@ -65,6 +126,9 @@ public class SpeciesService {
                 System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
             }
         }
+
+        // Save to cache
+        saveToCache(roundedLat, roundedLng, radius, enrichedSpecies);
 
         return enrichedSpecies;
     }
@@ -292,5 +356,52 @@ public class SpeciesService {
         }
 
         return species;
+    }
+
+    private void saveToCache(double roundedLat, double roundedLng, double radius,
+            List<SpeciesResponse> speciesList) {
+        try {
+            CachedScan scan = CachedScan.builder()
+                    .roundedLat(roundedLat)
+                    .roundedLng(roundedLng)
+                    .radius(radius)
+                    .build();
+
+            List<CachedSpecies> cachedSpeciesList = speciesList.stream()
+                    .map(sr -> CachedSpecies.builder()
+                            .cachedScan(scan)
+                            .commonName(sr.getCommonName())
+                            .scientificName(sr.getScientificName())
+                            .photoUrl(sr.getPhotoUrl())
+                            .recordDate(sr.getRecordDate())
+                            .phylum(sr.getPhylum())
+                            .latitude(sr.getLatitude())
+                            .longitude(sr.getLongitude())
+                            .numberOfOccurrences(sr.getNumberOfOccurrences())
+                            .build())
+                    .toList();
+
+            scan.getSpecies().addAll(cachedSpeciesList);
+            cachedScanRepository.save(scan);
+            System.out.println("💾 Cached " + speciesList.size() + " species for " + roundedLat + ", " + roundedLng);
+        } catch (Exception e) {
+            System.err.println("⚠️ Failed to save species cache: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Haversine check: is the point (pLat, pLng) within radiusMeters of (centerLat, centerLng)?
+     */
+    private static boolean isWithinRadius(double centerLat, double centerLng, double radiusMeters,
+                                          Double pLat, Double pLng) {
+        if (pLat == null || pLng == null) return true; // keep species with no coords
+        double R = 6_371_000; // Earth radius in meters
+        double dLat = Math.toRadians(pLat - centerLat);
+        double dLng = Math.toRadians(pLng - centerLng);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                 + Math.cos(Math.toRadians(centerLat)) * Math.cos(Math.toRadians(pLat))
+                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return dist <= radiusMeters;
     }
 }

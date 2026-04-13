@@ -10,7 +10,8 @@ import { TransitionContext, useWaveTransition } from './lib/transition'
 
 // 2. COMPONENTE DE OLA UNIFICADO
 function WaveTransition({ onRisingComplete, onFallingComplete }: { onRisingComplete: () => void, onFallingComplete: () => void }) {
-  const { wavePhase } = useWaveTransition();
+  const { wavePhase, transitionSpeed } = useWaveTransition();
+  const dur = transitionSpeed === 'fast' ? 0.45 : 0.8;
 
   const waveVariants: Variants = {
     hidden: { 
@@ -18,11 +19,11 @@ function WaveTransition({ onRisingComplete, onFallingComplete }: { onRisingCompl
     },
     rising: { 
       clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-      transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+      transition: { duration: dur, ease: [0.4, 0, 0.2, 1] }
     },
     falling: { 
       clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)",
-      transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+      transition: { duration: dur, ease: [0.4, 0, 0.2, 1] }
     },
   };
 
@@ -172,29 +173,45 @@ function WaveContent() {
 function TransitionProvider({ children }: { children: ReactNode }) {
   const [wavePhase, setWavePhase] = useState<'none' | 'rising' | 'falling'>('none');
   const [targetPath, setTargetPath] = useState<string | null>(null);
+  const [targetState, setTargetState] = useState<Record<string, unknown> | undefined>(undefined);
+  const [transitionSpeed, setTransitionSpeedState] = useState<'normal' | 'fast' | 'none'>(() => {
+    const stored = localStorage.getItem('scubex_transition_speed');
+    return (stored === 'fast' || stored === 'none') ? stored : 'normal';
+  });
   const navigate = useNavigate();
 
-  const startWaveTransition = (path: string) => {
+  const setTransitionSpeed = (v: 'normal' | 'fast' | 'none') => {
+    setTransitionSpeedState(v);
+    localStorage.setItem('scubex_transition_speed', v);
+  };
+
+  const startWaveTransition = (path: string, state?: Record<string, unknown>) => {
     if (wavePhase === 'none') {
+      if (transitionSpeed === 'none') {
+        navigate(path, { state });
+        return;
+      }
       setTargetPath(path);
+      setTargetState(state);
       setWavePhase('rising');
     }
   };
 
   const handleRisingComplete = () => {
     if (targetPath) {
-      navigate(targetPath);
-      setTimeout(() => setWavePhase('falling'), 450);
+      navigate(targetPath, { state: targetState });
+      setTimeout(() => setWavePhase('falling'), transitionSpeed === 'fast' ? 300 : 450);
     }
   };
 
   const handleFallingComplete = () => {
     setWavePhase('none');
     setTargetPath(null);
+    setTargetState(undefined);
   };
 
   return (
-    <TransitionContext.Provider value={{ startWaveTransition, wavePhase }}>
+    <TransitionContext.Provider value={{ startWaveTransition, wavePhase, transitionSpeed, setTransitionSpeed }}>
       {children}
       <AnimatePresence>
         {wavePhase !== 'none' && (

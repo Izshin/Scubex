@@ -24,4 +24,16 @@ public class UserService {
                                 .build()
                 ));
     }
+
+    public User findByGoogleId(String googleId) {
+        return userRepository.findByGoogleId(googleId).orElse(null);
+    }
+
+    public User updateProfile(String googleId, String customName, String customPictureUrl) {
+        User user = userRepository.findByGoogleId(googleId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setCustomName(customName);
+        user.setCustomPictureUrl(customPictureUrl);
+        return userRepository.save(user);
+    }
 }

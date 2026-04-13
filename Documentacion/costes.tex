@@ -17,10 +17,10 @@ En este capítulo se realiza el desglose de los costes asociados al proyecto, ba
 	\textbf{Costes de personal}&14.950 \euro\\
 	Desarrollador Full-Stack&9.750 \euro\\
 	Becario Documentaci\'{o}n&5.200 \euro\\
-	\textbf{Costes materiales}&50 \euro\\
+	\textbf{Costes materiales}&68,40 \euro\\
 	\textbf{Costes indirectos}&1.500 \euro\\
 	\midrule
-	\textbf{TOTAL}&16.500 \euro\\
+	\textbf{TOTAL}&16.518,40 \euro\\
 	\end{coolTable}
 	\caption{Tabla resumen de costes del proyecto}
 \end{table*}
@@ -99,20 +99,31 @@ Para el desarrollo del proyecto se ha utilizado un portátil con un coste de adq
 	\item \textbf{Amortización proporcional} (300h / 1.800h): $300\text{\euro} \times \frac{300}{1.800} = 50\text{\euro}$
 \end{itemize}
 
-\subsection{Dominios y hosting}
+\subsection{Despliegue en la nube}
 
-Actualmente el proyecto se encuentra en fase de desarrollo local y no se ha procedido al despliegue en producción, por lo que no se han incurrido en costes de dominios ni servicios de hosting.
+El proyecto se encuentra desplegado en producción y preproducción mediante dos servicios:
 
-Una vez finalizado el TFG y ante un posible despliegue futuro, se estiman los siguientes costes anuales:
 \begin{itemize}
-	\item Dominio (.es o .com): $\sim$12-15\euro/año
-	\item Hosting VPS básico: $\sim$60-120\euro/año
+	\item \textbf{Railway} (backend Spring Boot + PostgreSQL): Plan Hobby a 5\,USD/mes (\textasciitilde{}4,60\,\euro/mes). Este plan incluye 5\,USD de créditos de uso mensuales; superado ese umbral, se factura por consumo real de recursos. Actualmente debido al tráfico bajo--moderado, el crédito mensual de 5\,USD resulta suficiente.
+	\item \textbf{Vercel} (frontend React/Vite): Plan Hobby gratuito, sin coste.
 \end{itemize}
+
+\textbf{Coste estimado de despliegue durante el desarrollo del TFG} (4 meses):
+
+\begin{equation}
+	\text{Railway} = 4,60\text{\,\euro/mes} \times 4\text{\,meses} = 18,40\text{\,\euro}
+\end{equation}
+
+\begin{equation}
+	\text{Total despliegue} = 18,40\text{\,\euro} + 0\text{\,\euro\,(Vercel)} = 18,40\text{\,\euro}
+\end{equation}
+
+En un escenario de producción real con mayor tráfico, los costes de Railway podrían aumentar proporcionalmente al uso de CPU, RAM y almacenamiento consumidos más allá del crédito incluido. En este caso podría crearse un plan personalizado, que incluya las necesidades concretas de la aplicación.
 
 \subsection{Total costes materiales}
 
 \begin{equation}
-	\text{Total} = 50\text{\euro}
+	\text{Total} = 50\text{\,\euro} + 18,40\text{\,\euro} = 68,40\text{\,\euro}
 \end{equation}
 
 \section{Costes indirectos}
@@ -122,7 +133,7 @@ Los costes indirectos incluyen gastos generales asociados al desarrollo del proy
 Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y materiales:
 
 \begin{equation}
-	\text{Costes indirectos} = (14.950\text{\euro} + 50\text{\euro}) \times 0.10 = 1.500\text{\euro}
+	\text{Costes indirectos} = (14.950\text{\,\euro} + 68,40\text{\,\euro}) \times 0.10 = 1.501,84\text{\,\euro} \approx 1.500\text{\,\euro}
 \end{equation}
 
 \section{Coste total del proyecto}
@@ -136,10 +147,12 @@ Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y
 	Costes de personal&14.950\euro\\
 	\quad Desarrollador Full-Stack&9.750\euro\\
 	\quad Becario Documentaci\'{o}n&5.200\euro\\
-	Costes materiales&50\euro\\
+	Costes materiales&68,40\euro\\
+	\quad Amortización equipamiento&50\euro\\
+	\quad Despliegue Railway (4 meses)&18,40\euro\\
 	Costes indirectos&1.500\euro\\
 	\midrule
-	\textbf{TOTAL PROYECTO}&\textbf{16.500\euro}\\
+	\textbf{TOTAL PROYECTO}&\textbf{16.518,40\euro}\\
 	\end{coolTable}
 	\caption{Coste total del proyecto Scubex}
 \end{table*}

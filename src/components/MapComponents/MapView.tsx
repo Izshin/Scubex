@@ -2,18 +2,21 @@ import { useRef, forwardRef, useImperativeHandle, useMemo } from "react";
 import { Map } from "maplibre-gl";
 import MapRender, { type MapRenderRef } from "./MapRender";
 import ScanningAnimation from "./ScanningAnimation";
+import type { PublicationData } from "../../lib/api";
 
 type Props = { 
   onViewportIdle?: (bbox: number[]) => void;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
+  onPublicationClick?: (pub: PublicationData) => void;
   isScanning?: boolean;
   scanCenter?: { lat: number; lng: number } | null;
   scanRadius?: number;
+  publications?: PublicationData[];
 };
 
 export type MapViewRef = { getMap: () => Map | null };
 
-export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, onMapClick, isScanning = false, scanCenter, scanRadius }, forwardedRef) {
+export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publications }, forwardedRef) {
   const mapRenderRef = useRef<MapRenderRef>(null);
 
   useImperativeHandle(forwardedRef, () => ({
@@ -39,9 +42,11 @@ export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, 
         ref={mapRenderRef}
         onViewportIdle={onViewportIdle}
         onMapClick={onMapClick}
+        onPublicationClick={onPublicationClick}
         isScanning={isScanning}
         scanCenter={scanCenter}
         scanRadius={scanRadius}
+        publications={publications}
       />
       <ScanningAnimation 
         isScanning={isScanning}

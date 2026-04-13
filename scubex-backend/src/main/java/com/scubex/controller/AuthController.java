@@ -64,9 +64,9 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                     "token", jwt,
                     "user", Map.of(
-                            "name", user.getName() != null ? user.getName() : "",
+                            "name", user.getDisplayName() != null ? user.getDisplayName() : "",
                             "email", user.getEmail(),
-                            "picture", user.getPictureUrl() != null ? user.getPictureUrl() : ""
+                            "picture", user.getDisplayPicture() != null ? user.getDisplayPicture() : ""
                     )
             ));
         } catch (Exception e) {

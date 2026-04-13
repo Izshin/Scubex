@@ -25,3 +25,5 @@ export const useStore = (): RootStore => {
 export const useSpeciesStore = () => useStore().speciesStore;
 export const useMapStore = () => useStore().mapStore;
 export const useUserStore = () => useStore().userStore;
+export const useWeatherStore = () => useStore().weatherStore;
+export const usePublicationStore = () => useStore().publicationStore;
