@@ -37,6 +37,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/species/**", "/api/weather/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/images/**").permitAll()
+                .requestMatchers("/api/images/**").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/publications/**").permitAll()
+                .requestMatchers("/api/publications/**").authenticated()
                 .requestMatchers("/api/profile/**").authenticated()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()

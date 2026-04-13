@@ -1,0 +1,153 @@
+package com.scubex.controller;
+
+import com.scubex.model.Publication;
+import com.scubex.model.User;
+import com.scubex.service.PublicationService;
+import com.scubex.service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/publications")
+public class PublicationController {
+
+    private final PublicationService publicationService;
+    private final UserService userService;
+
+    public PublicationController(PublicationService publicationService, UserService userService) {
+        this.publicationService = publicationService;
+        this.userService = userService;
+    }
+
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody Map<String, Object> body, Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        User user = userService.findByGoogleId(auth.getName());
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        String title = (String) body.get("title");
+        String description = (String) body.get("description");
+        String imageUrl = (String) body.get("imageUrl");
+        Double latitude = ((Number) body.get("latitude")).doubleValue();
+        Double longitude = ((Number) body.get("longitude")).doubleValue();
+
+        if (title == null || title.isBlank() || latitude == null || longitude == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Title, latitude and longitude are required"));
+        }
+
+        Publication publication = Publication.builder()
+                .user(user)
+                .title(title)
+                .description(description)
+                .imageUrl(imageUrl)
+                .latitude(latitude)
+                .longitude(longitude)
+                .build();
+
+        Publication saved = publicationService.create(publication);
+        return ResponseEntity.ok(toDto(saved));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAll() {
+        List<Publication> publications = publicationService.getAll();
+        return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
+    }
+
+    @GetMapping("/area")
+    public ResponseEntity<?> getInArea(
+            @RequestParam Double latMin,
+            @RequestParam Double latMax,
+            @RequestParam Double lngMin,
+            @RequestParam Double lngMax) {
+        List<Publication> publications = publicationService.getInArea(latMin, latMax, lngMin, lngMax);
+        return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        Publication publication = publicationService.getById(id);
+        if (publication == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
+        }
+        return ResponseEntity.ok(toDto(publication));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<?> getMine(Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        User user = userService.findByGoogleId(auth.getName());
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+        List<Publication> publications = publicationService.getByUser(user);
+        return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        User user = userService.findByGoogleId(auth.getName());
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        Publication updated = Publication.builder()
+                .title((String) body.get("title"))
+                .description((String) body.get("description"))
+                .imageUrl((String) body.get("imageUrl"))
+                .build();
+
+        Publication result = publicationService.update(id, updated, user);
+        if (result == null) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized or not found"));
+        }
+        return ResponseEntity.ok(toDto(result));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id, Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        User user = userService.findByGoogleId(auth.getName());
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        boolean deleted = publicationService.delete(id, user);
+        if (!deleted) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized or not found"));
+        }
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    private Map<String, Object> toDto(Publication p) {
+        return Map.of(
+                "id", p.getId(),
+                "title", p.getTitle(),
+                "description", p.getDescription() != null ? p.getDescription() : "",
+                "imageUrl", p.getImageUrl() != null ? p.getImageUrl() : "",
+                "latitude", p.getLatitude(),
+                "longitude", p.getLongitude(),
+                "createdAt", p.getCreatedAt().toString(),
+                "author", Map.of(
+                        "email", p.getUser().getEmail() != null ? p.getUser().getEmail() : "",
+                        "name", p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : "",
+                        "picture", p.getUser().getDisplayPicture() != null ? p.getUser().getDisplayPicture() : ""
+                )
+        );
+    }
+}

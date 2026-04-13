@@ -16,7 +16,7 @@ const Home = observer(function Home() {
 
   const handleProfileClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    startWaveTransition('/profile');
+    startWaveTransition('/profile', { from: '/' });
   };
 
   const handleCreatureClick = (e: React.MouseEvent) => {

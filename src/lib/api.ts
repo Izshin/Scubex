@@ -200,11 +200,91 @@ function formatDate(dateString: string): string {
   }
 }
 
-export async function getPosts(bbox: number[]) {
-  const params = new URLSearchParams({ bbox: bbox.join(",") });
-  const res = await fetch(`/api/posts?${params.toString()}`);
-  if (!res.ok) throw new Error("Failed posts fetch");
-  return res.json();
+// Publication types
+export interface PublicationData {
+  id: number;
+  title: string;
+  description: string;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  createdAt: string;
+  author: {
+    email: string;
+    name: string;
+    picture: string;
+  };
+}
+
+export async function createPublication(data: {
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  latitude: number;
+  longitude: number;
+}): Promise<PublicationData> {
+  const response = await fetch(`${API_BASE_URL}/api/publications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error(`Create publication failed: ${response.status}`);
+  return response.json();
+}
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await fetch(`${API_BASE_URL}/api/images/upload`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!response.ok) throw new Error(`Image upload failed: ${response.status}`);
+  const data = await response.json();
+  return `${API_BASE_URL}${data.imageUrl}`;
+}
+
+export async function getPublications(): Promise<PublicationData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/publications`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Fetch publications failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getPublicationsInArea(latMin: number, latMax: number, lngMin: number, lngMax: number): Promise<PublicationData[]> {
+  const params = new URLSearchParams({
+    latMin: latMin.toString(),
+    latMax: latMax.toString(),
+    lngMin: lngMin.toString(),
+    lngMax: lngMax.toString(),
+  });
+  const response = await fetch(`${API_BASE_URL}/api/publications/area?${params}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Fetch area publications failed: ${response.status}`);
+  return response.json();
+}
+
+export async function deletePublication(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Delete publication failed: ${response.status}`);
+}
+
+export async function updatePublication(id: number, data: { title: string; description?: string; imageUrl?: string }): Promise<PublicationData> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error(`Update publication failed: ${response.status}`);
+  return response.json();
 }
 
 // Weather types

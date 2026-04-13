@@ -14,6 +14,53 @@ TD2(!). Related to TD1, How the frontend handles such petitions, talk about mapV
 
 TD3. Talk about project configuration, such as application properties and security configuration
 
+TD4(!!). Documentar el sistema de información climatológica:
+  - Integración con Open-Meteo API (forecast + marine endpoints)
+  - Backend: WeatherService, WeatherController, WeatherData DTO
+  - Caché de 30 min (CachedWeather, CachedWeatherRepository)
+  - Frontend: WeatherPanel.tsx (códigos WMO, iconos, panel colapsable/expandible)
+  - Diseño de la UI del panel meteorológico
+
+TD5(!!). Documentar la lógica de condiciones de buceo (DivingConditions):
+  - Sistema de puntuación ponderada (weighted scoring)
+  - Umbrales críticos (olas >2.5m, corriente >5km/h, viento >40km/h, tormentas, visibilidad <1000m)
+  - Pesos por factor: oleaje(3), corriente(3), visibilidad(2), viento(2), código meteorológico(2), probabilidad precipitación(1)
+  - Evaluación: ≥1.5 bueno, ≥0.8 moderado, <0.8 malo
+  - Justificación de los umbrales y pesos elegidos
+
+TD6(!!). Documentar el sistema de publicaciones completo:
+  - Backend: Publication entity, PublicationService, PublicationController (CRUD)
+  - Subida de imágenes: UploadedImage entity, ImageController (multipart, 5MB max)
+  - Frontend: PublicationPopup (crear), PublicationDetail (ver compacto + expandido), PublicationStore
+  - Marcadores en el mapa (MapRender)
+  - Geocodificación inversa (Nominatim)
+  - Interacción entre modos scan/publish
+
+TD7(!). Documentar la seguridad y autenticación:
+  - Flujo OAuth2 con Google (GoogleAuthController)
+  - JwtService: generación y validación de tokens
+  - JwtAuthFilter: filtro en la cadena de seguridad
+  - SecurityConfig: CORS, CSRF desactivado, endpoints públicos vs autenticados
+  - Persistencia en localStorage (frontend)
+  - Protección de endpoints (publicaciones, imágenes, perfil)
+
+TD8. Documentar el sistema de perfil de usuario:
+  - Edición de nombre y foto de perfil
+  - Subida de foto desde archivo local (reutiliza ImageController)
+  - UserController, UserService
+
+TD9. Documentar la transición de ola (WaveTransition):
+  - TransitionContext, TransitionProvider
+  - 3 modos: normal (~2s), rápida (1.2s), sin transición
+  - Framer Motion clip-path animation
+  - Persistencia de preferencia en localStorage
+
+TD10. Documentar arquitectura frontend:
+  - React + Vite + TypeScript
+  - MobX stores (UserStore, SpeciesStore, PublicationStore, MapStore, WeatherStore)
+  - Componentes principales y su relación
+  - Tailwind CSS + Framer Motion
+
 Considering:
 Security if deployed on appstore.
 

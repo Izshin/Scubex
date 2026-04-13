@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import maplibregl, { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import type { PublicationData } from "../../lib/api";
 
 /** Generate a GeoJSON polygon circle (64 points) given center and radius in meters */
 function createCircleGeoJSON(center: [number, number], radiusMeters: number): GeoJSON.Feature<GeoJSON.Polygon> {
@@ -30,9 +31,11 @@ function createCircleGeoJSON(center: [number, number], radiusMeters: number): Ge
 interface MapRenderProps {
   onViewportIdle?: (bbox: number[]) => void;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
+  onPublicationClick?: (pub: PublicationData) => void;
   isScanning?: boolean;
   scanCenter?: { lat: number; lng: number } | null;
   scanRadius?: number;
+  publications?: PublicationData[];
 }
 
 export type MapRenderRef = { 
@@ -40,11 +43,13 @@ export type MapRenderRef = {
   getContainer: () => HTMLDivElement | null;
 };
 
-export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, onMapClick, isScanning = false, scanCenter, scanRadius = 2000 }, forwardedRef) {
+export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publications = [] }, forwardedRef) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
+  const onPubClickRef = useRef(onPublicationClick);
+  onPubClickRef.current = onPublicationClick;
 
   useImperativeHandle(forwardedRef, () => ({
     getMap: () => mapRef.current,
@@ -213,7 +218,7 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     const source = map.getSource("scan-circle") as maplibregl.GeoJSONSource | undefined;
     if (!source) return;
 
-    if (scanCenter) {
+    if (scanCenter && scanRadius) {
       const circle = createCircleGeoJSON([scanCenter.lng, scanCenter.lat], scanRadius);
       source.setData({ type: "FeatureCollection", features: [circle] });
     } else {
@@ -266,6 +271,46 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
       mapRef.current.touchZoomRotate.enable();
     }
   }, [isScanning]);
+
+  // Publication markers
+  const pubMarkersRef = useRef<maplibregl.Marker[]>([]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Remove old markers
+    pubMarkersRef.current.forEach(m => m.remove());
+    pubMarkersRef.current = [];
+
+    // Add new markers
+    publications.forEach(pub => {
+      const el = document.createElement('div');
+      el.innerHTML = `<svg width="24" height="34" viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.268 21.732 0 14 0z" fill="#06b6d4"/>
+        <circle cx="14" cy="14" r="6" fill="white"/>
+      </svg>`;
+      el.style.cursor = 'pointer';
+      el.title = pub.title;
+
+      // Stop click from reaching the map (prevents scan/publish on marker click)
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onPubClickRef.current) onPubClickRef.current(pub);
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([pub.longitude, pub.latitude])
+        .addTo(map);
+
+      pubMarkersRef.current.push(marker);
+    });
+
+    return () => {
+      pubMarkersRef.current.forEach(m => m.remove());
+      pubMarkersRef.current = [];
+    };
+  }, [publications]);
 
   return <div className="w-full h-full cursor-crosshair" ref={containerRef} />;
 });
