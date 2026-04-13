@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Home from './pages/Home'
 import MapPage from './pages/Map'
 import Profile from './pages/Profile'
+import UserProfile from './pages/UserProfile'
 import { TransitionContext, useWaveTransition } from './lib/transition'
 
 
@@ -233,6 +234,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<motion.div><Home /></motion.div>} />
         <Route path="/map" element={<motion.div><MapPage /></motion.div>} />
         <Route path="/profile" element={<motion.div><Profile /></motion.div>} />
+        <Route path="/user/:email" element={<motion.div><UserProfile /></motion.div>} />
       </Routes>
     </AnimatePresence>
   )

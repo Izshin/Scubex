@@ -27,15 +27,33 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   // Reverse geocode to get place name
   useEffect(() => {
     const controller = new AbortController();
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&accept-language=es`,
-      { signal: controller.signal }
-    )
+    const opts = { signal: controller.signal };
+
+    const extractName = (data: { address?: Record<string, string>; display_name?: string; error?: string }) => {
+      if (data.error) return '';
+      const addr = data.address;
+      return addr?.beach || addr?.tourism || addr?.natural || addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || addr?.state || '';
+    };
+
+    // Try zoom=14 first (precise), then zoom=10, then zoom=5 (wide area for ocean clicks)
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14&accept-language=es`, opts)
       .then(r => r.json())
       .then(data => {
-        const addr = data.address;
-        const name = addr?.city || addr?.town || addr?.village || addr?.county || addr?.state || '';
-        setPlaceName(name);
+        const name = extractName(data);
+        if (name) { setPlaceName(name); return; }
+        // Fallback: zoom=10
+        return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&accept-language=es`, opts)
+          .then(r => r.json())
+          .then(data2 => {
+            const name2 = extractName(data2);
+            if (name2) { setPlaceName(name2); return; }
+            // Fallback: zoom=5 (catches nearby coast/region for ocean clicks)
+            return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=5&accept-language=es`, opts)
+              .then(r => r.json())
+              .then(data3 => {
+                setPlaceName(extractName(data3) || 'Mar abierto');
+              });
+          });
       })
       .catch(() => {});
     return () => controller.abort();

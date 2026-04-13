@@ -1,7 +1,9 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PublicationData } from '../lib/api';
-import { uploadImage } from '../lib/api';
+import type { PublicationData, CommentData } from '../lib/api';
+import { uploadImage, toggleLike, getLikeStatus, toggleSave, getSaveStatus, getComments, addComment, deleteComment } from '../lib/api';
+import { useUserStore } from '../lib/stores/index.tsx';
+import { useWaveTransition } from '../lib/transition';
 import type { Map } from 'maplibre-gl';
 
 interface PublicationDetailProps {
@@ -27,6 +29,33 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
+
+  // Interaction state
+  const userStore = useUserStore();
+  const { startWaveTransition } = useWaveTransition();
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(publication.likeCount ?? 0);
+  const [saved, setSaved] = useState(false);
+  const [comments, setComments] = useState<CommentData[]>([]);
+  const [commentCount, setCommentCount] = useState(publication.commentCount ?? 0);
+  const [commentText, setCommentText] = useState('');
+  const [showComments, setShowComments] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  // Fetch like/save status when expanded
+  useEffect(() => {
+    if (!expanded) return;
+    getLikeStatus(publication.id).then(s => { setLiked(s.liked); setLikeCount(s.count); }).catch(() => {});
+    if (userStore.isLoggedIn) {
+      getSaveStatus(publication.id).then(s => setSaved(s.saved)).catch(() => {});
+    }
+  }, [expanded, publication.id, userStore.isLoggedIn]);
+
+  // Fetch comments when section opened
+  useEffect(() => {
+    if (!showComments) return;
+    getComments(publication.id).then(setComments).catch(() => {});
+  }, [showComments, publication.id]);
 
   const updatePosition = useCallback(() => {
     if (!map) return;
@@ -145,9 +174,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 {publication.author.picture && (
-                  <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0" />
+                  <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
                 )}
-                <span className="text-white/80 text-xs truncate">{publication.author.name}</span>
+                <span className="text-white/80 text-xs truncate cursor-pointer hover:text-white transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
               </div>
               <button onClick={onClose} className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -166,9 +195,23 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                 <img src={publication.imageUrl} alt="" className="w-full max-h-48 object-contain rounded-lg bg-gray-50 mt-3" />
               )}
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                <span className="text-[10px] text-gray-400">
-                  {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {likeCount > 0 && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                      {likeCount}
+                    </span>
+                  )}
+                  {commentCount > 0 && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                      {commentCount}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setExpanded(true)}
                   className="text-xs font-medium text-cyan-600 hover:text-cyan-700 flex items-center gap-1 transition-colors"
@@ -213,12 +256,12 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3.5 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>
               {publication.author.picture && (
                 <img src={publication.author.picture} alt="" className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0" />
               )}
               <div className="min-w-0">
-                <span className="text-white font-semibold text-sm block truncate">{publication.author.name}</span>
+                <span className="text-white font-semibold text-sm block truncate hover:text-cyan-200 transition-colors">{publication.author.name}</span>
                 <span className="text-white/60 text-[10px]">
                   {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
@@ -361,22 +404,141 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                   </svg>
                   <span className="font-mono">{publication.latitude.toFixed(4)}, {publication.longitude.toFixed(4)}</span>
                 </div>
-                <div className="pt-3 border-t border-gray-100 space-y-3">
-                  <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1.5 text-gray-400 hover:text-cyan-500 transition-colors text-sm">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 14s-5.5-3.5-5.5-7.5C2.5 3.962 4.462 2 7 2c1.12 0 2.134.487 2.832 1.261A3.48 3.48 0 0 1 13 2c2.538 0 4.5 1.962 4.5 4.5C17.5 10.5 12 14 12 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="scale(0.82) translate(1,1)" />
+
+                {/* Like / Save / Comment bar */}
+                <div className="pt-3 border-t border-gray-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {/* Like button */}
+                      <button
+                        onClick={async () => {
+                          if (!userStore.isLoggedIn) return;
+                          const res = await toggleLike(publication.id);
+                          setLiked(res.liked);
+                          setLikeCount(res.count);
+                        }}
+                        className={`flex items-center gap-1.5 text-sm transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} ${!userStore.isLoggedIn ? 'opacity-50 cursor-default' : ''}`}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                        <span className="text-xs font-medium">{likeCount}</span>
+                      </button>
+
+                      {/* Comment toggle */}
+                      <button
+                        onClick={() => setShowComments(!showComments)}
+                        className={`flex items-center gap-1.5 text-sm transition-colors ${showComments ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-400'}`}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span className="text-xs font-medium">{commentCount}</span>
+                      </button>
+                    </div>
+
+                    {/* Save button */}
+                    <button
+                      onClick={async () => {
+                        if (!userStore.isLoggedIn) return;
+                        const res = await toggleSave(publication.id);
+                        setSaved(res.saved);
+                      }}
+                      className={`transition-colors ${saved ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-400'} ${!userStore.isLoggedIn ? 'opacity-50 cursor-default' : ''}`}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                       </svg>
-                      Me gusta
-                    </button>
-                    <button className="flex items-center gap-1.5 text-gray-400 hover:text-cyan-500 transition-colors text-sm">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6l-3 2.5V11H4a2 2 0 0 1-2-2V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                      </svg>
-                      Comentarios
                     </button>
                   </div>
-                  <p className="text-xs text-gray-300 italic">Próximamente: likes, comentarios y guardados</p>
+
+                  {/* Comments section */}
+                  <AnimatePresence>
+                    {showComments && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-3">
+                          {/* Comment input */}
+                          {userStore.isLoggedIn && (
+                            <form
+                              onSubmit={async (e) => {
+                                e.preventDefault();
+                                if (!commentText.trim() || submittingComment) return;
+                                setSubmittingComment(true);
+                                try {
+                                  const c = await addComment(publication.id, commentText.trim());
+                                  setComments(prev => [...prev, c]);
+                                  setCommentCount(n => n + 1);
+                                  setCommentText('');
+                                } catch { /* ignored */ }
+                                setSubmittingComment(false);
+                              }}
+                              className="flex gap-2"
+                            >
+                              <input
+                                type="text"
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                placeholder="Escribe un comentario..."
+                                maxLength={500}
+                                className="flex-1 border border-gray-200 rounded-full px-3 py-1.5 text-sm focus:outline-none"
+                              />
+                              <button
+                                type="submit"
+                                disabled={!commentText.trim() || submittingComment}
+                                className="px-3 py-1.5 rounded-full bg-cyan-500 text-white text-sm font-medium disabled:opacity-40 hover:bg-cyan-600 transition-colors"
+                              >
+                                {submittingComment ? '...' : 'Enviar'}
+                              </button>
+                            </form>
+                          )}
+
+                          {/* Comment list */}
+                          {comments.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-2">No hay comentarios aún</p>
+                          ) : (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {comments.map(c => (
+                                <div key={c.id} className="flex gap-2 group">
+                                  {c.author.picture ? (
+                                    <img src={c.author.picture} alt="" className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex-shrink-0 mt-0.5" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-baseline gap-2">
+                                      <span className="text-xs font-semibold text-gray-700 cursor-pointer hover:text-cyan-600 transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(c.author.email)}`)}>{c.author.name}</span>
+                                      <span className="text-[10px] text-gray-400">
+                                        {new Date(c.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                      </span>
+                                      {userStore.user?.email === c.author.email && (
+                                        <button
+                                          onClick={async () => {
+                                            await deleteComment(publication.id, c.id);
+                                            setComments(prev => prev.filter(x => x.id !== c.id));
+                                            setCommentCount(n => Math.max(0, n - 1));
+                                          }}
+                                          className="text-[10px] text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        >
+                                          eliminar
+                                        </button>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-gray-600 break-words">{c.text}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </>
             )}

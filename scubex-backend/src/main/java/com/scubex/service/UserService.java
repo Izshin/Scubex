@@ -29,6 +29,14 @@ public class UserService {
         return userRepository.findByGoogleId(googleId).orElse(null);
     }
 
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
     public User updateProfile(String googleId, String customName, String customPictureUrl) {
         User user = userRepository.findByGoogleId(googleId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

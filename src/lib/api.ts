@@ -209,6 +209,8 @@ export interface PublicationData {
   latitude: number;
   longitude: number;
   createdAt: string;
+  likeCount: number;
+  commentCount: number;
   author: {
     email: string;
     name: string;
@@ -284,6 +286,166 @@ export async function updatePublication(id: number, data: { title: string; descr
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error(`Update publication failed: ${response.status}`);
+  return response.json();
+}
+
+// Interaction types
+export interface CommentData {
+  id: number;
+  text: string;
+  createdAt: string;
+  author: {
+    name: string;
+    picture: string;
+    email: string;
+  };
+}
+
+export interface LikeStatus {
+  liked: boolean;
+  count: number;
+}
+
+export interface SaveStatus {
+  saved: boolean;
+}
+
+// Like/Unlike
+export async function toggleLike(pubId: number): Promise<LikeStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/like`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle like failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getLikeStatus(pubId: number): Promise<LikeStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/like`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get like status failed: ${response.status}`);
+  return response.json();
+}
+
+// Save/Unsave
+export async function toggleSave(pubId: number): Promise<SaveStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle save failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getSaveStatus(pubId: number): Promise<SaveStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/save`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get save status failed: ${response.status}`);
+  return response.json();
+}
+
+// Comments
+export async function getComments(pubId: number): Promise<CommentData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get comments failed: ${response.status}`);
+  return response.json();
+}
+
+export async function addComment(pubId: number, text: string): Promise<CommentData> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) throw new Error(`Add comment failed: ${response.status}`);
+  return response.json();
+}
+
+export async function deleteComment(pubId: number, commentId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Delete comment failed: ${response.status}`);
+}
+
+// ── User / Social types ──
+
+export interface UserSummary {
+  name: string;
+  email: string;
+  picture: string;
+}
+
+export interface PublicProfileData {
+  name: string;
+  email: string;
+  picture: string;
+  followerCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  publicationCount: number;
+  publications: PublicationData[];
+}
+
+export interface FollowStatus {
+  following: boolean;
+  followerCount: number;
+}
+
+// Public profile
+export async function getPublicProfile(email: string): Promise<PublicProfileData> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get profile failed: ${response.status}`);
+  return response.json();
+}
+
+// Follow / Unfollow
+export async function toggleFollow(email: string): Promise<FollowStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/follow`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle follow failed: ${response.status}`);
+  return response.json();
+}
+
+// Followers / Following lists
+export async function getFollowers(email: string): Promise<UserSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/followers`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get followers failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getFollowingList(email: string): Promise<UserSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/following`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get following failed: ${response.status}`);
+  return response.json();
+}
+
+// Saved publications (own profile)
+export async function getSavedPublications(): Promise<PublicationData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/me/saved`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get saved failed: ${response.status}`);
   return response.json();
 }
 

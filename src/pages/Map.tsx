@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react-lite";
+import { useLocation } from "react-router-dom";
 import MapView, { type MapViewRef } from "../components/MapComponents/MapView.tsx";
 import SpeciesPanel from "../components/SpeciesPanel";
 import WeatherPanel from "../components/WeatherPanel";
@@ -25,6 +26,7 @@ const MapPage = observer(() => {
   const publicationStore = usePublicationStore();
   const userStore = useUserStore();
   const { startWaveTransition } = useWaveTransition();
+  const location = useLocation();
   const mapRef = useRef<MapViewRef>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasScanned, setHasScanned] = useState(false);
@@ -36,6 +38,37 @@ const MapPage = observer(() => {
   useEffect(() => {
     publicationStore.fetchPublications();
   }, [publicationStore]);
+
+  // Focus on a publication when navigated from profile
+  useEffect(() => {
+    const state = location.state as { focusPublication?: number } | null;
+    if (!state?.focusPublication) return;
+    const pubId = state.focusPublication;
+    // Clear the state so it doesn't re-trigger
+    window.history.replaceState({}, '');
+    // Wait for publications to load, then fly to the target
+    const tryFocus = () => {
+      const pub = publicationStore.publications.find(p => p.id === pubId);
+      if (pub) {
+        setSelectedPublication(pub);
+        setPublishCoords(null);
+        const map = mapRef.current?.getMap();
+        if (map) {
+          const containerH = map.getContainer().clientHeight;
+          map.flyTo({
+            center: [pub.longitude, pub.latitude],
+            padding: { top: containerH * 0.3, bottom: 0, left: 0, right: 0 },
+            zoom: 14,
+            duration: 800,
+          });
+        }
+      } else {
+        // Publications might not be loaded yet, retry shortly
+        setTimeout(tryFocus, 300);
+      }
+    };
+    tryFocus();
+  }, [location.state, publicationStore.publications]);
 
   const handleViewportChange = useCallback((bbox: number[]) => {
     const map = mapRef.current?.getMap();
