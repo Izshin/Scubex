@@ -176,12 +176,12 @@ const MapPage = observer(() => {
           >
             {/* Mode toggle — only show if logged in */}
             {userStore.isLoggedIn && (
-              <div className="flex bg-gray-100 rounded-lg p-0.5">
+              <div className="flex bg-gray-100 rounded-lg p-px">
                 <button
                   onClick={() => { setMode('scan'); setPublishCoords(null); }}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                     mode === 'scan'
-                      ? 'bg-white text-cyan-600 shadow-sm'
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md -m-px rounded-lg'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -189,9 +189,9 @@ const MapPage = observer(() => {
                 </button>
                 <button
                   onClick={() => setMode('publish')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                     mode === 'publish'
-                      ? 'bg-white text-cyan-600 shadow-sm'
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md -m-px rounded-lg'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
