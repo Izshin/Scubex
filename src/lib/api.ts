@@ -76,6 +76,16 @@ export async function updateProfile(customName: string, customPictureUrl: string
   return response.json();
 }
 
+export async function deleteAccount(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  if (!response.ok) {
+    throw new Error(`Delete account failed: ${response.status}`);
+  }
+}
+
 // Test function to check if backend is running
 export async function testBackendConnection(): Promise<boolean> {
   try {

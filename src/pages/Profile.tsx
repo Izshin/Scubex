@@ -22,6 +22,7 @@ const Profile = observer(function Profile() {
   const [pictureFile, setPictureFile] = useState<File | null>(null);
   const [picturePreview, setPicturePreview] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile data
@@ -125,6 +126,7 @@ const Profile = observer(function Profile() {
 
   const handleCancel = () => {
     setEditing(false);
+    setConfirmDeleteAccount(false);
   };
 
   const openList = async (type: 'followers' | 'following') => {
@@ -219,6 +221,41 @@ const Profile = observer(function Profile() {
                   {uploading ? 'Subiendo...' : userStore.profileLoading ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
+
+              {/* Delete account */}
+              {!confirmDeleteAccount ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteAccount(true)}
+                  disabled={userStore.profileLoading || uploading}
+                  className="w-full max-w-xs px-4 py-2 rounded-full border border-red-400/40 bg-red-500/10 hover:bg-red-500/20 text-red-300 hover:text-red-200 text-xs font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <path d="M1.5 3.5h11M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5M3 3.5l.5 8.5a1 1 0 001 1h5a1 1 0 001-1l.5-8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Eliminar cuenta
+                </button>
+              ) : (
+                <div className="w-full max-w-xs bg-red-500/10 border border-red-400/30 rounded-2xl p-4 space-y-3">
+                  <p className="text-red-200 text-xs text-center font-medium">¿Eliminar tu cuenta permanentemente? Esta acción no se puede deshacer.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmDeleteAccount(false)}
+                      disabled={userStore.profileLoading}
+                      className="flex-1 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={async () => { setJustLoggedOut(true); await userStore.deleteAccount(); startWaveTransition('/'); }}
+                      disabled={userStore.profileLoading}
+                      className="flex-1 px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                    >
+                      {userStore.profileLoading ? 'Eliminando...' : 'Sí, eliminar'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* ─── View mode ─── */
@@ -370,7 +407,7 @@ const Profile = observer(function Profile() {
                         <div className="flex items-center gap-2 mt-1 text-white/40 text-[10px]">
                           {pub.likeCount > 0 && (
                             <span className="flex items-center gap-0.5">
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14s-5.5-3.5-5.5-7.5C2.5 4 4.5 2 6.5 2c1.2 0 2.3.7 2.8 1.7L8 5.5l-1.3-1.8C7.3 2.7 8.3 2 9.5 2c2 0 3.5 1.5 3.5 4.5S8 14 8 14z" /></svg>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                               {pub.likeCount}
                             </span>
                           )}

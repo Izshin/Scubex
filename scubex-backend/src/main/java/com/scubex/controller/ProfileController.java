@@ -62,4 +62,14 @@ public class ProfileController {
                 )
         ));
     }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteAccount(Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        String googleId = auth.getName();
+        userService.deleteAccount(googleId);
+        return ResponseEntity.noContent().build();
+    }
 }

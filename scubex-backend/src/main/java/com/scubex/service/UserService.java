@@ -44,4 +44,8 @@ public class UserService {
         user.setCustomPictureUrl(customPictureUrl);
         return userRepository.save(user);
     }
+
+    public void deleteAccount(String googleId) {
+        userRepository.findByGoogleId(googleId).ifPresent(userRepository::delete);
+    }
 }
