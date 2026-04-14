@@ -23,6 +23,7 @@ const Profile = observer(function Profile() {
   const [picturePreview, setPicturePreview] = useState('');
   const [uploading, setUploading] = useState(false);
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+  const [pictureError, setPictureError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile data
@@ -95,6 +96,12 @@ const Profile = observer(function Profile() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setPictureError('La foto no puede superar los 5 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setPictureError('');
     setPictureFile(file);
     setPicturePreview(URL.createObjectURL(file));
   };
@@ -204,6 +211,7 @@ const Profile = observer(function Profile() {
               </div>
 
               {userStore.profileError && <p className="text-red-300 text-xs">{userStore.profileError}</p>}
+              {pictureError && <p className="text-red-300 text-xs">{pictureError}</p>}
 
               <div className="flex gap-3 w-full max-w-xs">
                 <button

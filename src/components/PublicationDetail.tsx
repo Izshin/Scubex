@@ -23,6 +23,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState('');
+  const [editImageError, setEditImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
@@ -137,6 +138,12 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setEditImageError('La foto no puede superar los 5 MB.');
+      if (editFileRef.current) editFileRef.current.value = '';
+      return;
+    }
+    setEditImageError('');
     setEditImageFile(file);
     setEditImagePreview(URL.createObjectURL(file));
   };
@@ -145,6 +152,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
     setEditImageFile(null);
     setEditImagePreview('');
     setEditImageUrl('');
+    setEditImageError('');
     if (editFileRef.current) editFileRef.current.value = '';
   };
 
@@ -381,6 +389,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                       className="hidden"
                       onChange={handleEditFileChange}
                     />
+                    {editImageError && <p className="text-xs text-red-500 mt-1">{editImageError}</p>}
                   </div>
                 </div>
 

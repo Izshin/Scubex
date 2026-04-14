@@ -18,6 +18,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -91,6 +92,12 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('La foto no puede superar los 5 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setImageError('');
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
@@ -100,6 +107,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setImageError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -223,6 +231,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
               </button>
             )}
           </div>
+          {imageError && <p className="text-xs text-red-500 -mt-1">{imageError}</p>}
           <div className="flex gap-2 pt-1">
             <button
               type="button"
