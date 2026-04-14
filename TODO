@@ -91,9 +91,11 @@ TD7(!). Seguridad completa — fusionar con TD-AUTH
 TD8. Sistema de perfil de usuario — 0% documentado
   - User entity: campos originales (Google) + campos custom (customName, customPictureUrl)
   - getDisplayName()/getDisplayPicture(): prioriza custom sobre Google
-  - ProfileController: GET /api/profile, PUT /api/profile
+  - ProfileController: GET /api/profile, PUT /api/profile, DELETE /api/profile
+  - UserService.deleteAccount(): borra el usuario por googleId (cascade elimina publicaciones, follows, likes, saves, comentarios)
   - Frontend Profile.tsx: edición nombre + subida foto (reutiliza ImageController)
   - Token renovado tras actualizar perfil
+  - Eliminar cuenta: botón en modo edición con confirmación en 2 pasos → llama DELETE /api/profile, hace logout automático y redirige a Home
 
 TD9. Transición de ola — 0% documentado
   - TransitionContext/TransitionProvider en transition.ts
@@ -203,13 +205,6 @@ TD-COSTES. Completar Costes (costes.tex) — falta infraestructura
   - Añadir costes Railway (hosting backend)
   - Añadir costes Vercel (hosting frontend, plan free)
   - APIs (todas gratuitas: OBIS, iNaturalist, Open-Meteo, Nominatim)
-
-⚠️ DECISIÓN PENDIENTE: Resolver conflicto entre las dos carpetas de documentación
-  - Documentacion/ tiene iteracion1 = Species Scanner
-  - Documentacion_Nuevo/ tiene iteracion1 = OAuth2
-  - Decidir estructura final: ¿fusionar? ¿renombrar iteraciones?
-
-
 
 
 Sugerencias:
