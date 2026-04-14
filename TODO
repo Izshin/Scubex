@@ -17,11 +17,28 @@ TD1(~80%). Documentación de Species Scanner (iteracion1.tex original):
   - ❌ Falta: actualizar con el sistema de caché (CachedScan, rounding adaptativo, TTL 48h)
   - ❌ Falta: documentar el endpoint GET /api/species/scan con params
 
-TD2(~50%). Frontend del scanner de especies (iteracion1.tex original):
+TD2(~30%). Frontend del scanner de especies (iteracion1.tex original):
   - ✅ MapView, MapRender, SpeciesPanel, ScanningAnimation (radar 45°, puntos cada 80ms)
   - ✅ MobX stores (MapStore, SpeciesStore)
   - ❌ Falta: flujo completo scan → publish mode toggle
   - ❌ Falta: marcadores de publicaciones en el mapa
+  - ❌ Falta: detalle de especie al hacer click — expand/collapse animado con Framer Motion
+      · expandedId state + toggleExpand() — un solo card expandido a la vez
+      · Chevron animado que rota 180° al expandir (motion.svg + animate rotate)
+      · Panel detalle en grid 2 columnas: profundidad (depthMin–depthMax m), temperatura
+        (tempMin–tempMax °C), primer/último avistamiento (firstYear/lastYear), registros globales
+      · Estado UICN: span de 2 cols, badge con color por categoría; 7 categorías:
+        LC (verde) · NT (lima) · VU (amarillo) · EN (naranja) · CR (rojo) · EW (gris) · EX (negro)
+      · Fallback "Sin datos ecológicos disponibles" si todos los campos son undefined
+  - ❌ Falta: IUCN_STYLES + IUCN_LABELS (diccionarios de color y nombre en español)
+  - ❌ Falta: getPhylumEmoji — sistema de 13+ fila → emoji (Chordata, Mollusca, Arthropoda,
+      Cnidaria, Echinodermata, Porifera, Annelida, Platyhelminthes, Bryozoa, Brachiopoda,
+      Nemertea, Sipuncula, Tardigrada) + overrides por commonName (octopus/squid/lobster/shrimp)
+      ⚠️ Doc actual solo menciona 4 phyla; implementación tiene 13+ con overrides por nombre común
+  - ⚠️ NOTA TÉCNICA: SpeciesResponse.java (DTO backend) actualmente NO incluye depthMin/depthMax/
+      tempMin/tempMax/firstYear/lastYear/globalRecords/iucnCategory. Están en el Props type del
+      componente pero el pipeline de datos (api.ts + SpeciesStore) tampoco los mapea.
+      → El panel siempre muestra el fallback hasta que el backend los exponga.
 
 TD3(~40%). Configuración del proyecto (Arranque.tex parcial):
   - ✅ application.properties (puerto, H2/PostgreSQL, CORS)

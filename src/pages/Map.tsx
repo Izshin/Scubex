@@ -33,6 +33,10 @@ const MapPage = observer(() => {
   const [mode, setMode] = useState<'scan' | 'publish'>('scan');
   const [publishCoords, setPublishCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedPublication, setSelectedPublication] = useState<PublicationData | null>(null);
+  // Tracks the focusPublication id that has already been processed so re-renders
+  // triggered by publicationStore.publications changing (e.g. after creating a new
+  // publication) don't fly back to the originally focused publication.
+  const focusedPubIdRef = useRef<number | null>(null);
 
   // Load publications on mount
   useEffect(() => {
@@ -44,12 +48,13 @@ const MapPage = observer(() => {
     const state = location.state as { focusPublication?: number } | null;
     if (!state?.focusPublication) return;
     const pubId = state.focusPublication;
-    // Clear the state so it doesn't re-trigger
-    window.history.replaceState({}, '');
+    // Already handled this id — don't fly again
+    if (focusedPubIdRef.current === pubId) return;
     // Wait for publications to load, then fly to the target
     const tryFocus = () => {
       const pub = publicationStore.publications.find(p => p.id === pubId);
       if (pub) {
+        focusedPubIdRef.current = pubId;
         setSelectedPublication(pub);
         setPublishCoords(null);
         const map = mapRef.current?.getMap();
