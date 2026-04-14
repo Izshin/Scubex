@@ -284,7 +284,7 @@ const Profile = observer(function Profile() {
                         <button
                           key={value}
                           onClick={() => setTransitionSpeed(value)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] transition-all ${
+                          className={`px-2.5 py-1.5 rounded-full text-[10px] transition-all ${
                             transitionSpeed === value
                               ? 'bg-cyan-400 text-white font-semibold shadow'
                               : 'text-white/50 hover:text-white/70'

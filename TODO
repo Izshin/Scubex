@@ -209,6 +209,13 @@ TD-COSTES. Completar Costes (costes.tex) — falta infraestructura
   - Documentacion_Nuevo/ tiene iteracion1 = OAuth2
   - Decidir estructura final: ¿fusionar? ¿renombrar iteraciones?
 
+
+
+
+Sugerencias:
+Añadir busqueda de lugares, busqueda de especies y filtrado, 
+ordenacion de las mismas al escanear una zona
+
 Considering:
 Security if deployed on appstore.
 
