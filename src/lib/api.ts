@@ -8,6 +8,14 @@ interface BackendSpeciesResponse {
   recordDate?: string;
   photoUrl?: string;
   phylum?: string;
+  depthMin?: number;
+  depthMax?: number;
+  tempMin?: number;
+  tempMax?: number;
+  firstYear?: number;
+  lastYear?: number;
+  globalRecords?: number;
+  iucnCategory?: string;
 }
 
 // Frontend display types  
@@ -19,6 +27,14 @@ interface FrontendSpeciesData {
   last_record: string;
   photoUrl?: string;
   phylum?: string;
+  depthMin?: number;
+  depthMax?: number;
+  tempMin?: number;
+  tempMax?: number;
+  firstYear?: number;
+  lastYear?: number;
+  globalRecords?: number;
+  iucnCategory?: string;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -118,7 +134,15 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         records: species.numberOfOccurrences,
         last_record: species.recordDate ? formatDate(species.recordDate) : 'Fecha desconocida',
         photoUrl: species.photoUrl,
-        phylum: species.phylum
+        phylum: species.phylum,
+        depthMin: species.depthMin,
+        depthMax: species.depthMax,
+        tempMin: species.tempMin,
+        tempMax: species.tempMax,
+        firstYear: species.firstYear,
+        lastYear: species.lastYear,
+        globalRecords: species.globalRecords,
+        iucnCategory: species.iucnCategory,
       }))
       .sort((a, b) => b.records - a.records); // Sort by records in descending order (most records first)
     

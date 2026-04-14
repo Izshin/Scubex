@@ -36,4 +36,14 @@ public class CachedSpecies {
     private Double longitude;
 
     private Integer numberOfOccurrences;
+
+    // Eco-data
+    private Integer depthMin;
+    private Integer depthMax;
+    private Integer tempMin;
+    private Integer tempMax;
+    private Integer firstYear;
+    private Integer lastYear;
+    private Integer globalRecords;
+    private String iucnCategory;
 }

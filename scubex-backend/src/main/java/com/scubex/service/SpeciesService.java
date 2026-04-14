@@ -6,11 +6,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,6 +96,14 @@ public class SpeciesService {
                             .latitude(cs.getLatitude())
                             .longitude(cs.getLongitude())
                             .numberOfOccurrences(cs.getNumberOfOccurrences())
+                            .depthMin(cs.getDepthMin())
+                            .depthMax(cs.getDepthMax())
+                            .tempMin(cs.getTempMin())
+                            .tempMax(cs.getTempMax())
+                            .firstYear(cs.getFirstYear())
+                            .lastYear(cs.getLastYear())
+                            .globalRecords(cs.getGlobalRecords())
+                            .iucnCategory(cs.getIucnCategory())
                             .build())
                     .toList();
         }
@@ -105,27 +119,44 @@ public class SpeciesService {
         // 3. Group by species and count occurrences
         Map<String, List<ObisOccurrence>> groupedBySpecies = groupBySpecies(obisData);
 
-        // 4. Process each species with iNaturalist
-        List<SpeciesResponse> enrichedSpecies = new ArrayList<>();
+        // 4. Process all species in parallel using virtual threads
+        // Semaphore limits concurrent iNaturalist calls to avoid 429
+        Semaphore iNatSemaphore = new Semaphore(3);
+        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-        for (Map.Entry<String, List<ObisOccurrence>> entry : groupedBySpecies.entrySet()) {
-            String scientificName = entry.getKey();
-            List<ObisOccurrence> occurrences = entry.getValue();
+        List<CompletableFuture<Optional<SpeciesResponse>>> futures = groupedBySpecies.entrySet().stream()
+            .map(entry -> CompletableFuture.supplyAsync(() -> {
+                String scientificName = entry.getKey();
+                List<ObisOccurrence> occurrences = entry.getValue();
+                ObisOccurrence mostRecent = getMostRecentOccurrence(occurrences);
 
-            // Get most recent occurrence for coordinates
-            ObisOccurrence mostRecent = getMostRecentOccurrence(occurrences);
+                INaturalistResponse iNatData = null;
+                try {
+                    iNatSemaphore.acquire();
+                    iNatData = callINaturalistApi(scientificName);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    iNatSemaphore.release();
+                }
 
-            // Call iNaturalist for this species
-            INaturalistResponse iNatData = callINaturalistApi(scientificName);
+                if (iNatData == null || iNatData.getTotalResults() == null || iNatData.getTotalResults() == 0) {
+                    System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
+                    return Optional.<SpeciesResponse>empty();
+                }
 
-            // Filter out microorganisms (total_results=0)
-            if (iNatData != null && iNatData.getTotalResults() != null && iNatData.getTotalResults() > 0) {
-                SpeciesResponse species = buildSpeciesResponse(scientificName, occurrences, mostRecent, iNatData);
-                enrichedSpecies.add(species);
-            } else {
-                System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
-            }
-        }
+                ObisEcoData ecoData = callObisEcoStats(scientificName, executor);
+                return Optional.of(buildSpeciesResponse(scientificName, occurrences, mostRecent, iNatData, ecoData));
+            }, executor))
+            .collect(Collectors.toList());
+
+        List<SpeciesResponse> enrichedSpecies = futures.stream()
+            .map(CompletableFuture::join)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+
+        executor.shutdown();
 
         // Save to cache
         saveToCache(roundedLat, roundedLng, radius, enrichedSpecies);
@@ -191,6 +222,127 @@ public class SpeciesService {
             System.err.println("❌ Error calling/parsing OBIS: " + e.getMessage());
             return List.of();
         }
+    }
+
+    // ─── Inner record to hold OBIS eco-stats ───────────────────────────────────
+    private record ObisEcoData(
+        Integer depthMin, Integer depthMax,
+        Integer tempMin,  Integer tempMax,
+        Integer firstYear, Integer lastYear,
+        Integer globalRecords, String iucnCategory
+    ) {}
+
+    @SuppressWarnings("unchecked")
+    private ObisEcoData callObisEcoStats(String scientificName, ExecutorService executor) {
+        System.out.println("🔬 callObisEcoStats → " + scientificName);
+
+        // --- call 1: /statistics (records + yearrange) ---
+        CompletableFuture<int[]> statsFuture = CompletableFuture.supplyAsync(() -> {
+            // [globalRecords, firstYear, lastYear]
+            int[] result = new int[]{-1, -1, -1};
+            try {
+                URI uri = UriComponentsBuilder.fromUriString(obisApiUrl + "/statistics")
+                        .queryParam("scientificname", scientificName)
+                        .build().encode().toUri();
+                ResponseEntity<Map> resp = restTemplate.getForEntity(uri, Map.class);
+                if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                    Map<?, ?> body = resp.getBody();
+                    if (body.get("records") instanceof Number n) result[0] = n.intValue();
+                    if (body.get("yearrange") instanceof List<?> yr && yr.size() == 2) {
+                        if (yr.get(0) instanceof Number y0) result[1] = y0.intValue();
+                        if (yr.get(1) instanceof Number y1) result[2] = y1.intValue();
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ OBIS /statistics error for " + scientificName + ": " + e.getMessage());
+            }
+            return result;
+        }, executor);
+
+        // --- call 2: /statistics/env (depth + SST) ---
+        CompletableFuture<int[]> envFuture = CompletableFuture.supplyAsync(() -> {
+            // [depthMin, depthMax, tempMin, tempMax]
+            int[] result = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE};
+            try {
+                URI uri = UriComponentsBuilder.fromUriString(obisApiUrl + "/statistics/env")
+                        .queryParam("scientificname", scientificName)
+                        .build().encode().toUri();
+                ResponseEntity<Map> resp = restTemplate.getForEntity(uri, Map.class);
+                if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                    Map<?, ?> body = resp.getBody();
+                    if (body.get("depth") instanceof List<?> depths) {
+                        for (Object o : depths) {
+                            if (o instanceof Map<?,?> m
+                                    && m.get("records") instanceof Number rec && rec.intValue() > 0
+                                    && m.get("from") instanceof Number f) {
+                                int v = f.intValue();
+                                if (v < result[0]) result[0] = v;
+                                if (v > result[1]) result[1] = v;
+                            }
+                        }
+                    }
+                    if (body.get("sst") instanceof List<?> ssts) {
+                        for (Object o : ssts) {
+                            if (o instanceof Map<?,?> m
+                                    && m.get("records") instanceof Number rec && rec.intValue() > 0
+                                    && m.get("sst") instanceof Number t) {
+                                int v = t.intValue();
+                                if (v < result[2]) result[2] = v;
+                                if (v > result[3]) result[3] = v;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ OBIS /statistics/env error for " + scientificName + ": " + e.getMessage());
+            }
+            return result;
+        }, executor);
+
+        // --- call 3: /checklist/redlist (IUCN) ---
+        CompletableFuture<String> iucnFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                URI uri = UriComponentsBuilder.fromUriString(obisApiUrl + "/checklist/redlist")
+                        .queryParam("scientificname", scientificName)
+                        .queryParam("size", 1)
+                        .build().encode().toUri();
+                ResponseEntity<Map> resp = restTemplate.getForEntity(uri, Map.class);
+                if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                    if (resp.getBody().get("results") instanceof List<?> results && !results.isEmpty()) {
+                        if (results.get(0) instanceof Map<?,?> first && first.get("category") instanceof String cat) {
+                            return cat;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ OBIS /checklist/redlist error for " + scientificName + ": " + e.getMessage());
+            }
+            return null;
+        }, executor);
+
+        // Wait for all 3 in parallel
+        CompletableFuture.allOf(statsFuture, envFuture, iucnFuture).join();
+
+        int[] stats = statsFuture.join();
+        int[] env   = envFuture.join();
+        String iucnCategory = iucnFuture.join();
+
+        Integer globalRecords = stats[0] >= 0 ? stats[0] : null;
+        Integer firstYear     = stats[1] >= 0 ? stats[1] : null;
+        Integer lastYear      = stats[2] >= 0 ? stats[2] : null;
+        Integer depthMin      = env[0] != Integer.MAX_VALUE ? env[0] : null;
+        Integer depthMax      = env[1] != Integer.MIN_VALUE ? env[1] : null;
+        Integer tempMin       = env[2] != Integer.MAX_VALUE ? env[2] : null;
+        Integer tempMax       = env[3] != Integer.MIN_VALUE ? env[3] : null;
+
+        System.out.println("📊 Eco-stats for " + scientificName
+                + " → depth:" + depthMin + "-" + depthMax + "m"
+                + " sst:" + tempMin + "-" + tempMax + "°C"
+                + " years:" + firstYear + "-" + lastYear
+                + " globalRecs:" + globalRecords
+                + " IUCN:" + iucnCategory);
+
+        return new ObisEcoData(depthMin, depthMax, tempMin, tempMax, firstYear, lastYear, globalRecords, iucnCategory);
     }
 
     private INaturalistResponse callINaturalistApi(String scientificName) {
@@ -319,7 +471,7 @@ public class SpeciesService {
      * @return Complete SpeciesResponse object
      */
     private SpeciesResponse buildSpeciesResponse(String scientificName, List<ObisOccurrence> occurrences,
-            ObisOccurrence mostRecent, INaturalistResponse iNatData) {
+            ObisOccurrence mostRecent, INaturalistResponse iNatData, ObisEcoData eco) {
         SpeciesResponse species = new SpeciesResponse();
 
         // Basic information from OBIS
@@ -332,27 +484,32 @@ public class SpeciesService {
             species.setLongitude(mostRecent.getDecimalLongitude());
             species.setRecordDate(mostRecent.getEventDate());
             species.setPhylum(mostRecent.getPhylum());
-
         }
 
         // Enhanced information from iNaturalist
         if (iNatData != null && iNatData.getTotalResults() > 0 &&
                 iNatData.getResults() != null && !iNatData.getResults().isEmpty()) {
-
             INaturalistInfo firstResult = iNatData.getResults().get(0);
-
-            // Extract common name
             if (firstResult.getPreferred_common_name() != null) {
                 species.setCommonName(firstResult.getPreferred_common_name());
             }
-
-            // Extract photo URL
             if (firstResult.getPhotoUrl() != null) {
                 species.setPhotoUrl(firstResult.getPhotoUrl());
             }
-
         } else {
             System.out.println("⚠️  No iNaturalist data found for " + scientificName);
+        }
+
+        // Eco-data from OBIS statistics
+        if (eco != null) {
+            species.setDepthMin(eco.depthMin());
+            species.setDepthMax(eco.depthMax());
+            species.setTempMin(eco.tempMin());
+            species.setTempMax(eco.tempMax());
+            species.setFirstYear(eco.firstYear());
+            species.setLastYear(eco.lastYear());
+            species.setGlobalRecords(eco.globalRecords());
+            species.setIucnCategory(eco.iucnCategory());
         }
 
         return species;
@@ -378,6 +535,14 @@ public class SpeciesService {
                             .latitude(sr.getLatitude())
                             .longitude(sr.getLongitude())
                             .numberOfOccurrences(sr.getNumberOfOccurrences())
+                            .depthMin(sr.getDepthMin())
+                            .depthMax(sr.getDepthMax())
+                            .tempMin(sr.getTempMin())
+                            .tempMax(sr.getTempMax())
+                            .firstYear(sr.getFirstYear())
+                            .lastYear(sr.getLastYear())
+                            .globalRecords(sr.getGlobalRecords())
+                            .iucnCategory(sr.getIucnCategory())
                             .build())
                     .toList();
 
