@@ -49,7 +49,7 @@ type Condition = 'good' | 'moderate' | 'bad';
 function getConditionStyles(condition: Condition) {
   switch (condition) {
     case 'good': return { bg: 'bg-emerald-50/90', border: 'border-emerald-300/60', badge: 'bg-emerald-100 text-emerald-700', label: 'Buenas condiciones' };
-    case 'moderate': return { bg: 'bg-amber-50/90', border: 'border-amber-300/60', badge: 'bg-amber-100 text-amber-700', label: 'Condiciones aceptables' };
+    case 'moderate': return { bg: 'bg-amber-50/90', border: 'border-amber-300/60', badge: 'bg-amber-100 text-amber-700', label: 'Condiciones tolerables' };
     case 'bad': return { bg: 'bg-red-50/90', border: 'border-red-300/60', badge: 'bg-red-100 text-red-700', label: 'Condiciones adversas' };
   }
 }
@@ -99,15 +99,16 @@ type Props = {
   data: WeatherData | null;
   loading: boolean;
   error: string | null;
+  hidden?: boolean;
 };
 
-export default function WeatherPanel({ data, loading, error }: Props) {
+export default function WeatherPanel({ data, loading, error, hidden = false }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
   return (
     <AnimatePresence>
-      {loading && (
+      {!hidden && loading && (
         <motion.div
           key="weather-loading"
           className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-4 py-3"
@@ -126,7 +127,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
         </motion.div>
       )}
 
-      {error && !loading && (
+      {!hidden && error && !loading && (
         <motion.div
           key="weather-error"
           className="absolute top-4 left-4 z-10 bg-red-50/90 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/60 px-4 py-3"
@@ -138,13 +139,14 @@ export default function WeatherPanel({ data, loading, error }: Props) {
         </motion.div>
       )}
 
-      {data && !loading && (() => {
+      {!hidden && data && !loading && (() => {
         const condition: Condition = data.divingCondition ?? 'moderate';
         const styles = getConditionStyles(condition);
         return (
         <motion.div
           key="weather-data"
           className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 p-3"
+          style={{ maxWidth: 'calc(100vw - 5rem)' }}
           initial={{ opacity: 0, x: -20, scale: 0.95 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -20, scale: 0.95 }}
@@ -194,7 +196,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
                 className="overflow-hidden"
               >
                 {/* Compact grid */}
-                <div className="grid grid-cols-4 gap-x-3 gap-y-2 text-[13px] mt-2 min-w-[18rem]">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-2 text-[13px] mt-2">
                   <Stat label="Humedad" value={fmt(data.humidity, '%', 0)} color={statColor('Humedad', data)} />
                   <Stat label="Viento" value={`${fmt(data.windSpeed, '')} ${windDirectionLabel(data.windDirection)}`} color={statColor('Viento', data)} />
                   <Stat label="Visib." value={fmt(data.visibility ? data.visibility / 1000 : null, 'km', 1)} color={statColor('Visib.', data)} />

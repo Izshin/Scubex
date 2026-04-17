@@ -88,12 +88,11 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
       center: [-5.98, 36.52], // Cádiz
       zoom: 8,
       maxZoom: 18,
-      minZoom: 3
+      minZoom: 3,
+      attributionControl: false,
     });
 
-    // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
-    map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
     
     mapRef.current = map;
 

@@ -2,13 +2,16 @@ import { useRef, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react-lite";
 import { useLocation } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
 import MapView, { type MapViewRef } from "../components/MapComponents/MapView.tsx";
 import SpeciesPanel from "../components/SpeciesPanel";
 import WeatherPanel from "../components/WeatherPanel";
 import PublicationPopup from "../components/PublicationPopup";
 import PublicationDetail from "../components/PublicationDetail";
+import PlaceSearch from "../components/PlaceSearch";
 import { useSpeciesStore, useMapStore, useWeatherStore, usePublicationStore, useUserStore } from "../lib/stores/index.tsx";
 import { useWaveTransition } from "../lib/transition";
+import { loginWithGoogle } from "../lib/api";
 import type { PublicationData } from "../lib/api";
 
 const RADIUS_OPTIONS = [
@@ -33,6 +36,8 @@ const MapPage = observer(() => {
   const [mode, setMode] = useState<'scan' | 'publish'>('scan');
   const [publishCoords, setPublishCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedPublication, setSelectedPublication] = useState<PublicationData | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [loginPromptCoords, setLoginPromptCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Tracks the focusPublication id that has already been processed so re-renders
   // triggered by publicationStore.publications changing (e.g. after creating a new
   // publication) don't fly back to the originally focused publication.
@@ -93,8 +98,12 @@ const MapPage = observer(() => {
     const lng = Number(lngLat.lng.toFixed(6));
 
     if (mode === 'publish') {
-      setPublishCoords({ lat, lng });
       setSelectedPublication(null);
+      if (!userStore.isLoggedIn) {
+        setLoginPromptCoords({ lat, lng });
+        return;
+      }
+      setPublishCoords({ lat, lng });
       // Offset so clicked point sits ~65% down, leaving space for popup above
       const map = mapRef.current?.getMap();
       if (map) {
@@ -110,7 +119,7 @@ const MapPage = observer(() => {
       mapStore.setScanCenter({ lat, lng });
       weatherStore.fetchWeather(lat, lng);
     }
-  }, [mapStore, weatherStore, isScanning, mode]);
+  }, [mapStore, weatherStore, isScanning, mode, userStore.isLoggedIn]);
 
   // Scan button triggers the actual API call
   const handleScan = useCallback(async () => {
@@ -212,34 +221,32 @@ const MapPage = observer(() => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
           >
-            {/* Mode toggle — only show if logged in */}
-            {userStore.isLoggedIn && (
-              <div className="flex bg-gray-100 rounded-lg p-px">
-                <button
-                  onClick={() => { setMode('scan'); setPublishCoords(null); }}
-                  className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
-                    mode === 'scan'
-                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Escanear
-                </button>
-                <button
-                  onClick={() => setMode('publish')}
-                  className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
-                    mode === 'publish'
-                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Publicar
-                </button>
-              </div>
-            )}
+            {/* Mode toggle — always visible */}
+            <div className="flex bg-gray-100 rounded-lg p-px">
+              <button
+                onClick={() => { setMode('scan'); setPublishCoords(null); setLoginPromptCoords(null); }}
+                className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
+                  mode === 'scan'
+                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Escanear
+              </button>
+              <button
+                onClick={() => { setMode('publish'); setLoginPromptCoords(null); }}
+                className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
+                  mode === 'publish'
+                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Publicar
+              </button>
+            </div>
 
-            {/* Divider — only when toggle is shown */}
-            {userStore.isLoggedIn && <div className="w-px h-8 bg-gray-300 hidden sm:block" />}
+            {/* Divider */}
+            <div className="w-px h-8 bg-gray-300 hidden sm:block" />
 
             {mode === 'scan' ? (
               <>
@@ -313,6 +320,70 @@ const MapPage = observer(() => {
             </motion.div>
           )}
 
+          {/* Login prompt — shown when unauthenticated user clicks in publish mode */}
+          <AnimatePresence>
+            {mode === 'publish' && loginPromptCoords && !userStore.isLoggedIn && (
+              <motion.div
+                key="login-prompt-backdrop"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setLoginPromptCoords(null)}
+              >
+                <motion.div
+                  className="relative bg-white rounded-2xl shadow-xl border border-gray-200/60 p-5 flex flex-col items-center gap-3 w-72 mx-4"
+                  initial={{ scale: 0.9, y: 10 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setLoginPromptCoords(null)}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-cyan-600 text-xl leading-none transition-colors"
+                    title="Cerrar"
+                  >
+                    ×
+                  </button>
+                  <p className="text-sm font-semibold text-gray-800 text-center">Inicia sesión para publicar</p>
+                  <p className="text-xs text-gray-500 text-center">Necesitas una cuenta para compartir tus inmersiones con la comunidad.</p>
+                  <div className="relative">
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-2 px-4 rounded-xl text-sm shadow-md">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                      Iniciar sesión con Google
+                    </div>
+                    <div className="absolute inset-0 overflow-hidden rounded-xl" style={{ opacity: 0.01 }}>
+                      <GoogleLogin
+                        onSuccess={async (res) => {
+                          if (!res.credential) return;
+                          try {
+                            const data = await loginWithGoogle(res.credential);
+                            userStore.setUser({ ...data.user, token: data.token });
+                            setLoginPromptCoords(null);
+                            setPublishCoords(loginPromptCoords);
+                          } catch (e) {
+                            console.error('Login failed', e);
+                          }
+                        }}
+                        onError={() => console.error('Google login error')}
+                        shape="pill"
+                        theme="filled_blue"
+                        width={288}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Publication popup — speech bubble from marker */}
           <AnimatePresence>
             {mode === 'publish' && publishCoords && !selectedPublication && (
@@ -347,11 +418,23 @@ const MapPage = observer(() => {
             )}
           </AnimatePresence>
 
-          {/* Weather overlay on map */}
+          {/* Place search — top right */}
+          <PlaceSearch
+            onSelectPlace={(lat, lng) => {
+              const map = mapRef.current?.getMap();
+              if (map) {
+                map.flyTo({ center: [lng, lat], zoom: 12, duration: 800 });
+              }
+            }}
+            onExpandChange={setSearchOpen}
+          />
+
+          {/* Weather overlay on map — hidden on mobile while search is open */}
           <WeatherPanel
             data={weatherStore.weatherData}
             loading={weatherStore.isLoading}
             error={weatherStore.error}
+            hidden={searchOpen && window.innerWidth < 640}
           />
 
           {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}

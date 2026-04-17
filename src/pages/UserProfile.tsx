@@ -157,7 +157,8 @@ export default function UserProfile() {
             {profile.publications.map(pub => (
               <div
                 key={pub.id}
-                className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all group"
+                onClick={() => startWaveTransition('/map', { focusPublication: pub.id })}
+                className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all group cursor-pointer"
               >
                 {pub.imageUrl ? (
                   <div className="aspect-square overflow-hidden">
