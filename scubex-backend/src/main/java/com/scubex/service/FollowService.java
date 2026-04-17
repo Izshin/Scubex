@@ -12,9 +12,12 @@ import java.util.Optional;
 public class FollowService {
 
     private final UserFollowRepository followRepository;
+    private final NotificationService notificationService;
 
-    public FollowService(UserFollowRepository followRepository) {
+    public FollowService(UserFollowRepository followRepository,
+                         NotificationService notificationService) {
         this.followRepository = followRepository;
+        this.notificationService = notificationService;
     }
 
     public boolean toggleFollow(User follower, User followed) {
@@ -30,6 +33,7 @@ public class FollowService {
                 .follower(follower)
                 .followed(followed)
                 .build());
+        notificationService.notifyFollow(follower, followed);
         return true; // followed
     }
 

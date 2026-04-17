@@ -6,6 +6,16 @@ import { useUserStore } from '../lib/stores/index.tsx';
 import { useWaveTransition } from '../lib/transition';
 import type { Map } from 'maplibre-gl';
 
+// Render comment text with @[Name](email) mentions highlighted
+function renderMentions(text: string) {
+  const parts = text.split(/(@\[[^\]]+\]\([^)]+\))/);
+  return parts.map((part, i) => {
+    const match = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
+    if (match) return <span key={i} className="text-cyan-600 font-medium">@{match[1]}</span>;
+    return <span key={i}>{part}</span>;
+  });
+}
+
 interface PublicationDetailProps {
   publication: PublicationData;
   map: Map | null;
@@ -47,6 +57,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [submittingComment, setSubmittingComment] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch like/save status when expanded
   useEffect(() => {
@@ -550,6 +561,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                               className="flex gap-2"
                             >
                               <input
+                                ref={commentInputRef}
                                 type="text"
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
@@ -592,13 +604,29 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                             setComments(prev => prev.filter(x => x.id !== c.id));
                                             setCommentCount(n => Math.max(0, n - 1));
                                           }}
-                                          className="text-[10px] text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                          className="text-[10px] text-gray-300 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                                         >
                                           eliminar
                                         </button>
                                       )}
                                     </div>
-                                    <p className="text-sm text-gray-600 break-words">{c.text}</p>
+                                    <p className="text-sm text-gray-600 break-words leading-snug">{renderMentions(c.text)}</p>
+                                    {userStore.isLoggedIn && userStore.user?.email !== c.author.email && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const mention = `@[${c.author.name}](${c.author.email}) `;
+                                          setCommentText(mention);
+                                          setTimeout(() => {
+                                            const input = commentInputRef.current;
+                                            if (input) { input.focus(); input.setSelectionRange(mention.length, mention.length); }
+                                          }, 0);
+                                        }}
+                                        className="text-[10px] text-gray-400 hover:text-cyan-500 transition-colors leading-none"
+                                      >
+                                        responder
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               ))}

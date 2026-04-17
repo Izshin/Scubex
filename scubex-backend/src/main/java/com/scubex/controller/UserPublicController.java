@@ -4,10 +4,12 @@ import com.scubex.model.Publication;
 import com.scubex.model.PublicationSave;
 import com.scubex.model.User;
 import com.scubex.model.UserFollow;
+import com.scubex.repository.UserRepository;
 import com.scubex.service.FollowService;
 import com.scubex.service.InteractionService;
 import com.scubex.service.PublicationService;
 import com.scubex.service.UserService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,16 +23,29 @@ import java.util.Map;
 public class UserPublicController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
     private final PublicationService publicationService;
     private final FollowService followService;
     private final InteractionService interactionService;
 
-    public UserPublicController(UserService userService, PublicationService publicationService,
+    public UserPublicController(UserService userService, UserRepository userRepository,
+                                PublicationService publicationService,
                                 FollowService followService, InteractionService interactionService) {
         this.userService = userService;
+        this.userRepository = userRepository;
         this.publicationService = publicationService;
         this.followService = followService;
         this.interactionService = interactionService;
+    }
+
+    // ── User search (for mention autocomplete) ──
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(@RequestParam String q, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        if (q == null || q.isBlank() || q.length() < 2) return ResponseEntity.ok(List.of());
+        List<User> users = userRepository.searchByQuery(q.trim(), PageRequest.of(0, 8));
+        return ResponseEntity.ok(users.stream().map(this::userToDto).toList());
     }
 
     // ── Public profile ──

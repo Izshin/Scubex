@@ -530,3 +530,61 @@ export async function getWeather(lat: number, lng: number): Promise<WeatherData>
   console.log('✅ Weather response:', data);
   return data;
 }
+
+// ── Notifications ──
+
+export interface NotificationData {
+  id: number;
+  type: 'FOLLOW' | 'LIKE' | 'COMMENT' | 'MENTION';
+  read: boolean;
+  createdAt: string;
+  actorName: string;
+  actorPicture: string;
+  actorEmail: string;
+  publicationId: number | null;
+  publicationTitle: string;
+  commentSnippet: string;
+}
+
+export async function getNotifications(): Promise<NotificationData[]> {
+  const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error('Failed to fetch notifications');
+  return res.json();
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const res = await fetch(`${API_BASE_URL}/api/notifications/unread-count`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) return 0;
+  const data = await res.json();
+  return data.count ?? 0;
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+// ── User search (mention autocomplete) ──
+
+export async function searchUsers(q: string): Promise<UserSummary[]> {
+  if (q.length < 2) return [];
+  const res = await fetch(
+    `${API_BASE_URL}/api/users/search?q=${encodeURIComponent(q)}`,
+    { headers: { ...getAuthHeaders() } },
+  );
+  if (!res.ok) return [];
+  return res.json();
+}

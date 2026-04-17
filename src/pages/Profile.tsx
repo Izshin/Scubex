@@ -167,7 +167,6 @@ const Profile = observer(function Profile() {
       >
         Volver
       </a>
-
       {/* ─── Top: Profile info ─── */}
       <div className="w-full max-w-2xl mt-12 sm:mt-14">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">

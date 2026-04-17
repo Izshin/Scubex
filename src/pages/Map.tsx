@@ -9,6 +9,7 @@ import WeatherPanel from "../components/WeatherPanel";
 import PublicationPopup from "../components/PublicationPopup";
 import PublicationDetail from "../components/PublicationDetail";
 import PlaceSearch from "../components/PlaceSearch";
+import NotificationBell from "../components/NotificationBell";
 import { useSpeciesStore, useMapStore, useWeatherStore, usePublicationStore, useUserStore } from "../lib/stores/index.tsx";
 import { useWaveTransition } from "../lib/transition";
 import { loginWithGoogle } from "../lib/api";
@@ -183,20 +184,35 @@ const MapPage = observer(() => {
           Scubex
         </a>
         {userStore.isLoggedIn && (
-          <a
-            href="/profile"
-            onClick={(e) => { e.preventDefault(); startWaveTransition('/profile', { from: '/map' }); }}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 transition-all"
-          >
-            {userStore.user?.picture ? (
-              <img src={userStore.user.picture} alt={userStore.user.name} className="w-7 h-7 rounded-full active:animate-coin-spin" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-bold active:animate-coin-spin">
-                {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
-              </div>
-            )}
-            <span className="text-white text-sm font-medium hidden sm:inline">{userStore.user?.name}</span>
-          </a>
+          <div className="flex items-center gap-8">
+            <NotificationBell
+              onFocusPublication={(id) => {
+                const pub = publicationStore.publications.find(p => p.id === id);
+                if (pub) {
+                  handlePublicationClick(pub);
+                } else {
+                  // not loaded yet — use focusPublication state nav
+                  focusedPubIdRef.current = null;
+                  window.history.replaceState({ focusPublication: id }, '');
+                  window.dispatchEvent(new PopStateEvent('popstate', { state: { focusPublication: id } }));
+                }
+              }}
+            />
+            <a
+              href="/profile"
+              onClick={(e) => { e.preventDefault(); startWaveTransition('/profile', { from: '/map' }); }}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 transition-all"
+            >
+              {userStore.user?.picture ? (
+                <img src={userStore.user.picture} alt={userStore.user.name} className="w-7 h-7 rounded-full active:animate-coin-spin" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-bold active:animate-coin-spin">
+                  {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <span className="text-white text-sm font-medium hidden sm:inline">{userStore.user?.name}</span>
+            </a>
+          </div>
         )}
       </header>
 
@@ -311,7 +327,7 @@ const MapPage = observer(() => {
           {/* Hint overlay */}
           {mode === 'scan' && !mapStore.scanCenter && !isScanning && !speciesStore.hasSpecies && (
             <motion.div
-              className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
+              className="absolute bottom-40 sm:bottom-24 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}

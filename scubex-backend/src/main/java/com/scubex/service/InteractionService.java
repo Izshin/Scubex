@@ -15,13 +15,16 @@ public class InteractionService {
     private final PublicationLikeRepository likeRepository;
     private final PublicationSaveRepository saveRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     public InteractionService(PublicationLikeRepository likeRepository,
                               PublicationSaveRepository saveRepository,
-                              CommentRepository commentRepository) {
+                              CommentRepository commentRepository,
+                              NotificationService notificationService) {
         this.likeRepository = likeRepository;
         this.saveRepository = saveRepository;
         this.commentRepository = commentRepository;
+        this.notificationService = notificationService;
     }
 
     // ── Likes ──
@@ -36,6 +39,7 @@ public class InteractionService {
                 .publication(publication)
                 .user(user)
                 .build());
+        notificationService.notifyLike(user, publication);
         return true; // liked
     }
 
@@ -73,11 +77,13 @@ public class InteractionService {
     // ── Comments ──
 
     public Comment addComment(Publication publication, User user, String text) {
-        return commentRepository.save(Comment.builder()
+        Comment comment = commentRepository.save(Comment.builder()
                 .publication(publication)
                 .user(user)
                 .text(text)
                 .build());
+        notificationService.notifyComment(user, publication, text);
+        return comment;
     }
 
     public List<Comment> getComments(Long publicationId) {
