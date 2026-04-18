@@ -4,8 +4,8 @@ import { Map } from "maplibre-gl";
 
 interface OceanDot {
   id: string;
-  x: number;
-  y: number;
+  lng: number;
+  lat: number;
   timestamp: number;
 }
 
@@ -83,10 +83,11 @@ export default function ScanningAnimation({ isScanning, mapRef, scanCenter, scan
       const y = cy + dist * Math.sin(dotAngle);
 
       if (isPointOnOcean(x, y)) {
+        const lngLat = mapRef.current!.unproject([x, y]);
         const newDot: OceanDot = {
           id: `dot-${Date.now()}-${i}`,
-          x,
-          y,
+          lng: lngLat.lng,
+          lat: lngLat.lat,
           timestamp: Date.now()
         };
 
@@ -101,6 +102,16 @@ export default function ScanningAnimation({ isScanning, mapRef, scanCenter, scan
       }
     }
   }, [getScanScreenBounds, getSweepAngle, isPointOnOcean]);
+
+  // Force re-render when map moves so screen-space elements track the geo position
+  const [, setMapTick] = useState(0);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const onMove = () => setMapTick(t => t + 1);
+    map.on('move', onMove);
+    return () => { map.off('move', onMove); };
+  }, [mapRef, isScanning]);
 
   useEffect(() => {
     if (isScanning && scanCenter) {
@@ -180,23 +191,27 @@ export default function ScanningAnimation({ isScanning, mapRef, scanCenter, scan
 
         {/* Ocean Detection Dots */}
         <AnimatePresence>
-          {oceanDots.map(dot => (
-            <motion.div
-              key={dot.id}
-              className="absolute w-1.5 h-1.5 pointer-events-none"
-              style={{
-                left: dot.x - 3,
-                top: dot.y - 3,
-                backgroundColor: '#87ceeb',
-                borderRadius: '50%',
-                boxShadow: '0 0 6px #87ceeb, 0 0 12px #87ceeb',
-              }}
-              initial={{ scale: 0, opacity: 0.8 }}
-              animate={{ scale: [1, 1.5, 0.8], opacity: [0.8, 1, 0.3] }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 2, ease: "easeOut" }}
-            />
-          ))}
+          {oceanDots.map(dot => {
+            const px = mapRef.current?.project([dot.lng, dot.lat]);
+            if (!px) return null;
+            return (
+              <motion.div
+                key={dot.id}
+                className="absolute w-1.5 h-1.5 pointer-events-none"
+                style={{
+                  left: px.x - 3,
+                  top: px.y - 3,
+                  backgroundColor: '#87ceeb',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 6px #87ceeb, 0 0 12px #87ceeb',
+                }}
+                initial={{ scale: 0, opacity: 0.8 }}
+                animate={{ scale: [1, 1.5, 0.8], opacity: [0.8, 1, 0.3] }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 2, ease: "easeOut" }}
+              />
+            );
+          })}
         </AnimatePresence>
       </motion.div>
     </AnimatePresence>

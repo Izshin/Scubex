@@ -93,9 +93,29 @@ const MapPage = observer(() => {
 
   const isScanning = speciesStore.isScanning;
 
+  // Scan completed toast: place name + badge
+  const [scanToastName, setScanToastName] = useState<string | null>(null);
+  const [scanBadge, setScanBadge] = useState(false);
+  const prevScanningRef = useRef(false);
+  useEffect(() => {
+    if (prevScanningRef.current && !isScanning && mapStore.scanCenter) {
+      // Scan just finished — reverse-geocode the scan center
+      const { lat, lng } = mapStore.scanCenter;
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`)
+        .then(r => r.json())
+        .then(data => {
+          const a = data.address ?? {};
+          const name = a.beach ?? a.bay ?? a.town ?? a.city ?? a.village ?? a.county ?? a.state ?? `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+          setScanToastName(name);
+          setScanBadge(true);
+        })
+        .catch(() => { setScanToastName(`${lat.toFixed(2)}, ${lng.toFixed(2)}`); setScanBadge(true); });
+    }
+    prevScanningRef.current = isScanning;
+  }, [isScanning, mapStore.scanCenter]);
+
   // Click on map → depends on mode
   const handleMapClick = useCallback((lngLat: { lng: number; lat: number }) => {
-    if (isScanning) return;
     const lat = Number(lngLat.lat.toFixed(6));
     const lng = Number(lngLat.lng.toFixed(6));
 
@@ -118,6 +138,7 @@ const MapPage = observer(() => {
         });
       }
     } else {
+      if (isScanning) return; // don't move scan center while scan in progress
       mapStore.setScanCenter({ lat, lng });
       weatherStore.fetchWeather(lat, lng);
     }
@@ -139,7 +160,6 @@ const MapPage = observer(() => {
     if (!hasScanned) {
       setHasScanned(true);
     }
-    setSidebarOpen(true);
   }, [mapStore, speciesStore, weatherStore, isScanning, hasScanned]);
 
   const handleRadiusChange = useCallback((radius: number) => {
@@ -226,7 +246,8 @@ const MapPage = observer(() => {
             onViewportIdle={handleViewportChange}
             onMapClick={handleMapClick}
             onPublicationClick={handlePublicationClick}
-            scanCenter={mode === 'scan' ? mapStore.scanCenter : publishCoords}
+            scanCenter={mode === 'scan' ? mapStore.scanCenter : null}
+            publishCenter={mode === 'publish' ? publishCoords : null}
             scanRadius={mode === 'scan' ? mapStore.scanRadius : undefined}
             publications={publicationStore.publications}
           />
@@ -336,6 +357,44 @@ const MapPage = observer(() => {
               Haz click en el mapa para seleccionar una zona
             </motion.div>
           )}
+
+          {/* Scan completed toast */}
+          <AnimatePresence>
+            {scanToastName && (
+              <motion.button
+                key="scan-toast"
+                className={`absolute ${mode === 'publish' ? 'bottom-24' : 'bottom-40'} sm:bottom-24 left-3 sm:left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-800 text-xs px-3 py-2 rounded-2xl shadow-lg border border-gray-200/60 hover:bg-white transition-all`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.25 }}
+                onClick={() => {
+                  const map = mapRef.current?.getMap();
+                  if (map && mapStore.scanCenter) {
+                    map.flyTo({ center: [mapStore.scanCenter.lng, mapStore.scanCenter.lat], zoom: 12.5, duration: 700 });
+                  }
+                  setScanBadge(false);
+                  setScanToastName(null);
+                  setTimeout(() => setSidebarOpen(true), 500);
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-cyan-500 ml-1 shrink-0">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="currentColor"/>
+                  <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.6"/>
+                  <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3"/>
+                </svg>
+                <span className="text-gray-700 font-medium">Escaneo en {scanToastName}, acabado</span>
+                <button
+                  onClick={e => { e.stopPropagation(); setScanToastName(null); }}
+                  className="ml-1 text-gray-400 hover:text-cyan-600 transition-colors"
+                >
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/>
+                  </svg>
+                </button>
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* Login prompt — shown when unauthenticated user clicks in publish mode */}
           <AnimatePresence>
@@ -461,9 +520,9 @@ const MapPage = observer(() => {
               <button
                 className={`absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out ${sidebarOpen ? 'hidden sm:block' : ''}`}
                 style={{ right: sidebarOpen ? 400 : 0 }}
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                onClick={() => { setSidebarOpen(!sidebarOpen); setScanBadge(false); }}
               >
-                <div className="w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
+                <div className="relative w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
                   <svg
                     width="10"
                     height="14"
@@ -473,6 +532,9 @@ const MapPage = observer(() => {
                   >
                     <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
+                  {scanBadge && !sidebarOpen && (
+                    <span className="absolute -top-2 -left-2 w-3 h-3 bg-cyan-500 rounded-full" />
+                  )}
                 </div>
               </button>
 
