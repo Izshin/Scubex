@@ -1,7 +1,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react-lite";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
 import MapView, { type MapViewRef } from "../components/MapComponents/MapView.tsx";
 import SpeciesPanel from "../components/SpeciesPanel";
@@ -43,17 +43,18 @@ const MapPage = observer(() => {
   // triggered by publicationStore.publications changing (e.g. after creating a new
   // publication) don't fly back to the originally focused publication.
   const focusedPubIdRef = useRef<number | null>(null);
+  const [searchParams] = useSearchParams();
 
   // Load publications on mount
   useEffect(() => {
     publicationStore.fetchPublications();
   }, [publicationStore]);
 
-  // Focus on a publication when navigated from profile
+  // Focus on a publication when navigated from profile OR via ?pub= URL param
   useEffect(() => {
     const state = location.state as { focusPublication?: number } | null;
-    if (!state?.focusPublication) return;
-    const pubId = state.focusPublication;
+    const pubId = state?.focusPublication ?? (searchParams.get('pub') ? Number(searchParams.get('pub')) : null);
+    if (!pubId) return;
     // Already handled this id — don't fly again
     if (focusedPubIdRef.current === pubId) return;
     // Wait for publications to load, then fly to the target
@@ -79,7 +80,7 @@ const MapPage = observer(() => {
       }
     };
     tryFocus();
-  }, [location.state, publicationStore.publications]);
+  }, [location.state, searchParams, publicationStore.publications]);
 
   const handleViewportChange = useCallback((bbox: number[]) => {
     const map = mapRef.current?.getMap();

@@ -25,6 +25,39 @@ interface PublicationDetailProps {
   onDelete?: (id: number) => Promise<unknown>;
 }
 
+function ShareButton({ url, title }: { url: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  return (
+    <button
+      onClick={handleShare}
+      title={copied ? '¡Enlace copiado!' : 'Compartir publicación'}
+      className={`transition-colors ${copied ? 'text-green-500' : 'text-gray-400 hover:text-cyan-400'}`}
+    >
+      {copied ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function PublicationDetail({ publication, map, isOwner, onClose, onEdit, onDelete }: PublicationDetailProps) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -514,6 +547,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                         </svg>
                         <span className="text-xs font-medium">{commentCount}</span>
                       </button>
+
+                      {/* Share button */}
+                      <ShareButton url={`${window.location.origin}/map?pub=${publication.id}`} title={publication.title} />
                     </div>
 
                     {/* Save button */}

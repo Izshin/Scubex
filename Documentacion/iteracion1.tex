@@ -173,7 +173,47 @@ Se han implementado los siguientes casos de prueba antes del código productivo:
     \item \textbf{shouldHandleINaturalistTimeout}: Simula timeout en petición a iNaturalist. Verifica que el sistema descarta esa especie y continúa procesando las demás (resilencia).
 \end{itemize}
 
-\subsection{Documentación de API (TD1)}
+\subsection{Caché de escaneos (resolución de deuda técnica)}
+\label{subsec:cachedScan}
+
+La latencia identificada durante las pruebas (3--7 segundos por escaneo) se resolvió en esta iteración mediante un sistema de caché persistente en base de datos.
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 003: Caché Adaptativa de Escaneos}
+\textbf{Asunto}&Latencia de 3--7 segundos por escaneo debido a llamadas encadenadas a OBIS e iNaturalist.\\
+\textbf{Resumen}&Sistema de caché persistente en PostgreSQL con redondeo adaptativo de coordenadas y TTL de 48 horas.\\
+\midrule
+\textbf{Factores causantes}&Cada escaneo requiere: \textbf{(1)} una llamada a OBIS para obtener ocurrencias marinas, y \textbf{(2)} una llamada a iNaturalist por cada especie única detectada (N llamadas secuenciales/paralelas). Para zonas costeras con alta biodiversidad, N puede superar las 40 especies, acumulando varios segundos de latencia de red.\\
+\textbf{Solución}&Se ha implementado la entidad \texttt{CachedScan} que almacena el resultado completo de un escaneo indexado por \texttt{(roundedLat, roundedLng, radius)}. El redondeo de coordenadas es adaptativo según el radio solicitado: radio $\leq$ 1000\,m $\rightarrow$ 0.01\textdegree{} ($\approx$1.1\,km de tolerancia); radio $\leq$ 2000\,m $\rightarrow$ 0.05\textdegree{} ($\approx$5.5\,km); radio $>$ 2000\,m $\rightarrow$ 0.1\textdegree{} ($\approx$11\,km). Adicionalmente, una caché con radio mayor sirve para satisfacer una consulta de radio menor (filtrando por distancia haversiana), maximizando los hits.\\
+\textbf{Motivación}&Reducir el número de llamadas a las APIs externas y conseguir respuesta instantánea para zonas ya consultadas. Las especies marinas de una zona no cambian en un horizonte de 48 horas, por lo que el TTL elegido garantiza frescura sin impactar la experiencia de usuario.\\
+\textbf{Cuestiones abiertas}&El redondeo puede hacer que dos clicks muy próximos compartan la misma caché, lo que es el comportamiento deseado. En zonas fronterizas (p.ej., entre 0.04 y 0.06 grados) puede haber un falso miss si el usuario hace click justo en el umbral de redondeo.\\
+\textbf{Alternativas}&Spring Cache con backend Redis: descartado por añadir un servicio externo de infraestructura. La solución en PostgreSQL es más simple y ya disponible en Railway.\\
+	\end{coolTable}
+	\caption{Memorando técnico 003: Caché de Escaneos}
+\end{table*}
+
+\textbf{Pseudocódigo del flujo con caché}:
+
+\begin{asigResponsabilidad}{003}{SpeciesService}
+{List<SpeciesResponse> getSpeciesInSelectedArea(lat:double, lng:double, radius:double)}
+\pasoPseudo{1. roundedLat $\leftarrow$ roundCoord(lat, radius)}
+\pasoPseudo{2. roundedLng $\leftarrow$ roundCoord(lng, radius)}
+\pasoPseudo{3. cutoff $\leftarrow$ now() $-$ 48h}
+\pasoPseudo{4. cached $\leftarrow$ repository.findFirst(roundedLat, roundedLng, radius $\geq$ requested, createdAt $>$ cutoff)}
+\pasoPseudo{5. SI cached existe:}
+\pasoPseudo{5.1. SI cached.radius $>$ radius: filtrar especies por distancia haversiana $\leq$ radius}
+\pasoPseudo{5.2. Devolver lista (instantáneo, sin llamadas externas)}
+\pasoPseudo{6. SI NO: ejecutar pipeline completo OBIS $\rightarrow$ iNaturalist}
+\pasoPseudo{7. Persistir nuevo CachedScan con especies enriquecidas}
+\pasoPseudo{8. Devolver lista}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{1-2}{SpeciesService}{double roundCoord(value:double, radius:double)}{003}{SI}
+\pasoCodigo{4}{CachedScanRepository}{Optional<CachedScan> findFirst(...)}{003}{SI}
+\end{asigResponsabilidad}
+
+\subsection{Documentación de API (Swagger/OpenAPI)}
 
 Se ha integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
 \begin{itemize}
@@ -213,14 +253,15 @@ El frontend React consume el endpoint mediante:
 
 \section{Despliegue}
 
-El despliegue del proyecto aún no se ha realizado. Actualmente se ejecuta en entorno de desarrollo local:
+Tras la finalización de la iteración 1, el proyecto fue desplegado en la infraestructura de producción descrita en el capítulo de Arranque:
 
 \begin{itemize}
-    \item \textbf{Backend}: \texttt{mvn spring-boot:run} en puerto 8080.
-    \item \textbf{Frontend}: \texttt{npm run dev} en puerto 5173.
+    \item \textbf{Backend}: desplegado en Railway. El proceso de arranque ejecuta automáticamente \texttt{mvn package} y lanza el JAR resultante. Las variables de entorno (\texttt{GOOGLE\_CLIENT\_ID}, \texttt{JWT\_SECRET}, \texttt{DATABASE\_URL}, \texttt{CORS\_ALLOWED\_ORIGIN}) se configuran desde el panel de Railway.
+    \item \textbf{Frontend}: desplegado en Vercel. Cada \texttt{push} a la rama \texttt{main} desencadena un nuevo despliegue automático. La variable \texttt{VITE\_API\_BASE\_URL} apunta a la URL pública del backend en Railway.
+    \item \textbf{Base de datos}: PostgreSQL gestionado como servicio en Railway; accedido mediante \texttt{DATABASE\_URL} inyectada en \texttt{application.properties}.
 \end{itemize}
 
-En iteraciones futuras se planea despliegue en contenedores Docker y hosting en la nube.
+La aplicación es accesible públicamente en \texttt{https://scubex.vercel.app} desde la finalización de esta iteración.
 
 \section{Seguimiento y control}
 
@@ -235,7 +276,8 @@ En iteraciones futuras se planea despliegue en contenedores Docker y hosting en 
     \item [OK] Flujo de escaneo en dos pasos (click + botón) con radio configurable (500\,m--10\,km).
     \item [OK] Animación de radar con barrido rotatorio y puntos sincronizados en sector.
     \item [OK] Google OAuth2 con JWT implementado (login, persistencia en \texttt{localStorage}, página de perfil).
-    \item [ADVERTENCIA] Latencia observable en zonas con >30 especies (5-7 segundos). Candidata a optimización en Iteración 3 (sistema de caché).
+    \item [OK] Despliegue en Railway (backend) y Vercel (frontend) operativo desde el cierre de esta iteración.
+    \item [OK] Caché adaptativa de escaneos (\texttt{CachedScan}, redondeo por radio, TTL 48\,h) implementada --- ver \S\ref{subsec:cachedScan}.
 \end{itemize}
 
 \textbf{Métricas}:
@@ -244,8 +286,8 @@ En iteraciones futuras se planea despliegue en contenedores Docker y hosting en 
     \item \textbf{Tiempo de respuesta (promedio)}: 3.2s para radio de 5km.
 \end{itemize}
 
-\textbf{Decisiones técnicas pendientes}:
+\textbf{Decisiones técnicas resueltas}:
 \begin{itemize}
-    \item Implementar caching de taxonomías previamente consultadas en iNaturalist (Redis o in-memory LRU cache).
-    \item Añadir paginación al endpoint (\texttt{?page=1\&size=20}) para manejar áreas con alta biodiversidad.
+    \item \textbf{[Resuelto]} Caching de taxonomías: implementado como \texttt{CachedScan} con redondeo adaptativo por radio y TTL 48\,h (ver \S\ref{subsec:cachedScan}).
+    \item \textbf{[Postpuesto]} Paginación del endpoint: la limitación actual de 50 especies es suficiente para el caso de uso de buceadores recreativos. Se mantiene como mejora futura.
 \end{itemize}

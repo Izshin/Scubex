@@ -14,13 +14,14 @@ Este capítulo define la lista inicial de características priorizadas del proye
 Siguiendo la fase 1 de FDD (Desarrollar lista de características) y los objetivos definidos para el proyecto, se han identificado las siguientes funcionalidades nucleares priorizadas por valor para el usuario:
 
 \begin{enumerate}
-    \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto, historial de avistamientos).
-    \item \textbf{Mapa Interactivo}: Visualización de un mapa navegable mediante MapLibre GL JS como superficie central de interacción con la aplicación.
-    \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas (OBIS + iNaturalist).
-    \item \textbf{Datos Climáticos y Oceanográficos}: Condiciones de la zona en tiempo real mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos).
-    \item \textbf{Registro de Avistamientos}: Posibilidad de registrar un avistamiento de especie directamente en el mapa, geolocalizando la observación con fecha, foto y descripción opcionales.
-    \item \textbf{Red Social Geoespacial}: Visualización de avistamientos de otros usuarios en el mapa, con interacción mediante likes y comentarios.
-    \item \textbf{Perfil y Compartición}: Historial personal de avistamientos con la posibilidad de generar enlaces compartibles para que otros usuarios puedan consultar los descubrimientos.
+    \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto). El usuario puede personalizar su nombre y foto de perfil desde la página de perfil, con soporte para eliminar la cuenta.
+    \item \textbf{Mapa Interactivo}: Visualización de un mapa navegable mediante MapLibre GL JS como superficie central de interacción, con búsqueda de lugares integrada (Nominatim).
+    \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas (OBIS + iNaturalist), con sistema de caché adaptativo (TTL 48h) para reducir latencia y llamadas externas.
+    \item \textbf{Datos Climáticos y Oceanográficos}: Condiciones de la zona en tiempo real mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos), con evaluación automática de aptitud para el buceo y caché de 30 minutos.
+    \item \textbf{Registro de Publicaciones}: Publicación de inmersiones en el mapa con título, descripción, fotografía y geolocalización inversa (nombre del lugar mediante Nominatim). Edición y borrado por el propio autor.
+    \item \textbf{Interacciones Sociales}: Sistema de likes, guardados y comentarios sobre publicaciones. Soporte de menciones en comentarios mediante la sintaxis \texttt{@[Nombre](email)} con notificaciones automáticas al mencionado.
+    \item \textbf{Red Social y Seguimiento de Usuarios}: Perfiles públicos por usuario con recuento de seguidores y seguidos, posibilidad de seguir/dejar de seguir, y vista de publicaciones de cada perfil. Página de perfil propio con mis publicaciones y publicaciones guardadas.
+    \item \textbf{Sistema de Notificaciones}: Notificaciones en tiempo real (campana en el header) para eventos de seguimiento, like, comentario y mención. Las notificaciones se marcan como leídas al abrirlas o se eliminan permanentemente con swipe (móvil) o botón (escritorio).
 \end{enumerate}
 
 \textbf{Justificación de priorización}:
@@ -91,8 +92,9 @@ MapLibre GL JS se ha seleccionado porque:
 \textbf{API}&\textbf{Proveedor}&\textbf{Datos proporcionados}\\
 \midrule
 OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento.\\
-iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (preferred\_common\_name).\\
-Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de API key y plan gratuito generosísimo.\\
+iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (\texttt{preferred\_common\_name}).\\
+Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de clave y con plan gratuito generoso.\\
+Nominatim&OpenStreetMap Foundation& Geocodificación inversa: obtención del nombre humano de un lugar a partir de coordenadas geográficas (playa, municipio, estado). Usada al crear publicaciones y al visualizar su detalle.\\
 	\end{coolTable}
 	\caption{Resumen de APIs externas}
 \end{table*}
@@ -145,8 +147,8 @@ El backend actua como director de orquesta de las API, gestionando la conexión 
     \item [OK] OAuth2 implementado.
 \end{itemize}
 
-\textbf{Decisiones arquitectónicas pendientes}:
+\textbf{Decisiones arquitectónicas resueltas en iteraciones posteriores}:
 \begin{itemize}
-    \item Estrategia de caching para respuestas de OBIS (considerar cache en memoria con Spring Cache si el rate limit se vuelve problemático).
-    \item Migración del esquema con Flyway para gestionar cambios incrementales en PostgreSQL.
+    \item \textbf{[Resuelto en It.~2]} Estrategia de caching para OBIS: implementada como entidad \texttt{CachedScan} con redondeo adaptativo de coordenadas y TTL de 48 horas. El caching de condiciones climáticas se resolvió con la entidad \texttt{CachedWeather} (TTL 30 min).
+    \item \textbf{[Postpuesto]} Migración del esquema con Flyway: el proyecto utiliza \texttt{spring.jpa.hibernate.ddl-auto=update} en producción. La migración a Flyway se mantiene como mejora futura.
 \end{itemize}

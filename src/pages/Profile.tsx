@@ -44,6 +44,7 @@ const Profile = observer(function Profile() {
 
   // Track if user just logged out
   const [justLoggedOut, setJustLoggedOut] = useState(false);
+  const [copiedProfile, setCopiedProfile] = useState(false);
 
   // Fetch profile data
   useEffect(() => {
@@ -153,6 +154,17 @@ const Profile = observer(function Profile() {
     startWaveTransition(`/user/${encodeURIComponent(userEmail)}`);
   };
 
+  const handleShareProfile = async () => {
+    const url = `${window.location.origin}/user/${encodeURIComponent(user.email)}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: user.name, url }); } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopiedProfile(true);
+      setTimeout(() => setCopiedProfile(false), 2000);
+    }
+  };
+
   const publications = profileData?.publications ?? [];
   const currentPubs = activeTab === 'publications' ? publications : savedPubs;
   const isLoadingPubs = activeTab === 'publications' ? profileLoading : savedLoading;
@@ -167,6 +179,8 @@ const Profile = observer(function Profile() {
       >
         Volver
       </a>
+
+
       {/* ─── Top: Profile info ─── */}
       <div className="w-full max-w-2xl mt-12 sm:mt-14">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
@@ -307,7 +321,7 @@ const Profile = observer(function Profile() {
 
                 {/* Action buttons + transition */}
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-5">
-                  <div className="flex items-center justify-center sm:justify-start gap-4">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
                     <button
                       onClick={startEditing}
                       className="px-5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all"
@@ -319,6 +333,20 @@ const Profile = observer(function Profile() {
                       className="px-5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all"
                     >
                       Cerrar sesión
+                    </button>
+                    <button
+                      onClick={handleShareProfile}
+                      title={copiedProfile ? '¡Enlace copiado!' : 'Compartir perfil'}
+                      className={`p-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-colors ${copiedProfile ? 'text-green-400' : 'text-white/60 hover:text-white'}`}
+                    >
+                      {copiedProfile ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                   <div className="flex flex-col items-center">
