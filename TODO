@@ -197,9 +197,70 @@ TD13(!!). Sistema social (Fase 3) — 0% documentado
 
 TD14. Geocoding inverso mejorado — 0% documentado
   - PublicationPopup: cascade de Nominatim zoom 14 → 10 → 5
-  - Extrae: beach, tourism, natural, city, town, village, municipality, county, state
   - Fallback "Mar abierto" si no encuentra nada
   - Permite mostrar localización al crear publicación incluso en el agua
+  - ⚠️ También implementado en PublicationDetail.tsx (cascade idéntico al crear) — mostrar nombre del lugar al expandir un bocadillo existente
+
+TD15(!!). Sistema de notificaciones — 0% documentado
+  - Backend:
+    · Notification entity: id, recipient (FK User), type (FOLLOW/LIKE/COMMENT/MENTION), read (bool),
+      actorName, actorPicture, actorEmail, publicationId, publicationTitle, commentSnippet, createdAt
+    · NotificationRepository: findByRecipientIdOrderByCreatedAtDesc, countByRecipientIdAndReadFalse,
+      findByRecipientIdAndReadFalse
+    · NotificationService:
+      - notifyFollow(follower, followed) — genera notif FOLLOW
+      - notifyLike(actor, pub) — genera notif LIKE (no auto-notifica)
+      - notifyComment(actor, pub, text) — genera COMMENT al autor + MENTION a cada @[Name](email)
+        del texto (evita duplicados con Set<Long>)
+      - getNotifications(user), getUnreadCount(user), markRead(id, user), markAllRead(user)
+      - deleteNotification(id, user) — borra físicamente de BD verificando ownership
+    · NotificationController: endpoints bajo /api/notifications/
+      - GET / — lista completa del usuario autenticado (DTOs)
+      - GET /unread-count → {count}
+      - POST /{id}/read — marca una como leída
+      - POST /read-all — marca todas como leídas
+      - DELETE /{id} — elimina definitivamente (persistente)
+    · Integración: FollowService.toggleFollow llama notifyFollow; InteractionService llama
+      notifyLike y notifyComment al crear like/comentario
+  - Frontend:
+    · NotificationBell.tsx: bell icon en header, badge con contador no leídas
+      - Panel fixed (right-4 top-16) para evitar problemas de stacking context en móvil
+      - SwipeableNotification: useMotionValue + useTransform para swipe-left en móvil
+        (reveal fondo rojo + papelera con opacidad ligada al desplazamiento, umbral -60px)
+      - Desktop: botón X por notificación (hover → rojo, apparece con group-hover)
+      - Eliminar borra en backend (DELETE) para persistencia real
+      - Fetch del contador al montar y en visibilitychange; lista completa al abrir panel
+      - Click en notificación: navega a publicación (via onFocusPublication prop) o a perfil
+      - "Marcar todo como leído" en header del panel
+    · NotificationData interface en api.ts: id, type, read, createdAt, actorName, actorPicture,
+      actorEmail, publicationId, publicationTitle, commentSnippet
+    · Funciones API: getNotifications, getUnreadCount, markNotificationRead,
+      markAllNotificationsRead, deleteNotification
+
+TD16(!). Sistema de menciones en comentarios — 0% documentado
+  - Formato interno: @[Display Name](email@example.com)
+  - renderMentions(text): split por regex, renderiza mentions como <span> cyan
+  - Botón "responder" por comentario (siempre visible en móvil, hover en desktop):
+    · Pre-rellena input con @[Name](email) y coloca cursor al final
+    · Solo visible si el comentario no es propio
+  - Backend: NotificationService.notifyComment parsea el patrón y notifica a mencionados
+  - searchUsers(q) en api.ts: GET /api/users/search?q= (mínimo 2 chars)
+
+TD17(!). Búsqueda de lugares (PlaceSearch) — 0% documentado
+  - PlaceSearch.tsx: componente de búsqueda con Nominatim
+  - Toggle expand/collapse animado con Framer Motion
+  - Debounce 400ms, mínimo 2 chars
+  - Resultados con nombre corto y display_name completo como subtítulo
+  - onSelectPlace(lat, lng) → flyTo en el mapa
+  - Integrado en Map.tsx con onExpandChange para ocultar hint overlay
+  - Cierre al click fuera (mousedown listener)
+
+TD18. Modal de login para usuarios no autenticados — 0% documentado
+  - Aparece en Map.tsx al hacer click en modo publish sin estar logueado
+  - loginPromptCoords state guarda las coords del click hasta que se loguea o cancela
+  - Modal centrado (fixed inset-0) con backdrop blur
+  - Contenido: mensaje explicativo + botón invisible de GoogleLogin superpuesto al botón visual
+  - Al loguear se cierra el modal y se abre PublicationPopup con las coords guardadas
 
 === SECCIONES VACÍAS POR RELLENAR ===
 
