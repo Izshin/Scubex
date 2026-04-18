@@ -63,6 +63,16 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNotification(@PathVariable Long id, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        User user = userService.findByGoogleId(auth.getName());
+        if (user == null) return ResponseEntity.status(404).build();
+
+        notificationService.deleteNotification(id, user);
+        return ResponseEntity.ok().build();
+    }
+
     private Map<String, Object> toDto(Notification n) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", n.getId());

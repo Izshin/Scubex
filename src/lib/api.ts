@@ -577,6 +577,13 @@ export async function markAllNotificationsRead(): Promise<void> {
   });
 }
 
+export async function deleteNotification(id: number): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
 // ── User search (mention autocomplete) ──
 
 export async function searchUsers(q: string): Promise<UserSummary[]> {

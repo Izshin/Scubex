@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useWaveTransition } from '../lib/transition';
 import {
   getNotifications,
   getUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
   type NotificationData,
 } from '../lib/api';
 
@@ -34,11 +35,93 @@ interface Props {
   onFocusPublication?: (id: number) => void;
 }
 
+function SwipeableNotification({
+  n,
+  onDismiss,
+  onClick,
+}: {
+  n: NotificationData;
+  onDismiss: (id: number) => void;
+  onClick: (n: NotificationData) => void;
+}) {
+  const x = useMotionValue(0);
+  const revealOpacity = useTransform(x, [-20, -10], [1, 0]);
+
+  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (info.offset.x < -60) onDismiss(n.id);
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      {/* Swipe-reveal red bg */}
+      <motion.div style={{ opacity: revealOpacity }} className="absolute inset-0 bg-red-100 flex items-center justify-end pr-4 pointer-events-none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6M14 11v6" />
+          <path d="M9 6V4h6v2" />
+        </svg>
+      </motion.div>
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -120, right: 0 }}
+        dragElastic={{ left: 0.15, right: 0 }}
+        onDragEnd={handleDragEnd}
+        style={{ x }}
+        onClick={() => onClick(n)}
+        className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 group ${
+          !n.read ? 'bg-cyan-50/60' : 'bg-white'
+        }`}
+      >
+        <div className="flex-shrink-0 mt-0.5">
+          {n.actorPicture ? (
+            <img src={n.actorPicture} alt={n.actorName} className="w-9 h-9 rounded-full object-cover" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm font-bold">
+              {n.actorName?.[0]?.toUpperCase() ?? '?'}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-gray-800 leading-snug">{notificationText(n)}</p>
+          {n.commentSnippet && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{n.commentSnippet}</p>
+          )}
+          <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+        </div>
+        <div className="flex-shrink-0 flex items-center gap-1.5 mt-1">
+          {!n.read && <span className="w-2 h-2 rounded-full bg-cyan-500" />}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDismiss(n.id); }}
+            className="hidden sm:flex opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center text-gray-400 hover:text-red-400 active:text-red-600"
+            title="Eliminar"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function NotificationBell({ onFocusPublication }: Props) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleDismiss = useCallback((id: number) => {
+    setNotifications(prev => {
+      const n = prev.find(x => x.id === id);
+      if (n && !n.read) setUnread(u => Math.max(0, u - 1));
+      return prev.filter(x => x.id !== id);
+    });
+    deleteNotification(id).catch(() => {});
+  }, []);
   const panelRef = useRef<HTMLDivElement>(null);
   const { startWaveTransition } = useWaveTransition();
 
@@ -127,7 +210,7 @@ export default function NotificationBell({ onFocusPublication }: Props) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none"
+              className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] bg-red-500 text-white text-[10px] font-bold tabular-nums rounded-full flex items-center justify-center px-0.5"
             >
               {unread > 99 ? '99+' : unread}
             </motion.span>
@@ -143,7 +226,7 @@ export default function NotificationBell({ onFocusPublication }: Props) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.18 }}
-            className="fixed right-4 top-16 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200/60 flex flex-col z-50 max-h-[70vh]"
+            className="fixed right-4 top-16 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200/60 flex flex-col z-50 max-h-[70vh] overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -174,32 +257,12 @@ export default function NotificationBell({ onFocusPublication }: Props) {
                 </div>
               ) : (
                 notifications.map(n => (
-                  <button
+                  <SwipeableNotification
                     key={n.id}
-                    onClick={() => handleClick(n)}
-                    className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${!n.read ? 'bg-cyan-50/60' : ''}`}
-                  >
-                    {/* Actor avatar */}
-                    <div className="flex-shrink-0 mt-0.5">
-                      {n.actorPicture ? (
-                        <img src={n.actorPicture} alt={n.actorName} className="w-9 h-9 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm font-bold">
-                          {n.actorName?.[0]?.toUpperCase() ?? '?'}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 leading-snug">{notificationText(n)}</p>
-                      {n.commentSnippet && (
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">{n.commentSnippet}</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
-                    </div>
-                    {!n.read && (
-                      <span className="flex-shrink-0 w-2 h-2 rounded-full bg-cyan-500 mt-2" />
-                    )}
-                  </button>
+                    n={n}
+                    onDismiss={handleDismiss}
+                    onClick={handleClick}
+                  />
                 ))
               )}
             </div>
