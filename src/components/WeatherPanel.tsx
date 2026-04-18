@@ -255,7 +255,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
               </div>
               <button
                 onClick={() => setShowInfo(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none font-bold"
+                className="text-gray-400 hover:text-cyan-600 text-lg leading-none font-bold transition-colors"
               >
                 ×
               </button>
