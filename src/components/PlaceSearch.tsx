@@ -134,12 +134,33 @@ export default function PlaceSearch({ onSelectPlace, onExpandChange }: Props) {
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Buscar lugar..."
-              className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none pr-3 min-w-0"
+              className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none min-w-0"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             />
+          )}
+        </AnimatePresence>
+
+        {/* Clear button — only when expanded and has text */}
+        <AnimatePresence>
+          {expanded && query.length > 0 && (
+            <motion.button
+              key="clear-btn"
+              onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
+              className="w-7 h-7 flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors mr-1"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.12 }}
+              title="Borrar búsqueda"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-3 h-3">
+                <line x1="3" y1="3" x2="13" y2="13" />
+                <line x1="13" y1="3" x2="3" y2="13" />
+              </svg>
+            </motion.button>
           )}
         </AnimatePresence>
       </motion.div>
