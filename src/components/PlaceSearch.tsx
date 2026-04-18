@@ -149,7 +149,7 @@ export default function PlaceSearch({ onSelectPlace, onExpandChange }: Props) {
             <motion.button
               key="clear-btn"
               onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
-              className="w-7 h-7 flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors mr-1"
+              className="w-7 h-7 flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-cyan-600 transition-colors mr-1"
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.7 }}
