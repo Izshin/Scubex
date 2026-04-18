@@ -156,10 +156,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
           <div className="flex items-center gap-2">
             <span className="text-2xl leading-none">{getWeatherInfo(data.weatherCode).icon}</span>
             <span className="text-lg font-bold text-gray-900 whitespace-nowrap">{fmt(data.temperature, '°C')}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${styles.badge}`}>{styles.label}</span>
-            {data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode) && (
-              <span className="text-xs text-red-600 font-semibold">{getWeatherInfo(data.weatherCode).desc}</span>
-            )}
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{styles.label}</span>
             <span className="ml-auto" />
             <button
               onClick={() => setMinimized(!minimized)}
@@ -183,6 +180,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
               </button>
             )}
           </div>
+
 
           {/* Collapsible body */}
           <AnimatePresence initial={false}>
@@ -209,10 +207,15 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
                   <Stat label="Nivel mar" value={fmt(data.seaLevelHeight, 'm')} color={statColor('Nivel mar', data)} />
                 </div>
 
-                {/* Extra row if precipitation */}
-                {(data.precipitation !== null && data.precipitation > 0) && (
-                  <div className="mt-1.5 text-[11px] text-gray-600">
-                    Precipitación: {fmt(data.precipitation, 'mm')}
+                {/* Extra row: precipitation and/or storm badge */}
+                {((data.precipitation !== null && data.precipitation > 0) || (data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode))) && (
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    {data.precipitation !== null && data.precipitation > 0 ? (
+                      <span className="text-[11px] text-gray-600">Precipitación: {fmt(data.precipitation, 'mm')}</span>
+                    ) : <span />}
+                    {data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode) && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 whitespace-nowrap">{getWeatherInfo(data.weatherCode).desc}</span>
+                    )}
                   </div>
                 )}
               </motion.div>

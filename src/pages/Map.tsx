@@ -328,7 +328,7 @@ const MapPage = observer(() => {
           {/* Hint overlay */}
           {mode === 'scan' && !mapStore.scanCenter && !isScanning && !speciesStore.hasSpecies && (
             <motion.div
-              className="absolute bottom-40 sm:bottom-24 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
+              className="absolute bottom-40 sm:bottom-24 left-1/2 -translate-x-1/2 sm:left-8 sm:translate-x-0 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
