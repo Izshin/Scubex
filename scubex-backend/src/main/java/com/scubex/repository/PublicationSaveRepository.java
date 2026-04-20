@@ -13,4 +13,8 @@ public interface PublicationSaveRepository extends JpaRepository<PublicationSave
     boolean existsByPublicationIdAndUserId(Long publicationId, Long userId);
 
     List<PublicationSave> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    void deleteAllByUserId(Long userId);
+
+    void deleteAllByPublicationIdIn(List<Long> publicationIds);
 }

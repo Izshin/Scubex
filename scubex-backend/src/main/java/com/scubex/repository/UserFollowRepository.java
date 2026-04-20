@@ -20,4 +20,8 @@ public interface UserFollowRepository extends JpaRepository<UserFollow, Long> {
     List<UserFollow> findByFollowerId(Long followerId);
 
     List<UserFollow> findByFollowedId(Long followedId);
+
+    void deleteAllByFollowerId(Long followerId);
+
+    void deleteAllByFollowedId(Long followedId);
 }
