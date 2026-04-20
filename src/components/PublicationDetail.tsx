@@ -21,6 +21,7 @@ interface PublicationDetailProps {
   map: Map | null;
   isOwner: boolean;
   onClose: () => void;
+  hidden?: boolean;
   onEdit?: (id: number, data: { title: string; description?: string; imageUrl?: string }) => Promise<unknown>;
   onDelete?: (id: number) => Promise<unknown>;
 }
@@ -58,7 +59,7 @@ function ShareButton({ url, title }: { url: string; title: string }) {
   );
 }
 
-export default function PublicationDetail({ publication, map, isOwner, onClose, onEdit, onDelete }: PublicationDetailProps) {
+export default function PublicationDetail({ publication, map, isOwner, onClose, hidden = false, onEdit, onDelete }: PublicationDetailProps) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -165,7 +166,8 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
     }
   }, [expanded]);
 
-  const popupWidth = 400;
+  const containerWidth_pre = map?.getContainer().clientWidth ?? 800;
+  const popupWidth = containerWidth_pre < 500 ? Math.min(300, containerWidth_pre - 24) : 400;
   const tailH = 10;
   const markerH = 60;
   const gap = 4;
@@ -232,16 +234,16 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   };
 
   if (!screenPos) return null;
+  if (hidden) return null;
 
   let top = screenPos.y - markerH - gap - tailH - cardHeight;
   const clamped = top < minTop;
   if (clamped) top = minTop;
 
   // Clamp left so popup stays within viewport
-  const containerWidth = map?.getContainer().clientWidth ?? 800;
   let left = screenPos.x - popupWidth / 2;
   if (left < 8) left = 8;
-  if (left + popupWidth > containerWidth - 8) left = containerWidth - popupWidth - 8;
+  if (left + popupWidth > containerWidth_pre - 8) left = containerWidth_pre - popupWidth - 8;
 
   // Compute tail horizontal offset — clamped so it never reaches the rounded corners
   const tailMaxOffset = popupWidth / 2 - 28;
@@ -319,19 +321,17 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           </div>
 
           {/* Tail — offset horizontally so it always points at the marker pin */}
-          {!clamped && (
-            <svg
-              width="20"
-              height={tailH}
-              viewBox="0 0 20 10"
-              fill="none"
-              className="-mt-px"
-              style={{ marginLeft: tailOffset * 2 }}
-            >
-              <path d="M0 0L10 10L20 0" fill="white" />
-              <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
-            </svg>
-          )}
+          <svg
+            width="20"
+            height={tailH}
+            viewBox="0 0 20 10"
+            fill="none"
+            className="-mt-px"
+            style={{ marginLeft: tailOffset * 2 }}
+          >
+            <path d="M0 0L10 10L20 0" fill="white" />
+            <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
+          </svg>
         </motion.div>
       ) : (
         /* Expanded panel */

@@ -37,6 +37,7 @@ const MapPage = observer(() => {
   const [mode, setMode] = useState<'scan' | 'publish'>('scan');
   const [publishCoords, setPublishCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedPublication, setSelectedPublication] = useState<PublicationData | null>(null);
+  const [detailHidden, setDetailHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [loginPromptCoords, setLoginPromptCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Tracks the focusPublication id that has already been processed so re-renders
@@ -481,6 +482,7 @@ const MapPage = observer(() => {
                 publication={selectedPublication}
                 map={mapRef.current?.getMap() ?? null}
                 isOwner={userStore.user?.email === selectedPublication.author.email}
+                hidden={detailHidden}
                 onClose={() => setSelectedPublication(null)}
                 onEdit={async (id, data) => {
                   const updated = await publicationStore.editPublication(id, data);
@@ -510,7 +512,9 @@ const MapPage = observer(() => {
             data={weatherStore.weatherData}
             loading={weatherStore.isLoading}
             error={weatherStore.error}
-            hidden={searchOpen && window.innerWidth < 640}
+            hidden={(searchOpen || sidebarOpen) && window.innerWidth < 640}
+            onInfoOpen={() => setDetailHidden(true)}
+            onInfoClose={() => setDetailHidden(false)}
           />
 
           {/* Collapsible sidebar — absolutely positioned to avoid map reflow */}
@@ -520,7 +524,13 @@ const MapPage = observer(() => {
               <button
                 className={`absolute top-1/2 -translate-y-1/2 z-30 transition-[right] duration-300 ease-in-out ${sidebarOpen ? 'hidden sm:block' : ''}`}
                 style={{ right: sidebarOpen ? 400 : 0 }}
-                onClick={() => { setSidebarOpen(!sidebarOpen); setScanBadge(false); }}
+                onClick={() => {
+                  const opening = !sidebarOpen;
+                  if (opening && window.innerWidth < 640) setDetailHidden(true);
+                  if (!opening && window.innerWidth < 640) setDetailHidden(false);
+                  setSidebarOpen(opening);
+                  setScanBadge(false);
+                }}
               >
                 <div className="relative w-6 h-12 bg-white shadow-lg border border-r-0 border-gray-200 rounded-l-full flex items-center justify-center hover:bg-gray-50 transition-colors">
                   <svg
@@ -547,7 +557,7 @@ const MapPage = observer(() => {
                 <div className="sm:hidden flex items-center gap-2 px-3 py-2.5 border-b border-gray-200">
                   <button
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { setSidebarOpen(false); setDetailHidden(false); }}
                   >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M13 3L6 10L13 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

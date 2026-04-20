@@ -100,9 +100,11 @@ type Props = {
   loading: boolean;
   error: string | null;
   hidden?: boolean;
+  onInfoOpen?: () => void;
+  onInfoClose?: () => void;
 };
 
-export default function WeatherPanel({ data, loading, error, hidden = false }: Props) {
+export default function WeatherPanel({ data, loading, error, hidden = false, onInfoOpen, onInfoClose }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
@@ -172,7 +174,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
             </button>
             {!minimized && (
               <button
-                onClick={() => setShowInfo(true)}
+                onClick={() => { setShowInfo(true); onInfoOpen?.(); }}
                 className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
                 title="Más información"
               >
@@ -235,7 +237,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
           exit={{ opacity: 0 }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowInfo(false)} />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowInfo(false); onInfoClose?.(); }} />
 
           {/* Modal */}
           <motion.div
@@ -254,7 +256,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
                 </p>
               </div>
               <button
-                onClick={() => setShowInfo(false)}
+                onClick={() => { setShowInfo(false); onInfoClose?.(); }}
                 className="text-gray-400 hover:text-cyan-600 text-lg leading-none font-bold transition-colors"
               >
                 ×
@@ -319,7 +321,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false }: P
             {/* Footer */}
             <div className="p-3 border-t border-gray-100 text-center">
               <button
-                onClick={() => setShowInfo(false)}
+                onClick={() => { setShowInfo(false); onInfoClose?.(); }}
                 className="text-xs text-cyan-600 hover:text-cyan-700 font-semibold"
               >
                 Entendido
