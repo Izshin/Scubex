@@ -1,8 +1,9 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PublicationData, CommentData } from '../lib/api';
-import { uploadImage, toggleLike, getLikeStatus, toggleSave, getSaveStatus, getComments, addComment, deleteComment } from '../lib/api';
+import { uploadImage, toggleLike, getLikeStatus, toggleSave, getSaveStatus, getComments, addComment, deleteComment, loginWithGoogle } from '../lib/api';
 import { useUserStore } from '../lib/stores/index.tsx';
+import { GoogleLogin } from '@react-oauth/google';
 import { useWaveTransition } from '../lib/transition';
 import type { Map } from 'maplibre-gl';
 
@@ -89,6 +90,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -516,12 +518,12 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                       {/* Like button */}
                       <button
                         onClick={async () => {
-                          if (!userStore.isLoggedIn) return;
+                          if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
                           const res = await toggleLike(publication.id);
                           setLiked(res.liked);
                           setLikeCount(res.count);
                         }}
-                        className={`flex items-center gap-1.5 text-sm transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} ${!userStore.isLoggedIn ? 'opacity-50 cursor-default' : ''}`}
+                        className={`flex items-center gap-1.5 text-sm transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -555,11 +557,11 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                     {/* Save button */}
                     <button
                       onClick={async () => {
-                        if (!userStore.isLoggedIn) return;
+                        if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
                         const res = await toggleSave(publication.id);
                         setSaved(res.saved);
                       }}
-                      className={`transition-colors ${saved ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-400'} ${!userStore.isLoggedIn ? 'opacity-50 cursor-default' : ''}`}
+                      className={`transition-colors ${saved ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-400'}`}
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -580,10 +582,10 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                       >
                         <div className="space-y-3">
                           {/* Comment input */}
-                          {userStore.isLoggedIn && (
                             <form
                               onSubmit={async (e) => {
                                 e.preventDefault();
+                                if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
                                 if (!commentText.trim() || submittingComment) return;
                                 setSubmittingComment(true);
                                 try {
@@ -604,16 +606,17 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                 placeholder="Escribe un comentario..."
                                 maxLength={500}
                                 className="flex-1 border border-gray-200 rounded-full px-3 py-1.5 text-sm focus:outline-none"
+                                readOnly={!userStore.isLoggedIn}
+                                onClick={() => { if (!userStore.isLoggedIn) setShowLoginPopup(true); }}
                               />
                               <button
                                 type="submit"
-                                disabled={!commentText.trim() || submittingComment}
+                                disabled={userStore.isLoggedIn && (!commentText.trim() || submittingComment)}
                                 className="px-3 py-1.5 rounded-full bg-cyan-500 text-white text-sm font-medium disabled:opacity-40 hover:bg-cyan-600 transition-colors"
                               >
                                 {submittingComment ? '...' : 'Enviar'}
                               </button>
                             </form>
-                          )}
 
                           {/* Comment list */}
                           {comments.length === 0 ? (
@@ -676,6 +679,66 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
               </>
             )}
           </div>
+          {/* Login required popup */}
+          <AnimatePresence>
+            {showLoginPopup && (
+              <motion.div
+                className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-2xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setShowLoginPopup(false)}
+              >
+                <motion.div
+                  className="relative bg-white rounded-2xl shadow-xl border border-gray-200/60 p-5 flex flex-col items-center gap-3 w-72 mx-4"
+                  initial={{ scale: 0.9, y: 10 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setShowLoginPopup(false)}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-cyan-600 text-xl leading-none transition-colors"
+                  >
+                    ×
+                  </button>
+                  <p className="text-sm font-semibold text-gray-800 text-center">Inicia sesión para interactuar</p>
+                  <p className="text-xs text-gray-500 text-center">Necesitas una cuenta para dar likes, guardar o comentar publicaciones.</p>
+                  <div className="relative">
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-2 px-4 rounded-xl text-sm shadow-md">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                      Iniciar sesión con Google
+                    </div>
+                    <div className="absolute inset-0 overflow-hidden rounded-xl" style={{ opacity: 0.01 }}>
+                      <GoogleLogin
+                        onSuccess={async (res) => {
+                          if (!res.credential) return;
+                          try {
+                            const data = await loginWithGoogle(res.credential);
+                            userStore.setUser({ ...data.user, token: data.token });
+                            setShowLoginPopup(false);
+                          } catch (e) {
+                            console.error('Login failed', e);
+                          }
+                        }}
+                        onError={() => console.error('Google login error')}
+                        shape="pill"
+                        theme="filled_blue"
+                        width={288}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           </motion.div>
         </motion.div>
       )}

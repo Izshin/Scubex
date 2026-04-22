@@ -17,19 +17,19 @@ Siguiendo la fase 1 de FDD (Desarrollar lista de características) y los objetiv
     \item \textbf{Gestión de Usuarios (OAuth2)}: Autenticación delegada mediante Google y persistencia de perfil (nombre, foto). El usuario puede personalizar su nombre y foto de perfil desde la página de perfil, con soporte para eliminar la cuenta.
     \item \textbf{Mapa Interactivo}: Visualización de un mapa navegable mediante MapLibre GL JS como superficie central de interacción, con búsqueda de lugares integrada (Nominatim).
     \item \textbf{Escáner de Especies}: Identificación de fauna marina en una zona mediante radio de búsqueda y validación cruzada de APIs científicas (OBIS + iNaturalist), con sistema de caché adaptativo (TTL 48h) para reducir latencia y llamadas externas.
-    \item \textbf{Datos Climáticos y Oceanográficos}: Condiciones de la zona en tiempo real mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos), con evaluación de aptitud para el buceo y caché de 30 minutos.
-    \item \textbf{Registro de Publicaciones}: Publicación de inmersiones en el mapa con título, descripción, fotografía y geolocalización inversa (nombre del lugar mediante Nominatim). Edición y borrado por el propio autor. Cada publicación genera un enlace compartible (\texttt{/map?pub=\{id\}}) con soporte de Web Share API en móvil y copia al portapapeles en escritorio.
-    \item \textbf{Interacciones Sociales}: Sistema de likes, guardados y comentarios sobre publicaciones. Soporte de menciones en comentarios mediante la sintaxis \texttt{@[Nombre](email)} con notificaciones automáticas al mencionado.
+    \item \textbf{Datos Climáticos y Oceanográficos}: Condiciones de la zona bajo demanda mediante Open-Meteo (viento, temperatura del agua, corrientes, olas, datos atmosféricos), con evaluación de aptitud para el buceo y caché de 30 minutos en el backend.
+    \item \textbf{Registro de Publicaciones}: Publicación de inmersiones en el mapa con título, descripción, fotografía y geolocalización inversa (nombre del lugar mediante Nominatim). Edición y borrado por el propio autor. Cada publicación genera un enlace compartible (\texttt{/map?pub=\{id\}}).
+    \item \textbf{Interacciones Sociales}: Sistema de likes, guardados y comentarios sobre publicaciones. Soporte de menciones en comentarios mediante la sintaxis \texttt{@[Nombre](email)} con notificaciones automáticas al mencionado. El enlace compartible de cada publicación es accesible mediante un botón que usa la Web Share API en móvil y copia al portapapeles en escritorio.
     \item \textbf{Red Social y Seguimiento de Usuarios}: Perfiles públicos por usuario con recuento de seguidores y seguidos, posibilidad de seguir/dejar de seguir, y vista de publicaciones de cada perfil. Página de perfil propio con mis publicaciones y publicaciones guardadas. Cada perfil dispone de enlace compartible (\texttt{/user/\{email\}}) accesible desde un botón de compartir en la página de perfil.
     \item \textbf{Sistema de Notificaciones}: Notificaciones en tiempo real (campana en el header) para eventos de seguimiento, like, comentario y mención. Las notificaciones se marcan como leídas al abrirlas o se eliminan permanentemente con swipe (móvil) o botón (escritorio).
 \end{enumerate}
 
-\textbf{Justificación de priorización}:
+\textbf{Justificación de priorización}: La lista anterior refleja el orden de implementación planificado, de mayor a menor prioridad. A continuación se justifica ese orden:
 \begin{itemize}
     \item La autenticación se implementa primero ya que el resto de funcionalidades (avistamientos, perfil, red social) dependen de la identidad del usuario.
     \item El mapa es la superficie central de la aplicación: sin él no tiene sentido geolocalizar especies, condiciones climáticas ni avistamientos.
-    \item El escáner de especies y los datos climáticos constituyen el MVP funcional mínimo: son las dos propuestas de valor diferenciales respecto a las aplicaciones analizadas en el capítulo de Contexto.
-    \item El registro de avistamientos, la red social y el perfil compartible son las funcionalidades de comunidad que convierten la herramienta en una red social de buceadores.
+    \item El escáner de especies, los datos climáticos y el registro de publicaciones constituyen el MVP funcional mínimo. Como se planteó en el capítulo de Contexto, el objetivo es que el usuario pueda tomar decisiones apoyándose tanto en datos objetivos como en experiencias reales: el escáner y el clima aportan la primera dimensión; las publicaciones, la segunda, al permitir consultar las inmersiones documentadas por otros buceadores en la misma zona.
+    \item Las funcionalidades de comunidad (likes, comentarios, seguimiento entre usuarios, notificaciones) se implementan sobre ese MVP: convierten la herramienta en una red social de buceadores, pero no son necesarias para que la propuesta de valor principal sea utilizable.
 \end{itemize}
 
 \section{Diseño arquitectónico}
@@ -41,9 +41,10 @@ Con las características identificadas, el sistema requiere una arquitectura cap
 
 \begin{itemize}
     \item \textbf{Backend}: Spring Boot 4 (Java 21). Actúa como Gateway de APIs científicas, orquestador de peticiones asíncronas y gestor de autenticación.
-    \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil.
+    \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil. Gestión de estado reactiva mediante MobX \texttt{makeAutoObservable}, con stores separadas por dominio (especies, clima, publicaciones, usuario, mapa).
     \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
     \item \textbf{Base de Datos}: H2 en memoria para el entorno de desarrollo y tests unitarios. PostgreSQL 16 para preproducción y producción, gestionado como servicio en Railway.
+    \item \textbf{Testing}: JUnit 5 + Mockito para pruebas unitarias del backend. H2 en memoria como base de datos de test.
     \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
     \item \textbf{Documentación de API}: OpenAPI 3.0 (Swagger UI) con anotaciones automáticas.
     \item \textbf{Despliegue}: Railway (backend + PostgreSQL) y Vercel (frontend).
@@ -75,13 +76,16 @@ Producción&Railway + Vercel&PostgreSQL (Railway)&\texttt{main}\\
 
 La configuración CORS se ha establecido manualmente mediante la variable \texttt{CORS\_ALLOWED\_ORIGIN} en Railway, y \texttt{VITE\_API\_BASE\_URL} en Vercel, configuradas con las respectivas URL del backend correspondientes a preproducción y producción.
 
-\subsection{Justificación de MapLibre GL JS}
+\subsection{Justificación de MapLibre GL JS + MapTiler}
 
-MapLibre GL JS se ha seleccionado porque:
+La solución cartográfica se compone de dos piezas complementarias:
+
 \begin{itemize}
-    \item \textbf{Sin necesidad de geocodificación}: El proyecto no requiere búsqueda de direcciones ni rutas, solo visualización de capas geoespaciales.
-    \item \textbf{Open Source y sin rate limits}: Alternativa libre a Mapbox GL (del cual es fork).
+    \item \textbf{MapLibre GL JS} actúa como motor de renderizado: biblioteca open source (fork de Mapbox GL JS) que renderiza estilos vectoriales mediante WebGL. Permite animaciones fluidas, rotación e inclinación del mapa, y menor consumo de datos frente a tiles rasterizados. Al ser open source, no impone restricciones de licencia sobre el código.
+    \item \textbf{MapTiler} provee los tiles y el estilo visual del mapa a través de su API (\texttt{VITE\_MAPTILER\_KEY}). Se ha creado un estilo personalizado (tema marino) alojado en MapTiler Cloud. El plan gratuito cubre de sobra el volumen de peticiones necesario para el proyecto.
 \end{itemize}
+
+La separación entre motor de renderizado (MapLibre) y proveedor de tiles (MapTiler) permite sustituir el proveedor de tiles sin cambiar el código de renderizado, y viceversa.
 
 \subsection{Integración de APIs Externas}
 
@@ -94,7 +98,7 @@ MapLibre GL JS se ha seleccionado porque:
 OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento.\\
 iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (\texttt{preferred\_common\_name}).\\
 Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de clave y con plan gratuito generoso.\\
-Nominatim&OpenStreetMap Foundation& Geocodificación inversa: obtención del nombre humano de un lugar a partir de coordenadas geográficas (playa, municipio, estado). Usada al crear publicaciones y al visualizar su detalle.\\
+Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa (\texttt{/search}): buscador de lugares del mapa. Inversa (\texttt{/reverse}): obtención del nombre humano de unas coordenadas (playa, municipio, estado) al crear publicaciones y al visualizar su detalle.\\
 	\end{coolTable}
 	\caption{Resumen de APIs externas}
 \end{table*}
@@ -102,7 +106,7 @@ Nominatim&OpenStreetMap Foundation& Geocodificación inversa: obtención del nom
 \textbf{Estrategia de consumo}:
 \begin{itemize}
     \item \textbf{OBIS + iNaturalist}: Consultas de especies marinas mediante el botón de escaneo.
-    \item \textbf{Open-Meteo}: Polling cada 30 minutos que actualiza las condiciones climatológicas de la zona y el océano.
+    \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa. El backend cachea la respuesta durante 30 minutos (\texttt{CachedWeather}), de modo que peticiones repetidas a las mismas coordenadas dentro de esa ventana no generan llamadas externas.
 \end{itemize}
 
 \subsection{Patrón Arquitectónico: Gateway API}

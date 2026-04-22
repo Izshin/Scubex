@@ -247,9 +247,9 @@ const MapPage = observer(() => {
             onViewportIdle={handleViewportChange}
             onMapClick={handleMapClick}
             onPublicationClick={handlePublicationClick}
-            scanCenter={mode === 'scan' ? mapStore.scanCenter : null}
+            scanCenter={mapStore.scanCenter}
             publishCenter={mode === 'publish' ? publishCoords : null}
-            scanRadius={mode === 'scan' ? mapStore.scanRadius : undefined}
+            scanRadius={mapStore.scanRadius}
             publications={publicationStore.publications}
           />
 
