@@ -100,16 +100,7 @@ export async function testBackendConnection(): Promise<boolean> {
 }
 
 export async function getZoneSpecies(scanData: { lat: number; lng: number; radius: number }) {
-  console.log('🌊 Calling real backend API:', scanData);
-  
-  // Test backend connection first
-  const isBackendRunning = await testBackendConnection();
-  if (!isBackendRunning) {
-    console.warn(`⚠️ Backend is not running or not accessible at ${API_BASE_URL}`);
-  }
-  
   try {
-    // Build the API URL with query parameters
     const params = new URLSearchParams({
       lat: scanData.lat.toString(),
       lng: scanData.lng.toString(),
@@ -117,7 +108,6 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
     });
     
     const apiUrl = `${API_BASE_URL}/api/species?${params.toString()}`;
-    console.log('📡 API Call:', apiUrl);
     
     // Make the API call to your Spring Boot backend
     const response = await fetch(apiUrl, {
@@ -133,9 +123,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
     }
     
     const backendData: BackendSpeciesResponse[] = await response.json();
-    console.log('✅ Backend response:', backendData);
-    
-    // Transform backend data to frontend format and sort by number of records (most first)
+
     const transformedSpecies: FrontendSpeciesData[] = backendData
       .map((species, index) => ({
         taxon_id: index.toString(), // Use index as ID since backend doesn't provide one
@@ -154,33 +142,20 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         globalRecords: species.globalRecords,
         iucnCategory: species.iucnCategory,
       }))
-      .sort((a, b) => b.records - a.records); // Sort by records in descending order (most records first)
-    
-    console.log('📊 Species sorted by records (highest first):', transformedSpecies.map(s => `${s.scientific_name}: ${s.records} records`));
-    
-    // Calculate total occurrences across all species
+      .sort((a, b) => b.records - a.records);
+
     const totalOccurrences = transformedSpecies.reduce((sum, species) => sum + species.records, 0);
-    console.log('🔢 Total occurrences found:', totalOccurrences);
-    
-    // Return in the format expected by the frontend
-    const frontendData = {
+
+    return {
       species: transformedSpecies,
       counts: {
         total_taxa: transformedSpecies.length,
         total_occurrences: totalOccurrences
       },
-      source: ["OBIS", "iNaturalist"] // Your backend uses these APIs
+      source: ["OBIS", "iNaturalist"]
     };
     
-    console.log('🐠 Transformed data:', frontendData);
-    return frontendData;
-    
   } catch (error) {
-    console.error('❌ Error calling backend API:', error);
-    
-    // Provide helpful error information
-    console.log('🔄 Providing error information instead of mock data...');
-    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const isConnectionError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Network');
     
@@ -228,8 +203,7 @@ function formatDate(dateString: string): string {
     // Format as "YYYY-MM-DD"
     return date.toISOString().split('T')[0];
     
-  } catch (error) {
-    console.warn('⚠️ Error formatting date:', dateString, error);
+  } catch {
     return 'Fecha inválida';
   }
 }

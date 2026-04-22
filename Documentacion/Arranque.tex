@@ -74,7 +74,7 @@ Producción&Railway + Vercel&PostgreSQL (Railway)&\texttt{main}\\
     \item La separación permite desplegar frontend y backend de forma independiente. Gracias a esto pueden escalarse independientemente y no solo eso. Debido a la separación se cuenta con mas memoria de los planes gratuitos de ambas aplicaciones, reduciendo costes. 
 \end{itemize}
 
-La configuración CORS se ha establecido manualmente mediante la variable \texttt{CORS\_ALLOWED\_ORIGIN} en Railway, y \texttt{VITE\_API\_BASE\_URL} en Vercel, configuradas con las respectivas URL del backend correspondientes a preproducción y producción.
+La configuración CORS se ha establecido manualmente mediante la variable \texttt{CORS\_ALLOWED\_ORIGINS} en Railway, y \texttt{VITE\_API\_BASE\_URL} en Vercel, configuradas con las respectivas URL del backend correspondientes a preproducción y producción.
 
 \subsection{Justificación de MapLibre GL JS + MapTiler}
 
@@ -106,53 +106,7 @@ Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa 
 \textbf{Estrategia de consumo}:
 \begin{itemize}
     \item \textbf{OBIS + iNaturalist}: Consultas de especies marinas mediante el botón de escaneo.
-    \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa. El backend cachea la respuesta durante 30 minutos (\texttt{CachedWeather}), de modo que peticiones repetidas a las mismas coordenadas dentro de esa ventana no generan llamadas externas.
+        \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa. 
 \end{itemize}
 
-\subsection{Patrón Arquitectónico: Gateway API}
-
-El backend actua como director de orquesta de las API, gestionando la conexión entre las mismas. Pasándole al frontend unos datos ya procesados en formato JSON, que el frontend guarda en una store. Este es el flujo de datos desde el principio:
-
-\begin{enumerate}
-    \item \textbf{El usuario clicka una zona}. Y react realiza esta llamada \texttt{GET /api/species?lat=X\&lng=Y\&radius=Z}.
-    \item \textbf{SpeciesService} (backend) realiza:
-    \begin{enumerate}
-        \item Una transformación geométrica, convirtiendo el radio a un polígono: \texttt{(lat, lng, radius)} $\rightarrow$ \texttt{WKT POLYGON}. Esto se realiza porque en la...
-        \item Petición a OBIS, hace falta pasar un polígono de la zona. De la cual se extraeran los datos de las especies. La llamada a OBIS es la siguiente: \texttt{GET /occurrence?geometry=POLYGON(...)}.
-        \item Para cada especie única devuelta por OBIS se realiza un procesamiento de datos:
-        \begin{itemize}
-            \item Primero se hace una petición a iNaturalist: \texttt{GET /taxa?q=<scientificName>}. Esta llamada devuelve datos interesantes de la  especie que serviran mas adelante.
-            \item Segundo: Filtrado, si \texttt{total\_results == 0}, se descarta la especie por completo. La mayoría de especies que no se encuentran en iNaturalist son microorganismos sin interés para buceadores recreativos. 
-            \item Tercero: Aquí se extraen los datos interesantes. Una foto y nombre común. Para que todas las personas puedan saber que especie se ha registrado 
-        \end{itemize}
-    \end{enumerate}
-    \item \textbf{Finalmente se unifica la respuesta y se crea un JSON para el frontend}. Se hace mediante el DTO \texttt{SpeciesResponse}.
-\end{enumerate}
-
-\textbf{Ventajas}:
-\begin{itemize}
-    \item React no necesita conocer la existencia de múltiples APIs.
-    \item La lógica de filtrado (microorganismos, especies sin foto) se centraliza en el backend.
-    \item Se evita exposición de API keys en el navegador.
-\end{itemize}
-
-\section{Seguimiento y control}
-
-\textbf{Fase del proyecto}: Arranque (Fases 1-2 de FDD: Lista de características y Modelo Global).
-
-\textbf{Estado}:
-\begin{itemize}
-    \item [OK] Arquitectura definida y documentada.
-    \item [OK] Stack tecnológico seleccionado y justificado.
-    \item [OK] APIs externas identificadas y contratos analizados.
-    \item [OK] Backend desplegado en Railway con PostgreSQL. Datasource configurado mediante variables de entorno con H2 para desarrollo local.
-    \item [OK] Frontend desplegado en Vercel. CORS configurado desde variable de entorno en Spring Security y Railway.
-    \item [OK] Escáner de especies funcional en producción: \texttt{https://scubex.vercel.app}.
-    \item [OK] OAuth2 implementado.
-\end{itemize}
-
-\textbf{Decisiones arquitectónicas resueltas en iteraciones posteriores}:
-\begin{itemize}
-    \item \textbf{[Resuelto en It.~2]} Estrategia de caching para OBIS: implementada como entidad \texttt{CachedScan} con redondeo adaptativo de coordenadas y TTL de 48 horas. El caching de condiciones climáticas se resolvió con la entidad \texttt{CachedWeather} (TTL 30 min).
-    \item \textbf{[Postpuesto]} Migración del esquema con Flyway: el proyecto utiliza \texttt{spring.jpa.hibernate.ddl-auto=update} en producción. La migración a Flyway se mantiene como mejora futura.
-\end{itemize}
+\textbf{Decisiones pendientes que quedaron en esta fase}: Quedó pendiente el determinar la estrategia de caching para OBIS (\texttt{CachedScan}, redondeo adaptativo de coordenadas, TTL 48h) que se resolvió en la Iteración~1; Y tambien el caching de condiciones climáticas (\texttt{CachedWeather}, TTL 30min) que se resolvió en la Iteración~2. 

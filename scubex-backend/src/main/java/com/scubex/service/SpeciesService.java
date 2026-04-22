@@ -28,11 +28,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.scubex.DTO.SpeciesResponse;
 import com.scubex.model.CachedScan;
 import com.scubex.model.CachedSpecies;
+import com.scubex.model.SpeciesEnrichmentCache;
 import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
 import com.scubex.repository.CachedScanRepository;
+import com.scubex.repository.SpeciesEnrichmentCacheRepository;
 
 @Service
 public class SpeciesService {
@@ -42,6 +44,9 @@ public class SpeciesService {
 
     @Autowired
     private CachedScanRepository cachedScanRepository;
+
+    @Autowired
+    private SpeciesEnrichmentCacheRepository speciesEnrichmentCacheRepository;
 
     @Value("${obis.api.url}")
     private String obisApiUrl;
@@ -124,12 +129,26 @@ public class SpeciesService {
         Semaphore iNatSemaphore = new Semaphore(3);
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
+        Instant enrichmentCutoff = Instant.now().minus(30, ChronoUnit.DAYS);
+
         List<CompletableFuture<Optional<SpeciesResponse>>> futures = groupedBySpecies.entrySet().stream()
             .map(entry -> CompletableFuture.supplyAsync(() -> {
                 String scientificName = entry.getKey();
                 List<ObisOccurrence> occurrences = entry.getValue();
                 ObisOccurrence mostRecent = getMostRecentOccurrence(occurrences);
 
+                // Check enrichment cache first (iNaturalist + eco-stats are global per species)
+                Optional<SpeciesEnrichmentCache> cachedEnrichment = speciesEnrichmentCacheRepository
+                        .findByScientificNameAndCachedAtAfter(scientificName, enrichmentCutoff);
+                if (cachedEnrichment.isPresent()) {
+                    SpeciesEnrichmentCache enrichment = cachedEnrichment.get();
+                    if (!enrichment.isHasInatData()) {
+                        return Optional.<SpeciesResponse>empty();
+                    }
+                    return Optional.of(buildSpeciesResponseFromCache(scientificName, occurrences, mostRecent, enrichment));
+                }
+
+                // Cache miss: call external APIs
                 INaturalistResponse iNatData = null;
                 try {
                     iNatSemaphore.acquire();
@@ -141,11 +160,12 @@ public class SpeciesService {
                 }
 
                 if (iNatData == null || iNatData.getTotalResults() == null || iNatData.getTotalResults() == 0) {
-                    System.out.println("⚠️ Skipping " + scientificName + " - no iNaturalist data or total_results=0");
+                    saveEnrichmentCache(scientificName, false, null, null);
                     return Optional.<SpeciesResponse>empty();
                 }
 
                 ObisEcoData ecoData = callObisEcoStats(scientificName, executor);
+                saveEnrichmentCache(scientificName, true, iNatData, ecoData);
                 return Optional.of(buildSpeciesResponse(scientificName, occurrences, mostRecent, iNatData, ecoData));
             }, executor))
             .collect(Collectors.toList());
@@ -513,6 +533,60 @@ public class SpeciesService {
         }
 
         return species;
+    }
+
+    private SpeciesResponse buildSpeciesResponseFromCache(String scientificName, List<ObisOccurrence> occurrences,
+            ObisOccurrence mostRecent, SpeciesEnrichmentCache enrichment) {
+        SpeciesResponse species = new SpeciesResponse();
+        species.setScientificName(scientificName);
+        species.setNumberOfOccurrences(occurrences.size());
+        if (mostRecent != null) {
+            species.setLatitude(mostRecent.getDecimalLatitude());
+            species.setLongitude(mostRecent.getDecimalLongitude());
+            species.setRecordDate(mostRecent.getEventDate());
+            species.setPhylum(mostRecent.getPhylum());
+        }
+        species.setCommonName(enrichment.getCommonName());
+        species.setPhotoUrl(enrichment.getPhotoUrl());
+        species.setDepthMin(enrichment.getDepthMin());
+        species.setDepthMax(enrichment.getDepthMax());
+        species.setTempMin(enrichment.getTempMin());
+        species.setTempMax(enrichment.getTempMax());
+        species.setFirstYear(enrichment.getFirstYear());
+        species.setLastYear(enrichment.getLastYear());
+        species.setGlobalRecords(enrichment.getGlobalRecords());
+        species.setIucnCategory(enrichment.getIucnCategory());
+        return species;
+    }
+
+    private void saveEnrichmentCache(String scientificName, boolean hasInatData,
+            INaturalistResponse iNatData, ObisEcoData ecoData) {
+        try {
+            String commonName = null;
+            String photoUrl = null;
+            if (hasInatData && iNatData != null
+                    && iNatData.getResults() != null && !iNatData.getResults().isEmpty()) {
+                INaturalistInfo first = iNatData.getResults().get(0);
+                commonName = first.getPreferred_common_name();
+                photoUrl = first.getPhotoUrl();
+            }
+            speciesEnrichmentCacheRepository.save(SpeciesEnrichmentCache.builder()
+                    .scientificName(scientificName)
+                    .hasInatData(hasInatData)
+                    .commonName(commonName)
+                    .photoUrl(photoUrl)
+                    .depthMin(ecoData != null ? ecoData.depthMin() : null)
+                    .depthMax(ecoData != null ? ecoData.depthMax() : null)
+                    .tempMin(ecoData != null ? ecoData.tempMin() : null)
+                    .tempMax(ecoData != null ? ecoData.tempMax() : null)
+                    .firstYear(ecoData != null ? ecoData.firstYear() : null)
+                    .lastYear(ecoData != null ? ecoData.lastYear() : null)
+                    .globalRecords(ecoData != null ? ecoData.globalRecords() : null)
+                    .iucnCategory(ecoData != null ? ecoData.iucnCategory() : null)
+                    .build());
+        } catch (Exception e) {
+            // Ignore duplicate key if concurrent thread already saved this species
+        }
     }
 
     private void saveToCache(double roundedLat, double roundedLng, double radius,
