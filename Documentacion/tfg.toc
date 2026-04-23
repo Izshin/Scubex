@@ -45,7 +45,7 @@
 \contentsline {subsection}{\numberline {6.2.2}Estrategia de entornos}{32}{subsection.6.2.2}%
 \contentsline {subsection}{\numberline {6.2.3}Justificación de MapLibre GL JS + MapTiler}{33}{subsection.6.2.3}%
 \contentsline {subsection}{\numberline {6.2.4}Integración de APIs Externas}{33}{subsection.6.2.4}%
-\contentsline {chapter}{\numberline {7}Iteración 1: MVP de Scubex}{35}{chapter.7}%
+\contentsline {chapter}{\numberline {7}Iteración 1: Inicio del MVP de Scubex}{35}{chapter.7}%
 \contentsline {section}{\numberline {7.1}Características desarrolladas esta iteración}{36}{section.7.1}%
 \contentsline {section}{\numberline {7.2}Diseño}{40}{section.7.2}%
 \contentsline {section}{\numberline {7.3}Implementación}{40}{section.7.3}%

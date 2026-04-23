@@ -5,7 +5,9 @@ import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
+import com.scubex.model.SpeciesEnrichmentCache;
 import com.scubex.repository.CachedScanRepository;
+import com.scubex.repository.SpeciesEnrichmentCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 /**
  * Test suite for SpeciesService following TDD approach
@@ -46,6 +50,9 @@ class SpeciesServiceTest {
     @Mock
     private CachedScanRepository cachedScanRepository;
 
+    @Mock
+    private SpeciesEnrichmentCacheRepository speciesEnrichmentCacheRepository;
+
     @InjectMocks
     private SpeciesService speciesService;
 
@@ -55,9 +62,14 @@ class SpeciesServiceTest {
         ReflectionTestUtils.setField(speciesService, "obisApiUrl", "https://api.obis.org/v3");
         ReflectionTestUtils.setField(speciesService, "iNaturalistApiUrl", "https://api.inaturalist.org/v1");
 
-        // Default: no cache hits
-        when(cachedScanRepository.findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(
+        // Default: no cache hits (L1)
+        when(cachedScanRepository.findFirstByRoundedLatAndRoundedLngAndRadiusGreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc(
                 any(Double.class), any(Double.class), any(Double.class), any(Instant.class)))
+                .thenReturn(Optional.empty());
+
+        // Default: no enrichment cache hits (L2) — lenient: no todos los tests llegan a esta rama
+        lenient().when(speciesEnrichmentCacheRepository.findByScientificNameAndCachedAtAfter(
+                any(String.class), any(Instant.class)))
                 .thenReturn(Optional.empty());
     }
 
