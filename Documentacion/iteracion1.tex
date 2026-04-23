@@ -70,6 +70,8 @@ Esta iteración entrega el MVP funcional de Scubex. Un mapa interactivo sobre el
 
 El diagrama UML de la Fig.~\ref{fig:diseno01} muestra las relaciones entre los componentes principales del sistema: controladores, servicios, repositorios y entidades de caché. La leyenda del propio diagrama recoge la notación de visibilidad y el código de colores por capa arquitectónica.
 
+Cabe señalar que el método \texttt{findBestMatch()} empleado en los pseudocódigos es un alias semántico: el nombre real, generado automáticamente por Spring Data JPA a partir de los criterios de consulta, es \texttt{findFirstByRoundedLatAndRoundedLngAndRadius\-GreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc}. Se ha mantenido la denominación simplificada en los pseudocódigos para no reproducir la cadena completa en cada referencia.
+
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/UML it1.pdf}
@@ -91,11 +93,11 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Asunto}&La API de OBIS no acepta búsqueda radial: requiere un polígono \texttt{POLYGON((\ldots))} en formato WKT.\\
 \textbf{Resumen}&Generación de un polígono de 12 vértices aproximadamente circular desde coordenadas centrales y radio.\\
 \midrule
-\textbf{Factores causantes}&El frontend expresa la zona de interés como un punto central \texttt{(lat, lng)} más un radio en metros. OBIS exige el parámetro \texttt{geometry} con un polígono WKT cerrado en el orden \emph{longitud latitud} (no el habitual \emph{lat lng}). Usar un simple bounding box rectangular incluiría esquinas fuera del radio real.\\
-\textbf{Solución}&\texttt{createPolygonFromRadius(lat, lng, radius)} calcula 12 vértices equidistantes angularmente en el perímetro del círculo, compensando la distorsión longitudinal a latitudes distintas de 0°: $\Delta\lambda = \frac{r}{111320 \cdot \cos(\phi)}$. El polígono se cierra repitiendo el vértice 0 como vértice 12. El resultado se codifica con \texttt{UriComponentsBuilder.build().encode()} para transmisión HTTP segura.\\
-\textbf{Motivación}&OBIS alberga >150M registros de biodiversidad marina validados científicamente. Es preferible adaptar la geometría a su interfaz antes que buscar fuentes alternativas de menor calidad.\\
+\textbf{Factores causantes}&El usuario define la zona como un punto central y un radio, pero la API de OBIS exige el área en formato WKT (polígono cerrado). Alternativamente, se podria haber usado un bounding box rectangular, no obstante sobreestimaría el área incluyendo registros fuera del radio real.\\
+\textbf{Solución}&Se implementa \texttt{createPolygonFromRadius(lat, lng, radius)}, que aproxima el círculo con un polígono de 12 vértices equidistantes, corrigiendo la longitud por $\cos(\phi)$ para no deformar el área en latitudes altas. La cadena WKT resultante se codifica adecuadamente antes de insertarse en la URL de la petición HTTP.\\
+\textbf{Motivación}&OBIS alberga >150M registros de biodiversidad marina validados científicamente. Es preferible adaptarse a su interfaz antes que buscar fuentes alternativas de menor calidad, ya que no existen muchas comparables.\\
 \textbf{Cuestiones abiertas}&A latitudes altas ($>60°$) la aproximación esférica introduce error; para el caso de uso de Scubex (zonas costeras tropicales y templadas) es despreciable.\\
-\textbf{Alternativas}&\emph{Bounding box}: sencillo pero incluye esquinas fuera del radio real. \emph{Filtrado post-proceso}: pedir área global y filtrar en memoria, descartado por transferencia de datos innecesaria.\\
+\textbf{Alternativas}&\textbf{Bounding box}: sencillo pero incluye esquinas fuera del radio real. \textbf{Filtrado post-proceso}: pedir área global y filtrar en memoria, descartado por transferencia de datos innecesaria.\\
 	\end{coolTable}
 	\caption{Memorando técnico 001: Geometría WKT\label{tab:memo001}}
 \end{table*}
@@ -106,13 +108,13 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 002: Filtrado de Calidad Visual}
 \textbf{Asunto}&OBIS devuelve microorganismos y especies sin fotografía, que carecen de valor para una app de buceo.\\
-\textbf{Resumen}&Filtrado cruzado: solo se incluyen en la respuesta las especies con entrada en iNaturalist y fotografía disponible.\\
+\textbf{Resumen}&Filtrado cruzado: se descartan especies sin entrada en iNaturalist. Las que tienen entrada pero carecen de fotografía se incluyen con un emoji representativo de su phylum como fallback visual en el frontend.\\
 \midrule
-\textbf{Factores causantes}&\textbf{(1)} OBIS incluye todo tipo de registros biológicos marinos (bacterias, algas unicelulares, etc.). \textbf{(2)} Hay especies macroscópicas con nombre científico válido que no tienen observaciones fotografiadas en iNaturalist (ej. \textit{Thenea muricata}).\\
-\textbf{Solución}&Para cada nombre científico único devuelto por OBIS, se consulta \texttt{GET /taxa?q=\{name\}\&per\_page=1} en iNaturalist. Se descartan: \textbf{(a)} respuestas con \texttt{total\_results = 0} (especie no documentada) y \textbf{(b)} respuestas con \texttt{default\_photo = null} (sin representación visual). Las especies que superan el filtro se enriquecen con \texttt{preferred\_common\_name} y \texttt{default\_photo.url}.\\
-\textbf{Motivación}&Un buceador busca animales que pueda ver en el agua. Incluir microorganismos sería ruido informativo que degradaría la utilidad percibida.\\
-\textbf{Cuestiones abiertas}&La latencia de N llamadas HTTP a iNaturalist (una por especie única) en el primer escaneo de una zona puede superar los 7 segundos. Resuelta en Memorando~004 mediante caché de enriquecimiento por especie.\\
-\textbf{Alternativas}&Filtrado solo por \texttt{phylum} (taxonid=2,3,4): reduce microorganismos pero no garantiza fotografía. Placeholder según phylum (Chordata→pez, Mollusca→pulpo): aceptable como fallback visual pero empleado como complemento, no como sustituto.\\
+\textbf{Factores causantes}&\textbf{(1)} OBIS incluye todo tipo de registros biológicos marinos (bacterias, algas unicelulares, etc.) que no se ven al bucear. \textbf{(2)} Hay especies macroscópicas con nombre científico válido que no tienen observaciones fotografiadas en iNaturalist (ej. \textit{Thenea muricata}).\\
+\textbf{Solución}&Cada especie devuelta por OBIS se busca en iNaturalist. Si no aparece, se descarta: sin nombre común ni foto no aporta valor. Si aparece, se incluye siempre: si tiene foto se usa; si no, el frontend muestra un emoji según el phylum como fallback visual.\\
+\textbf{Motivación}&Un buceador busca animales que pueda ver en el agua. Incluir microorganismos sería ruido.\\
+\textbf{Cuestiones abiertas}&La latencia de N llamadas HTTP a iNaturalist (una por especie única) en el primer escaneo de una zona puede superar los 20 segundos. Resuelta en Memorando~004 mediante caché de enriquecimiento por especie.\\
+\textbf{Alternativas}&\textbf{Filtrado por phylum}: descartar directamente los phyla microscópicos (bacterias, algas) sin consultar iNaturalist. Es más rápido, pero una especie macroscópica rara de un phylum ``grande'' pasaría el filtro aunque no tenga foto ni nombre común. \textbf{Placeholder genérico}: asignar siempre un emoji o imagen por grupo taxonómico sin consultar iNaturalist. Elimina las llamadas externas pero pierde la foto real y el nombre común cuando sí existen.\\
 	\end{coolTable}
 	\caption{Memorando técnico 002: Filtrado de Calidad Visual\label{tab:memo002}}
 \end{table*}
@@ -122,14 +124,14 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 003: Caché L1 de Escaneos (\texttt{CachedScan})}
-\textbf{Asunto}&Latencia de 3--7\,s por escaneo en zonas sin datos previos en caché.\\
+\textbf{Asunto}&Latencia de 10--20\,s por escaneo en zonas sin datos previos en caché.\\
 \textbf{Resumen}&Caché de resultado completo por zona geográfica indexado por coordenadas redondeadas y radio, con TTL de 48\,h.\\
 \midrule
-\textbf{Factores causantes}&El pipeline completo (OBIS + N llamadas iNaturalist) tarda entre 3 y 7 segundos según la biodiversidad de la zona. Si dos usuarios escanean la misma zona en menos de 48 horas, o el mismo usuario repite el escaneo, todas las llamadas externas se duplican innecesariamente.\\
-\textbf{Solución}&Entidad \texttt{CachedScan} indexada por \texttt{(roundedLat, roundedLng, radius)} con relación \texttt{@OneToMany} a \texttt{CachedSpecies}. Las coordenadas se redondean adaptativamente: radio $\leq 1000$\,m $\rightarrow 0.01°$; radio $\leq 2000$\,m $\rightarrow 0.05°$; radio $> 2000$\,m $\rightarrow 0.1°$. Un escaneo almacenado con radio mayor sirve para satisfacer peticiones de radio menor, filtrando por distancia haversiana.\\
-\textbf{Motivación}&La fauna marina de una zona no cambia en 48\,h. PostgreSQL ya disponible en Railway (sin infraestructura adicional).\\
+\textbf{Factores causantes}&Un escaneo completo puede tardar entre 10 y 20 segundos. Repetir ese proceso cada vez que alguien consulta la misma zona es un desperdicio innecesario, tanto en tiempo de respuesta como en llamadas a APIs externas.\\
+\textbf{Solución}&El resultado de cada escaneo se persiste en base de datos bajo una clave compuesta por coordenadas redondeadas y radio. El redondeo agrupa clicks cercanos en la misma clave, evitando duplicados por diferencias de centímetros. Si existe un escaneo de menos de 48\,h para esa zona, se devuelve directamente sin tocar ninguna API externa.\\
+\textbf{Motivación}&Capacidad de dar una respuesta instantanea a un escaneo, sin pasar por APIs. Plugins ya preconfigurados en base de datos, lo que hace la implementación mas simple\\
 \textbf{Cuestiones abiertas}&Clicks en el umbral de redondeo (ej. \texttt{0.049}° vs \texttt{0.051}°) pueden generar un falso miss aunque las zonas sean prácticamente idénticas. Comportamiento aceptado por su baja frecuencia.\\
-\textbf{Alternativas}&Redis: más rápido, pero añade servicio externo y coste. Spring Cache en memoria: no persiste entre reinicios del servidor (Railway reinicia en cada despliegue).\\
+\textbf{Alternativas}&\textbf{Redis}: más rápido, pero añade servicio externo y coste. \textbf{Spring Cache en memoria}: no persiste entre reinicios del servidor (Railway reinicia en cada despliegue).\\
 	\end{coolTable}
 	\caption{Memorando técnico 003: Caché L1 --- \texttt{CachedScan}\label{tab:memo003}}
 \end{table*}
@@ -139,14 +141,14 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 004: Caché L2 de Enriquecimiento (\texttt{SpeciesEnrichmentCache})}
-\textbf{Asunto}&Los datos de iNaturalist y las estadísticas ecológicas de OBIS para una especie son globales (independientes de la zona) pero se reconsultan en cada escaneo nuevo donde aparece esa especie.\\
-\textbf{Resumen}&Caché persistente por especie (\texttt{scientificName} como clave única), TTL 30 días, con \emph{negative caching} y semáforo de concurrencia.\\
+\textbf{Asunto}&Aun con el caché L1, los escaneos seguian siendo lentos debido a los ratelimit de iNaturalist.\\
+\textbf{Resumen}& Se implementó un caché persistente por especie (con \texttt{scientificName} como clave única), que guarda los datos extra de iNaturalist y básicos de OBIS durante 30 días para ahorrar llamadas. Tambien se implementó un semáforo de concurrencia, para limitar las llamadas en paralelo a iNaturalist.\\
 \midrule
-\textbf{Factores causantes}&\textit{Chimaera monstrosa} aparece en el Mediterráneo, en el Atlántico Norte y en el Mar del Norte. Cada escaneo que la detecte generaría las mismas 4 llamadas HTTP (iNaturalist + 3 OBIS ecológicos) con el mismo resultado. El ratio hit/miss de la caché L1 (\texttt{CachedScan}) no cubre este caso porque se trata de zonas geográficamente distintas.\\
-\textbf{Solución}&Entidad \texttt{SpeciesEnrichmentCache} indexada por \texttt{scientificName} con TTL de 30 días. Almacena: \texttt{commonName}, \texttt{photoUrl}, y los datos eco de OBIS (\texttt{depthMin/Max}, \texttt{tempMin/Max}, \texttt{firstYear/lastYear}, \texttt{globalRecords}, \texttt{iucnCategory}). \emph{Negative caching}: si iNaturalist responde \texttt{total\_results=0}, se guarda \texttt{hasInatData=false} para evitar reconsultas en los próximos 30 días. \emph{Semáforo(3)}: máximo 3 llamadas concurrentes a iNaturalist para respetar el rate limit de 100 req/min. Los 3 endpoints OBIS ecológicos se llaman en paralelo mediante \texttt{CompletableFuture} con virtual threads de Java\,21.\\
-\textbf{Motivación}&La morfología, hábitat y estado de conservación de una especie no varía con la localización del escaneo. Un TTL de 30 días equilibra frescura (actualizaciones de conservación) con eficiencia.\\
+\textbf{Factores causantes}&Pese a que 100 llamadas por minuto sean usualmente suficientes, a veces se quedaban cortas en zonas de alta biodiversidad. La caché L1 evita repetir escaneos de la misma zona, pero no ayuda cuando la misma especie aparece en zonas distintas. \\
+						\textbf{Solución}&La foto, el nombre común y los datos ecológicos de cada especie se guardan en base de datos usando el nombre científico como clave, con una validez de 30 días. La próxima vez que esa especie aparezca en cualquier escaneo, se recupera directamente de base de datos sin tocar ninguna API. Para no saturar iNaturalist, un semáforo limita a 3 las llamadas concurrentes de esta API mientras las demás esperan su turno. Si una especie no existe en iNaturalist, también se guarda esa ausencia, evitando repetir la consulta inútil durante 30 días.\\
+\textbf{Motivación}&Los datos de iNaturalist y OBIS son siempre los mismos independientemente de dónde se encuentre. Y un TTL de 30 días equilibra frescura (actualizaciones de las especies) con eficiencia.\\
 \textbf{Cuestiones abiertas}&Si el estado IUCN de una especie cambia dentro del período de TTL de 30 días, la caché servirá el dato desactualizado. Aceptado dado que dichos cambios son poco frecuentes.\\
-\textbf{Alternativas}&Caché solo en L1: no resolvería el problema entre zonas distintas. Precarga batch de un catálogo de especies: descartado por la heterogeneidad de las zonas de buceo y el coste de mantener el catálogo actualizado.\\
+\textbf{Alternativas}&\textbf{Caché solo en L1}: resuelve repeticiones en la misma zona, pero si la misma especie aparece en el Mediterráneo y en el Atlántico Norte, se vuelven a hacer todas las llamadas. \textbf{Precarga batch}: mantener un catálogo de especies actualizado es inviable dado que las zonas de buceo son heterogéneas y las especies que aparecen varían enormemente.\\
 	\end{coolTable}
 	\caption{Memorando técnico 004: Caché L2 --- \texttt{SpeciesEnrichmentCache}\label{tab:memo004}}
 \end{table*}
@@ -155,7 +157,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 % ── asigResponsabilidad 001: SpeciesService ───────────────────────────────────
 \begin{asigResponsabilidad}{001}{SpeciesService}
 {List<SpeciesResponse> getSpeciesInSelectedArea(lat:double, lng:double, radius:double)}
-\pasoPseudo{1. Se redondean las coordenadas recibidas según el radio con \texttt{roundCoord()}, para agrupar zonas cercanas en una misma clave de caché.}
+\pasoPseudo{1. Se redondean las coordenadas recibidas según el radio con \texttt{roundCoord()}, para agrupar zonas cercanas en una misma clave de caché. A mayor radio, mayor es el redondeo}
 \pasoPseudo{2. Se consulta la base de datos buscando un escaneo previo de la misma zona (menos de 48h) con \texttt{findBestMatch()}. Si existe, se devuelve directamente sin llamar a ninguna API externa --- fin.}
 \pasoPseudo{3. Si no hay caché, se construye un polígono WKT de 12 vértices alrededor del punto central con \texttt{createPolygonFromRadius()} y se consultan los registros de OBIS con \texttt{callObisApi()}.}
 \pasoPseudo{4. Para cada especie única devuelta por OBIS, en paralelo:}
@@ -164,13 +166,13 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \pasoPseudo{4.3. Si iNaturalist devuelve foto y nombre común, se obtienen datos ecológicos de OBIS (profundidad, temperatura, registros históricos, categoría IUCN) con \texttt{callObisEcoStats()} y se guarda todo en caché.}
 \pasoPseudo{5. Se persiste el resultado completo del escaneo con \texttt{saveToCache()} y se devuelve la lista de especies enriquecidas.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{001}{SI}
-\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{001}{SI}
+\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{003}{SI}
+\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{003}{SI}
 \pasoCodigo{5}{SpeciesSvc.}{String createPolygonFromRadius(lat, lng, radius)}{001}{SI}
-\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001}{SI}
-\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{001}{SI}
-\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{001}{SI}
-\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{001}{SI}
+\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001\newline 002}{SI}
+\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{002\newline 004}{SI}
+\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{004}{SI}
+\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{003\newline 004}{SI}
 \end{asigResponsabilidad}
 
 % ── Memorando 005: OAuth2 + JWT ───────────────────────────────────────────────
@@ -179,13 +181,13 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 005: Autenticación OAuth2 + JWT}
 \textbf{Asunto}&La aplicación necesita identificar usuarios sin gestionar contraseñas ni sesiones de servidor.\\
-\textbf{Resumen}&Validación de token Google ID mediante \texttt{googleapis.com/tokeninfo} y emisión de JWT firmado con HMAC-SHA256, TTL 7 días.\\
+\textbf{Resumen}&Validación del ID token de Google mediante su API de tokeninfo y emisión de JWT firmado con HMAC-SHA256, TTL 7 días.\\
 \midrule
-\textbf{Factores causantes}&\textbf{(1)} Scubex es una SPA sin servidor de sesiones; el estado de autenticación debe viajar en cada petición HTTP. \textbf{(2)} Implementar registro propio (hash de contraseñas, recuperación, etc.) añadiría complejidad sin valor diferencial para el usuario.\\
-\textbf{Solución}&El frontend usa \texttt{@react-oauth/google} para mostrar el botón ``Continuar con Google''. Al hacer click, Google entrega un \emph{credential} (token ID). El backend llama a \texttt{GET https://oauth2.googleapis.com/tokeninfo?id\_token=\{credential\}} para validarlo y extraer \texttt{sub}, \texttt{email}, \texttt{name} y \texttt{picture}. Se verifica que el campo \texttt{aud} coincida con \texttt{GOOGLE\_CLIENT\_ID} para evitar suplantación. Se crea o recupera el registro \texttt{User} y se emite un JWT con \texttt{JwtService.generateToken()}, firmado con la clave \texttt{JWT\_SECRET} (HMAC-SHA256). El frontend persiste el token en \texttt{localStorage} y lo envía en la cabecera \texttt{Authorization: Bearer \{token\}} en las peticiones autenticadas. \texttt{JwtAuthFilter} intercepta cada petición, valida la firma y el vencimiento, e inyecta el \texttt{Authentication} en el contexto de Spring Security.\\
+\textbf{Factores causantes}&Scubex no tiene servidor de sesiones, así que la identidad del usuario tiene que viajar en cada petición. Implementar registro propio con contraseñas añadiría complejidad sin aportar nada al usuario.\\
+\textbf{Solución}&El usuario hace click en ``Continuar con Google''; Google devuelve un token que el backend valida directamente contra su API. Si es válido y el campo \texttt{aud} corresponde a la app (evitando suplantación), se crea o recupera el usuario y se emite un JWT propio firmado con HMAC-SHA256 que el cliente usará en todas sus peticiones autenticadas.\\
 \textbf{Motivación}&Sin sesiones de servidor: compatible con despliegue stateless en Railway. Sin contraseñas: menor superficie de ataque. Google verifica la identidad: Scubex no almacena credenciales sensibles.\\
 \textbf{Cuestiones abiertas}&Sin \emph{refresh tokens}: tras 7 días el usuario debe volver a autenticarse. Sin revocación de tokens individuales (logout invalida solo la copia en \texttt{localStorage}).\\
-\textbf{Alternativas}&Auth0 / Firebase Authentication: simplificaría la implementación pero añadiría dependencia de servicio externo y coste. Session cookies HttpOnly: más seguras contra XSS pero incompatibles con arquitectura stateless.\\
+\textbf{Alternativas}&\textbf{Auth0 / Firebase Authentication}: delega toda la lógica de autenticación a un servicio externo, simplificando la implementación, pero introduce dependencia y coste si el uso escala. \textbf{Session cookies HttpOnly}: Requieren que el servidor mantenga estado de sesión, incompatible con el despliegue stateless en Railway.\\
 	\end{coolTable}
 	\caption{Memorando técnico 005: Autenticación OAuth2 + JWT\label{tab:memo005}}
 \end{table*}
@@ -200,16 +202,16 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \pasoPseudo{4. Con los datos de identidad confirmados (sub, email, nombre, foto), se busca o crea el usuario en la base de datos con \texttt{findOrCreate()}. Si el usuario ya existe, se recupera; si es nuevo, se registra.}
 \pasoPseudo{5. Se genera un JWT firmado con HMAC-SHA256 mediante \texttt{generateToken()} y se devuelve al cliente junto con los datos básicos del perfil. A partir de aquí el cliente usa este JWT en todas sus peticiones autenticadas.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{002}{SI}
-\pasoCodigo{6}{UserSvc.}{User findOrCreate(sub, email, name, picture)}{002}{SI}
-\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{002}{SI}
+\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{005}{SI}
+\pasoCodigo{6}{UserSvc.}{User findOrCreate(sub, email, name, picture)}{005}{SI}
+\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{005}{SI}
 \end{asigResponsabilidad}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Pruebas}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Las pruebas se han implementado siguiendo TDD, escribiendo los casos de prueba antes del código productivo. Se emplean JUnit\,5 y Mockito para aislar las dependencias externas (OBIS, iNaturalist, Google).
+Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para aislar las dependencias externas (OBIS, iNaturalist, Google).
 
 \subsection{\texttt{SpeciesServiceTest}}
 
