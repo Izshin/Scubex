@@ -86,9 +86,6 @@ public class SpeciesService {
         if (cached.isPresent()) {
             CachedScan cachedScan = cached.get();
             boolean needsFilter = cachedScan.getRadius() > radius;
-            System.out.println("✅ Cache HIT for species scan at " + roundedLat + ", " + roundedLng
-                    + " (requested r=" + radius + ", cached r=" + cachedScan.getRadius()
-                    + (needsFilter ? ", filtering by distance)" : ")"));
             return cachedScan.getSpecies().stream()
                     .filter(cs -> !needsFilter || isWithinRadius(lat, lng, radius,
                             cs.getLatitude(), cs.getLongitude()))
@@ -112,8 +109,6 @@ public class SpeciesService {
                             .build())
                     .toList();
         }
-
-        System.out.println("⏳ Cache MISS for species scan at " + roundedLat + ", " + roundedLng);
 
         // 1. Create polygon from coordinates + radius
         String polygon = createPolygonFromRadius(lat, lng, radius);
@@ -225,21 +220,17 @@ public class SpeciesService {
 
             // build().encode() → encodes spaces as %20 (and other illegal chars) correctly
             URI uri = b.build().encode().toUri();
-            System.out.println("🌊 OBIS final URI: " + uri);
 
             ResponseEntity<ObisResponse> res = restTemplate.getForEntity(uri, ObisResponse.class);
             if (!res.getStatusCode().is2xxSuccessful() || res.getBody() == null) {
-                System.err.println("❌ OBIS HTTP " + res.getStatusCode() + " or empty body");
                 return List.of();
             }
 
             ObisResponse body = res.getBody();
             List<ObisOccurrence> out = body.getResults() != null ? body.getResults() : List.of();
-            System.out.println("✅ OBIS total=" + body.getTotal() + " results=" + out.size());
             return out;
 
         } catch (Exception e) {
-            System.err.println("❌ Error calling/parsing OBIS: " + e.getMessage());
             return List.of();
         }
     }
@@ -254,7 +245,6 @@ public class SpeciesService {
 
     @SuppressWarnings("unchecked")
     private ObisEcoData callObisEcoStats(String scientificName, ExecutorService executor) {
-        System.out.println("🔬 callObisEcoStats → " + scientificName);
 
         // --- call 1: /statistics (records + yearrange) ---
         CompletableFuture<int[]> statsFuture = CompletableFuture.supplyAsync(() -> {
@@ -274,7 +264,7 @@ public class SpeciesService {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ OBIS /statistics error for " + scientificName + ": " + e.getMessage());
+                // ignore stats error
             }
             return result;
         }, executor);
@@ -314,7 +304,7 @@ public class SpeciesService {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ OBIS /statistics/env error for " + scientificName + ": " + e.getMessage());
+                // ignore env error
             }
             return result;
         }, executor);
@@ -335,7 +325,7 @@ public class SpeciesService {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ OBIS /checklist/redlist error for " + scientificName + ": " + e.getMessage());
+                // ignore redlist error
             }
             return null;
         }, executor);
@@ -355,13 +345,6 @@ public class SpeciesService {
         Integer tempMin       = env[2] != Integer.MAX_VALUE ? env[2] : null;
         Integer tempMax       = env[3] != Integer.MIN_VALUE ? env[3] : null;
 
-        System.out.println("📊 Eco-stats for " + scientificName
-                + " → depth:" + depthMin + "-" + depthMax + "m"
-                + " sst:" + tempMin + "-" + tempMax + "°C"
-                + " years:" + firstYear + "-" + lastYear
-                + " globalRecs:" + globalRecords
-                + " IUCN:" + iucnCategory);
-
         return new ObisEcoData(depthMin, depthMax, tempMin, tempMax, firstYear, lastYear, globalRecords, iucnCategory);
     }
 
@@ -377,21 +360,16 @@ public class SpeciesService {
                     .encode()
                     .toUri();
 
-            System.out.println("🦋 iNaturalist URI: " + uri);
-
             // Use automatic JSON deserialization instead of manual parsing
             ResponseEntity<INaturalistResponse> response = restTemplate.getForEntity(uri, INaturalistResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                System.out.println("✅ iNaturalist response successful");
                 return response.getBody();
             }
 
-            System.err.println("❌ iNaturalist HTTP " + response.getStatusCode() + " or empty body");
             return null;
 
         } catch (Exception e) {
-            System.err.println("❌ Error calling iNaturalist API: " + e.getMessage());
             return null;
         }
     }
@@ -418,7 +396,6 @@ public class SpeciesService {
             }
         }
 
-        System.out.println("📊 Grouped " + occurrences.size() + " occurrences into " + grouped.size() + " species");
         return grouped;
     }
 
@@ -475,7 +452,7 @@ public class SpeciesService {
                 return LocalDate.of(Integer.parseInt(eventDateStr), 1, 1);
             }
         } catch (Exception e) {
-            System.err.println("⚠️  Could not parse date: " + eventDateStr);
+            // ignore unparseable date
         }
 
         return null;
@@ -517,7 +494,7 @@ public class SpeciesService {
                 species.setPhotoUrl(firstResult.getPhotoUrl());
             }
         } else {
-            System.out.println("⚠️  No iNaturalist data found for " + scientificName);
+            // no iNaturalist data for this species
         }
 
         // Eco-data from OBIS statistics
@@ -622,9 +599,8 @@ public class SpeciesService {
 
             scan.getSpecies().addAll(cachedSpeciesList);
             cachedScanRepository.save(scan);
-            System.out.println("💾 Cached " + speciesList.size() + " species for " + roundedLat + ", " + roundedLng);
         } catch (Exception e) {
-            System.err.println("⚠️ Failed to save species cache: " + e.getMessage());
+            // ignore cache save errors
         }
     }
 
