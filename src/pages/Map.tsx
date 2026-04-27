@@ -473,6 +473,7 @@ const MapPage = observer(() => {
           <AnimatePresence>
             {selectedPublication && (
               <PublicationDetail
+                key={selectedPublication.id}
                 publication={selectedPublication}
                 map={mapRef.current?.getMap() ?? null}
                 isOwner={userStore.user?.email === selectedPublication.author.email}

@@ -690,12 +690,12 @@ INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpt
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\kpfonts\jkpttbn8t.vf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbn8r.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\kpfonts\jkpttbne.tfm
-INPUT .\figures\UML it1.pdf
-INPUT .\figures\UML it1.pdf
-INPUT .\figures\UML it1.pdf
-INPUT .\figures\UML it1.pdf
-INPUT .\figures\UML it1.pdf
-INPUT .\figures\UML it1.pdf
+INPUT .\figures\umlit1.pdf
+INPUT .\figures\umlit1.pdf
+INPUT .\figures\umlit1.pdf
+INPUT .\figures\umlit1.pdf
+INPUT .\figures\umlit1.pdf
+INPUT .\figures\umlit1.pdf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\public\mathpazo\zplmr7m.vf
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\mathpazo\fplmri.tfm
 INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmmi10.tfm
@@ -704,8 +704,12 @@ INPUT .\iteracion2.tex
 INPUT .\iteracion2.tex
 INPUT .\iteracion2.tex
 INPUT iteracion2.tex
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\palatino\pplr8t.vf
-INPUT C:\Users\ivanf\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\palatino\pplr8r.tfm
+INPUT .\figures\umlIt2.pdf
+INPUT .\figures\umlIt2.pdf
+INPUT .\figures\umlIt2.pdf
+INPUT .\figures\umlIt2.pdf
+INPUT .\figures\umlIt2.pdf
+INPUT .\figures\umlIt2.pdf
 INPUT .\Manual.tex
 INPUT .\Manual.tex
 INPUT .\Manual.tex

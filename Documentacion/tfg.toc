@@ -48,18 +48,18 @@
 \contentsline {chapter}{\numberline {7}Iteración 1: Inicio del MVP de Scubex}{35}{chapter.7}%
 \contentsline {section}{\numberline {7.1}Características desarrolladas esta iteración}{36}{section.7.1}%
 \contentsline {section}{\numberline {7.2}Diseño}{40}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Implementación}{40}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Pruebas}{49}{section.7.4}%
-\contentsline {subsection}{\numberline {7.4.1}\texttt {SpeciesServiceTest}}{49}{subsection.7.4.1}%
-\contentsline {subsection}{\numberline {7.4.2}\texttt {JwtServiceTest}}{50}{subsection.7.4.2}%
-\contentsline {subsection}{\numberline {7.4.3}\texttt {AuthControllerTest}}{50}{subsection.7.4.3}%
-\contentsline {section}{\numberline {7.5}Despliegue}{51}{section.7.5}%
-\contentsline {chapter}{\numberline {8}Iteración 2: Sistema Climático}{53}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Características desarrolladas esta iteración}{54}{section.8.1}%
-\contentsline {section}{\numberline {8.2}Diseño}{56}{section.8.2}%
-\contentsline {section}{\numberline {8.3}Implementación}{56}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Pruebas}{62}{section.8.4}%
-\contentsline {section}{\numberline {8.5}Despliegue}{62}{section.8.5}%
+\contentsline {section}{\numberline {7.3}Implementación}{41}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Pruebas}{48}{section.7.4}%
+\contentsline {subsection}{\numberline {7.4.1}\texttt {SpeciesServiceTest}}{48}{subsection.7.4.1}%
+\contentsline {subsection}{\numberline {7.4.2}\texttt {JwtServiceTest}}{49}{subsection.7.4.2}%
+\contentsline {subsection}{\numberline {7.4.3}\texttt {AuthControllerTest}}{49}{subsection.7.4.3}%
+\contentsline {section}{\numberline {7.5}Despliegue}{50}{section.7.5}%
+\contentsline {chapter}{\numberline {8}Iteración 2: Sistema Climático}{51}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Características desarrolladas esta iteración}{52}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Diseño}{54}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Implementación}{54}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Pruebas}{61}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Despliegue}{61}{section.8.5}%
 \contentsline {part}{IV\hspace {1em}Cierre del proyecto}{63}{part.4}%
 \contentsline {chapter}{\numberline {9}Manual de usuario}{65}{chapter.9}%
 \contentsline {section}{\numberline {9.1}Sección libre}{66}{section.9.1}%
