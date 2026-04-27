@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { Map } from 'maplibre-gl';
 import { uploadImage } from '../lib/api';
@@ -22,8 +22,6 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [cardHeight, setCardHeight] = useState(0);
   const [placeName, setPlaceName] = useState('');
 
   // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
@@ -47,22 +45,6 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
     map.on('move', updatePosition);
     return () => { map.off('move', updatePosition); };
   }, [map, updatePosition]);
-
-  // Measure card height synchronously before paint
-  useLayoutEffect(() => {
-    if (cardRef.current) {
-      setCardHeight(cardRef.current.getBoundingClientRect().height);
-    }
-  });
-
-  // Keep measuring on resize
-  useEffect(() => {
-    if (cardRef.current) {
-      const obs = new ResizeObserver(([entry]) => setCardHeight(entry.contentRect.height));
-      obs.observe(cardRef.current);
-      return () => obs.disconnect();
-    }
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,31 +89,34 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
 
   if (!screenPos) return null;
 
-  const popupWidth = 400;
+  const isMobile = window.innerWidth < 640;
+  const popupWidth = isMobile ? Math.min(320, window.innerWidth - 24) : 400;
   const tailH = 10;
   const markerH = 60;
   const gap = 4;
 
-  const minTop = 8;
-  let top = screenPos.y - markerH - gap - tailH - cardHeight;
-  const clamped = top < minTop;
-  if (clamped) top = minTop;
+  // Anchor at fixed bottom point above marker — card grows upward from here
+  const bottomAnchor = screenPos.y - markerH - gap;
+
+  // On mobile keep popup horizontally within viewport
+  const minLeft = 8;
+  const maxLeft = window.innerWidth - popupWidth - 8;
+  const rawLeft = screenPos.x - popupWidth / 2;
+  const left = Math.max(minLeft, Math.min(rawLeft, maxLeft));
 
   return (
     <motion.div
-      className="absolute z-30 pointer-events-auto flex flex-col items-center"
-      style={{
-        left: screenPos.x - popupWidth / 2,
-        top,
-        width: popupWidth,
-      }}
+      className="absolute z-30 pointer-events-none"
+      style={{ left, top: bottomAnchor, width: popupWidth, height: 0 }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.2 }}
     >
+      {/* Content anchored to bottom, grows upward */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-auto flex flex-col items-center">
       {/* Bubble card */}
-      <div ref={cardRef} className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 flex items-center justify-between">
           <h3 className="text-white font-semibold text-sm">Nueva publicación</h3>
@@ -226,13 +211,12 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
         </form>
       </div>
 
-      {/* Tail — only show when not clamped (i.e. popup fits above marker) */}
-      {!clamped && (
-        <svg width="20" height={tailH} viewBox="0 0 20 10" fill="none" className="-mt-px">
-          <path d="M0 0L10 10L20 0" fill="white" />
-          <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
-        </svg>
-      )}
+      {/* Tail pointing down to the marker */}
+      <svg width="20" height={tailH} viewBox="0 0 20 10" fill="none" className="-mt-px">
+        <path d="M0 0L10 10L20 0" fill="white" />
+        <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
+      </svg>
+      </div>
     </motion.div>
   );
 }
