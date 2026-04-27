@@ -69,6 +69,12 @@ class PublicationStore {
     }
   }
 
+  updatePublicationCounts(id: number, likeCount: number, commentCount: number) {
+    this.publications = this.publications.map(p =>
+      p.id === id ? { ...p, likeCount, commentCount } : p
+    );
+  }
+
   async editPublication(id: number, data: { title: string; description?: string; imageUrl?: string }) {
     try {
       const updated = await updatePublication(id, data);

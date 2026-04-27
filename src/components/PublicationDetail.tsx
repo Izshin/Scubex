@@ -25,6 +25,7 @@ interface PublicationDetailProps {
   hidden?: boolean;
   onEdit?: (id: number, data: { title: string; description?: string; imageUrl?: string }) => Promise<unknown>;
   onDelete?: (id: number) => Promise<unknown>;
+  onCountsChange?: (likeCount: number, commentCount: number) => void;
 }
 
 function ShareButton({ url, title }: { url: string; title: string }) {
@@ -60,7 +61,7 @@ function ShareButton({ url, title }: { url: string; title: string }) {
   );
 }
 
-export default function PublicationDetail({ publication, map, isOwner, onClose, hidden = false, onEdit, onDelete }: PublicationDetailProps) {
+export default function PublicationDetail({ publication, map, isOwner, onClose, hidden = false, onEdit, onDelete, onCountsChange }: PublicationDetailProps) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -538,16 +539,20 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                           // Optimistic update
                           const prevLiked = liked;
                           const prevCount = likeCount;
+                          const newCount = liked ? likeCount - 1 : likeCount + 1;
                           setLiked(!liked);
-                          setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+                          setLikeCount(newCount);
+                          onCountsChange?.(newCount, commentCount);
                           try {
                             const res = await toggleLike(publication.id);
                             setLiked(res.liked);
                             setLikeCount(res.count);
+                            onCountsChange?.(res.count, commentCount);
                           } catch {
                             // Rollback
                             setLiked(prevLiked);
                             setLikeCount(prevCount);
+                            onCountsChange?.(prevCount, commentCount);
                             setOptimisticError('No se pudo actualizar el like');
                             setTimeout(() => setOptimisticError(null), 3000);
                           }
@@ -640,7 +645,11 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                   },
                                 };
                                 setComments(prev => [...prev, tempComment]);
-                                setCommentCount(n => n + 1);
+                                setCommentCount(n => {
+                                  const next = n + 1;
+                                  onCountsChange?.(likeCount, next);
+                                  return next;
+                                });
                                 setCommentText('');
                                 setSubmittingComment(true);
                                 try {
@@ -650,7 +659,11 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                 } catch {
                                   // Rollback
                                   setComments(prev => prev.filter(x => x.id !== tempId));
-                                  setCommentCount(n => Math.max(0, n - 1));
+                                  setCommentCount(n => {
+                                    const next = Math.max(0, n - 1);
+                                    onCountsChange?.(likeCount, next);
+                                    return next;
+                                  });
                                   setCommentText(capturedText);
                                   setOptimisticError('No se pudo enviar el comentario');
                                   setTimeout(() => setOptimisticError(null), 3000);
@@ -702,7 +715,11 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                           onClick={async () => {
                                             await deleteComment(publication.id, c.id);
                                             setComments(prev => prev.filter(x => x.id !== c.id));
-                                            setCommentCount(n => Math.max(0, n - 1));
+                                            setCommentCount(n => {
+                                              const next = Math.max(0, n - 1);
+                                              onCountsChange?.(likeCount, next);
+                                              return next;
+                                            });
                                           }}
                                           className="text-[10px] text-gray-300 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                                         >

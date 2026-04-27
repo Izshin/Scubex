@@ -492,6 +492,10 @@ const MapPage = observer(() => {
                   await publicationStore.removePublication(id);
                   setSelectedPublication(null);
                 }}
+                onCountsChange={(likeCount, commentCount) => {
+                  setSelectedPublication(prev => prev ? { ...prev, likeCount, commentCount } : prev);
+                  publicationStore.updatePublicationCounts(selectedPublication.id, likeCount, commentCount);
+                }}
               />
             )}
           </AnimatePresence>
