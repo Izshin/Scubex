@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PublicationData, CommentData } from '../lib/api';
 import { uploadImage, toggleLike, getLikeStatus, toggleSave, getSaveStatus, getComments, addComment, deleteComment, loginWithGoogle } from '../lib/api';
+import { reverseGeocode } from '../lib/geocode';
 import { useUserStore } from '../lib/stores/index.tsx';
 import { GoogleLogin } from '@react-oauth/google';
 import { useWaveTransition } from '../lib/transition';
@@ -73,6 +74,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
+  const editBlobUrlRef = useRef<string | null>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
@@ -106,34 +108,27 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
     }
   }, [expanded, publication.id, userStore.isLoggedIn]);
 
-  // Reverse geocode when expanded
+  // Reverse geocode when expanded (uses module-level cache to avoid repeated network requests)
   useEffect(() => {
     if (!expanded || placeName) return;
     const controller = new AbortController();
-    const opts = { signal: controller.signal };
-    const extractName = (data: { address?: Record<string, string>; display_name?: string; error?: string }) => {
-      if (data.error) return '';
-      const addr = data.address;
-      return addr?.beach || addr?.tourism || addr?.natural || addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || addr?.state || '';
-    };
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=14&accept-language=es`, opts)
-      .then(r => r.json())
-      .then(data => {
-        const name = extractName(data);
-        if (name) { setPlaceName(name); return; }
-        return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=10&accept-language=es`, opts)
-          .then(r => r.json())
-          .then(data2 => {
-            const name2 = extractName(data2);
-            if (name2) { setPlaceName(name2); return; }
-            return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${publication.latitude}&lon=${publication.longitude}&format=json&zoom=5&accept-language=es`, opts)
-              .then(r => r.json())
-              .then(data3 => { setPlaceName(extractName(data3) || 'Mar abierto'); });
-          });
-      })
+    reverseGeocode(publication.latitude, publication.longitude, controller.signal)
+      .then(name => { if (!controller.signal.aborted) setPlaceName(name); })
       .catch(() => {});
     return () => controller.abort();
   }, [expanded, publication.latitude, publication.longitude, placeName]);
+
+  // Revoke edit image blob URL when editing ends or on unmount
+  useEffect(() => {
+    if (!editing && editBlobUrlRef.current) {
+      URL.revokeObjectURL(editBlobUrlRef.current);
+      editBlobUrlRef.current = null;
+    }
+  }, [editing]);
+  useEffect(() => {
+    const ref = editBlobUrlRef;
+    return () => { if (ref.current) URL.revokeObjectURL(ref.current); };
+  }, []);
 
   // Fetch comments when section opened
   useEffect(() => {
@@ -197,11 +192,18 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
     }
     setEditImageError('');
     setEditImageFile(file);
-    setEditImagePreview(URL.createObjectURL(file));
+    if (editBlobUrlRef.current) URL.revokeObjectURL(editBlobUrlRef.current);
+    const blobUrl = URL.createObjectURL(file);
+    editBlobUrlRef.current = blobUrl;
+    setEditImagePreview(blobUrl);
   };
 
   const removeEditImage = () => {
     setEditImageFile(null);
+    if (editBlobUrlRef.current) {
+      URL.revokeObjectURL(editBlobUrlRef.current);
+      editBlobUrlRef.current = null;
+    }
     setEditImagePreview('');
     setEditImageUrl('');
     setEditImageError('');

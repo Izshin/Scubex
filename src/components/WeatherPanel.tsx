@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Spinner from './Spinner';
 import type { WeatherData } from '../lib/api';
 
 // WMO Weather Code → description + icon
@@ -119,11 +120,7 @@ export default function WeatherPanel({ data, loading, error, hidden = false, onI
           exit={{ opacity: 0, x: -20 }}
         >
           <div className="flex items-center gap-2">
-            <motion.div
-              className="rounded-full h-4 w-4 border-2 border-blue-300 border-t-blue-600"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            />
+            <Spinner size="w-4 h-4" color="border-blue-300 border-t-blue-600" />
             <span className="text-xs text-gray-500">Cargando clima...</span>
           </div>
         </motion.div>

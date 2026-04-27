@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react
 import { motion } from 'framer-motion';
 import type { Map } from 'maplibre-gl';
 import { uploadImage } from '../lib/api';
+import { reverseGeocode } from '../lib/geocode';
 
 interface PublicationPopupProps {
   lat: number;
@@ -25,37 +26,11 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const [cardHeight, setCardHeight] = useState(0);
   const [placeName, setPlaceName] = useState('');
 
-  // Reverse geocode to get place name
+  // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
   useEffect(() => {
     const controller = new AbortController();
-    const opts = { signal: controller.signal };
-
-    const extractName = (data: { address?: Record<string, string>; display_name?: string; error?: string }) => {
-      if (data.error) return '';
-      const addr = data.address;
-      return addr?.beach || addr?.tourism || addr?.natural || addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.county || addr?.state || '';
-    };
-
-    // Try zoom=14 first (precise), then zoom=10, then zoom=5 (wide area for ocean clicks)
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14&accept-language=es`, opts)
-      .then(r => r.json())
-      .then(data => {
-        const name = extractName(data);
-        if (name) { setPlaceName(name); return; }
-        // Fallback: zoom=10
-        return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&accept-language=es`, opts)
-          .then(r => r.json())
-          .then(data2 => {
-            const name2 = extractName(data2);
-            if (name2) { setPlaceName(name2); return; }
-            // Fallback: zoom=5 (catches nearby coast/region for ocean clicks)
-            return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=5&accept-language=es`, opts)
-              .then(r => r.json())
-              .then(data3 => {
-                setPlaceName(extractName(data3) || 'Mar abierto');
-              });
-          });
-      })
+    reverseGeocode(lat, lng, controller.signal)
+      .then(name => { if (!controller.signal.aborted) setPlaceName(name); })
       .catch(() => {});
     return () => controller.abort();
   }, [lat, lng]);

@@ -10,6 +10,8 @@ import PublicationPopup from "../components/PublicationPopup";
 import PublicationDetail from "../components/PublicationDetail";
 import PlaceSearch from "../components/PlaceSearch";
 import NotificationBell from "../components/NotificationBell";
+import Avatar from "../components/Avatar";
+import Spinner from "../components/Spinner";
 import { useSpeciesStore, useMapStore, useWeatherStore, usePublicationStore, useUserStore } from "../lib/stores/index.tsx";
 import { useWaveTransition } from "../lib/transition";
 import { loginWithGoogle } from "../lib/api";
@@ -225,13 +227,11 @@ const MapPage = observer(() => {
               onClick={(e) => { e.preventDefault(); startWaveTransition('/profile', { from: '/map' }); }}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 transition-all"
             >
-              {userStore.user?.picture ? (
-                <img src={userStore.user.picture} alt={userStore.user.name} className="w-7 h-7 rounded-full active:animate-coin-spin" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-bold active:animate-coin-spin">
-                  {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
-                </div>
-              )}
+              <Avatar
+                src={userStore.user?.picture}
+                name={userStore.user?.name}
+                className="w-7 h-7 active:animate-coin-spin"
+              />
               <span className="text-white text-sm font-medium hidden sm:inline">{userStore.user?.name}</span>
             </a>
           </div>
@@ -323,13 +323,7 @@ const MapPage = observer(() => {
                   whileTap={mapStore.scanCenter && !isScanning ? { scale: 0.97 } : {}}
                 >
                   {isScanning ? (
-                    <motion.div
-                      className="w-4 h-4"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <div className="w-full h-full border-2 border-white/30 border-t-white rounded-full" />
-                    </motion.div>
+                    <Spinner size="w-4 h-4" color="border-white/30 border-t-white" />
                   ) : (
                     <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
                       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="currentColor"/>

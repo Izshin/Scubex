@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
-import { useState, type ReactNode } from 'react'
+import { useState, memo, type ReactNode } from 'react'
 import Home from './pages/Home'
 import MapPage from './pages/Map'
 import Profile from './pages/Profile'
@@ -58,25 +58,42 @@ function WaveTransition({ onRisingComplete, onFallingComplete }: { onRisingCompl
   );
 }
 
-// 3. CONTENIDO DE LA OLA CON ANIMACIONES CONTINUAS
-function WaveContent() {
-  const particleData = [
-    { x: 15, size: 3, delay: 0.1, duration: 4.5 }, { x: 85, size: 2, delay: 0.3, duration: 5 },
-    { x: 35, size: 4, delay: 0.0, duration: 3 }, { x: 75, size: 2.5, delay: 0.2, duration: 5.5 },
-    { x: 55, size: 3.5, delay: 0.4, duration: 3.8 }, { x: 25, size: 2, delay: 0.1, duration: 6 },
-    { x: 65, size: 3, delay: 0.5, duration: 3.2 }, { x: 45, size: 2.5, delay: 0.3, duration: 5.8 },
-    { x: 95, size: 2, delay: 0.0, duration: 4.5 }, { x: 5, size: 4, delay: 0.2, duration: 4 },
-    // Más burbujas como solicitaste
-    { x: 20, size: 2, delay: 0.6, duration: 5.2 }, { x: 80, size: 3, delay: 0.8, duration: 4.8 },
-    { x: 40, size: 2.5, delay: 1.0, duration: 3.5 }, { x: 60, size: 3.5, delay: 0.4, duration: 5.0 },
-    { x: 10, size: 2.8, delay: 0.7, duration: 4.2 }, { x: 90, size: 2.2, delay: 0.9, duration: 4.7 },
-    { x: 30, size: 3.2, delay: 0.2, duration: 5.3 }, { x: 70, size: 2.7, delay: 0.5, duration: 4.1 },
-    { x: 50, size: 2.3, delay: 1.1, duration: 3.9 }, { x: 18, size: 3.8, delay: 0.3, duration: 5.6 },
-    { x: 82, size: 2.1, delay: 0.6, duration: 4.4 }, { x: 38, size: 3.3, delay: 0.8, duration: 3.7 },
-    { x: 68, size: 2.6, delay: 1.2, duration: 5.1 }, { x: 12, size: 3.1, delay: 0.1, duration: 4.3 },
-    { x: 88, size: 2.4, delay: 0.4, duration: 4.9 }, { x: 42, size: 3.6, delay: 0.7, duration: 3.4 },
-  ];
+const particleData = [
+  { x: 15, size: 3, delay: 0.1, duration: 4.5 }, { x: 85, size: 2, delay: 0.3, duration: 5 },
+  { x: 35, size: 4, delay: 0.0, duration: 3 }, { x: 75, size: 2.5, delay: 0.2, duration: 5.5 },
+  { x: 55, size: 3.5, delay: 0.4, duration: 3.8 }, { x: 25, size: 2, delay: 0.1, duration: 6 },
+  { x: 65, size: 3, delay: 0.5, duration: 3.2 }, { x: 45, size: 2.5, delay: 0.3, duration: 5.8 },
+  { x: 95, size: 2, delay: 0.0, duration: 4.5 }, { x: 5, size: 4, delay: 0.2, duration: 4 },
+  { x: 20, size: 2, delay: 0.6, duration: 5.2 }, { x: 80, size: 3, delay: 0.8, duration: 4.8 },
+  { x: 40, size: 2.5, delay: 1.0, duration: 3.5 }, { x: 60, size: 3.5, delay: 0.4, duration: 5.0 },
+  { x: 10, size: 2.8, delay: 0.7, duration: 4.2 }, { x: 90, size: 2.2, delay: 0.9, duration: 4.7 },
+  { x: 30, size: 3.2, delay: 0.2, duration: 5.3 }, { x: 70, size: 2.7, delay: 0.5, duration: 4.1 },
+  { x: 50, size: 2.3, delay: 1.1, duration: 3.9 }, { x: 18, size: 3.8, delay: 0.3, duration: 5.6 },
+  { x: 82, size: 2.1, delay: 0.6, duration: 4.4 }, { x: 38, size: 3.3, delay: 0.8, duration: 3.7 },
+  { x: 68, size: 2.6, delay: 1.2, duration: 5.1 }, { x: 12, size: 3.1, delay: 0.1, duration: 4.3 },
+  { x: 88, size: 2.4, delay: 0.4, duration: 4.9 }, { x: 42, size: 3.6, delay: 0.7, duration: 3.4 },
+];
 
+const FOAM_BUBBLES = [
+  { w: 10, h: 8,  left: 22, bottom: 45, duration: 2.8, delay: 0.3 },
+  { w: 6,  h: 11, left: 67, bottom: 28, duration: 3.5, delay: 1.1 },
+  { w: 12, h: 7,  left: 45, bottom: 60, duration: 2.2, delay: 0.7 },
+  { w: 8,  h: 9,  left: 78, bottom: 35, duration: 3.1, delay: 0.2 },
+  { w: 5,  h: 6,  left: 12, bottom: 50, duration: 3.8, delay: 1.5 },
+  { w: 9,  h: 10, left: 55, bottom: 22, duration: 2.5, delay: 0.9 },
+  { w: 7,  h: 8,  left: 33, bottom: 42, duration: 3.3, delay: 0.4 },
+  { w: 11, h: 6,  left: 88, bottom: 55, duration: 2.9, delay: 1.3 },
+  { w: 6,  h: 12, left: 5,  bottom: 30, duration: 3.6, delay: 0.6 },
+  { w: 8,  h: 7,  left: 62, bottom: 48, duration: 2.4, delay: 1.8 },
+  { w: 10, h: 9,  left: 40, bottom: 25, duration: 3.0, delay: 0.1 },
+  { w: 7,  h: 11, left: 95, bottom: 38, duration: 2.7, delay: 1.6 },
+  { w: 9,  h: 6,  left: 18, bottom: 62, duration: 3.4, delay: 0.8 },
+  { w: 5,  h: 8,  left: 72, bottom: 32, duration: 2.6, delay: 1.2 },
+  { w: 12, h: 10, left: 50, bottom: 55, duration: 3.2, delay: 0.5 },
+];
+
+// 3. CONTENIDO DE LA OLA CON ANIMACIONES CONTINUAS
+const WaveContent = memo(function WaveContent() {
   return (
     <>
       {/* Espuma de la ola: animación en bucle y más alta */}
@@ -110,15 +127,15 @@ function WaveContent() {
         
         {/* Burbujas de espuma adicionales */}
         <div className="absolute inset-0">
-          {[...Array(15)].map((_, i) => (
+          {FOAM_BUBBLES.map((b, i) => (
             <motion.div
               key={`foam-bubble-${i}`}
               className="absolute bg-white rounded-full opacity-60"
               style={{
-                width: Math.random() * 8 + 4,
-                height: Math.random() * 8 + 4,
-                left: `${Math.random() * 100}%`,
-                bottom: `${Math.random() * 80 + 20}px`,
+                width: b.w,
+                height: b.h,
+                left: `${b.left}%`,
+                bottom: `${b.bottom}px`,
                 boxShadow: '0 0 15px rgba(255,255,255,0.7)'
               }}
               animate={{
@@ -127,8 +144,8 @@ function WaveContent() {
                 scale: [1, 1.3, 1]
               }}
               transition={{
-                duration: 2 + Math.random() * 2,
-                delay: Math.random() * 2,
+                duration: b.duration,
+                delay: b.delay,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
@@ -168,7 +185,7 @@ function WaveContent() {
       </div>
     </>
   );
-}
+});
 
 // 4. PROVEEDOR DE TRANSICIÓN SIMPLIFICADO
 function TransitionProvider({ children }: { children: ReactNode }) {

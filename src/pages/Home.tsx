@@ -4,6 +4,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useWaveTransition } from '../lib/transition';
 import { useUserStore } from '../lib/stores';
 import { loginWithGoogle } from '../lib/api';
+import Avatar from '../components/Avatar';
 
 const Home = observer(function Home() {
   const { startWaveTransition } = useWaveTransition();
@@ -545,13 +546,7 @@ const Home = observer(function Home() {
         <div className="fixed top-5 right-5 z-50">
           {userStore.isLoggedIn ? (
             <a href="/profile" onClick={handleProfileClick} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 transition-all">
-              {userStore.user?.picture ? (
-                <img src={userStore.user.picture} alt={userStore.user.name} className="w-8 h-8 rounded-full" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm font-bold">
-                  {userStore.user?.name?.[0]?.toUpperCase() ?? '?'}
-                </div>
-              )}
+              <Avatar src={userStore.user?.picture} name={userStore.user?.name} className="w-8 h-8" />
               <span className="text-white text-sm font-medium">{userStore.user?.name}</span>
             </a>
           ) : (

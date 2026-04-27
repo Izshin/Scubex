@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import Avatar from './Avatar';
+import Spinner from './Spinner';
 import { useWaveTransition } from '../lib/transition';
 import {
   getNotifications,
@@ -74,13 +76,7 @@ function SwipeableNotification({
         }`}
       >
         <div className="flex-shrink-0 mt-0.5">
-          {n.actorPicture ? (
-            <img src={n.actorPicture} alt={n.actorName} className="w-9 h-9 rounded-full object-cover" />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm font-bold">
-              {n.actorName?.[0]?.toUpperCase() ?? '?'}
-            </div>
-          )}
+          <Avatar src={n.actorPicture} name={n.actorName} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-800 leading-snug">{notificationText(n)}</p>
@@ -245,11 +241,7 @@ export default function NotificationBell({ onFocusPublication }: Props) {
             <div className="overflow-y-auto flex-1 custom-scrollbar">
               {loading ? (
                 <div className="flex items-center justify-center py-10">
-                  <motion.div
-                    className="w-5 h-5 border-2 border-cyan-300 border-t-cyan-600 rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  />
+                  <Spinner />
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="py-10 text-center text-sm text-gray-400">

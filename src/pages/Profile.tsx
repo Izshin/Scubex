@@ -6,6 +6,7 @@ import { useUserStore } from '../lib/stores';
 import { useWaveTransition } from '../lib/transition';
 import { uploadImage, getSavedPublications, getPublicProfile, getFollowers, getFollowingList } from '../lib/api';
 import type { PublicationData, PublicProfileData, UserSummary } from '../lib/api';
+import Avatar from '../components/Avatar';
 
 type Tab = 'publications' | 'saved';
 type ListModal = 'followers' | 'following' | null;
@@ -191,9 +192,7 @@ const Profile = observer(function Profile() {
                 {picturePreview ? (
                   <img src={picturePreview} alt="Preview" className="w-24 h-24 rounded-full ring-4 ring-white/30 shadow-lg object-cover" />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-cyan-500 flex items-center justify-center text-white text-4xl shadow-lg">
-                    {nameInput?.[0]?.toUpperCase() ?? '?'}
-                  </div>
+                  <Avatar src={null} name={nameInput} className="w-24 h-24 text-4xl shadow-lg" />
                 )}
                 <button
                   type="button"
@@ -512,13 +511,7 @@ const Profile = observer(function Profile() {
                         onClick={() => navigateToUser(u.email)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left"
                       >
-                        {u.picture ? (
-                          <img src={u.picture} alt="" className="w-9 h-9 rounded-full flex-shrink-0 object-cover" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm flex-shrink-0">
-                            {u.name?.[0]?.toUpperCase() ?? '?'}
-                          </div>
-                        )}
+                        <Avatar src={u.picture} name={u.name} />
                         <div className="min-w-0">
                           <p className="text-white text-sm font-medium truncate">{u.name}</p>
                           <p className="text-white/40 text-xs truncate">{u.email}</p>

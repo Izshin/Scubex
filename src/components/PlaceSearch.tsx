@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Spinner from './Spinner';
 
 interface NominatimResult {
   place_id: number;
@@ -110,11 +111,7 @@ export default function PlaceSearch({ onSelectPlace, onExpandChange }: Props) {
           title="Buscar lugar"
         >
           {loading ? (
-            <motion.div
-              className="w-4 h-4 border-2 border-gray-300 border-t-cyan-500 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-            />
+            <Spinner size="w-4 h-4" color="border-gray-300 border-t-cyan-500" />
           ) : (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <circle cx="11" cy="11" r="7" />
