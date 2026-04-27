@@ -7,11 +7,14 @@ import com.scubex.repository.NotificationRepository;
 import com.scubex.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -73,12 +76,20 @@ public class NotificationService {
                     .build());
         }
 
-        // Notify mentioned users
+        // Notify mentioned users — batch-load all mentioned users in one query
+        List<String> mentionedEmails = new ArrayList<>();
         Matcher matcher = MENTION_PATTERN.matcher(text);
         while (matcher.find()) {
-            String mentionedEmail = matcher.group(2);
-            userRepository.findByEmail(mentionedEmail).ifPresent(mentioned -> {
-                if (!notified.contains(mentioned.getId())) {
+            mentionedEmails.add(matcher.group(2));
+        }
+
+        if (!mentionedEmails.isEmpty()) {
+            Map<String, User> mentionedUsers = userRepository.findByEmailIn(mentionedEmails).stream()
+                    .collect(Collectors.toMap(User::getEmail, u -> u));
+
+            for (String email : mentionedEmails) {
+                User mentioned = mentionedUsers.get(email);
+                if (mentioned != null && !notified.contains(mentioned.getId())) {
                     notified.add(mentioned.getId());
                     notificationRepository.save(Notification.builder()
                             .recipient(mentioned)
@@ -91,7 +102,7 @@ public class NotificationService {
                             .commentSnippet(snippet)
                             .build());
                 }
-            });
+            }
         }
     }
 

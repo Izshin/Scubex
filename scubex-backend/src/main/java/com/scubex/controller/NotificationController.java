@@ -18,57 +18,45 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final UserService userService;
+    private final AuthHelper authHelper;
 
-    public NotificationController(NotificationService notificationService, UserService userService) {
+    public NotificationController(NotificationService notificationService, UserService userService,
+                                   AuthHelper authHelper) {
         this.notificationService = notificationService;
         this.userService = userService;
+        this.authHelper = authHelper;
     }
 
     @GetMapping
     public ResponseEntity<?> getNotifications(Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).build();
-
+        User user = authHelper.getUser(auth);
         List<Notification> notifications = notificationService.getNotifications(user);
         return ResponseEntity.ok(notifications.stream().map(this::toDto).toList());
     }
 
     @GetMapping("/unread-count")
     public ResponseEntity<?> getUnreadCount(Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).build();
-
+        User user = authHelper.getUser(auth);
         return ResponseEntity.ok(Map.of("count", notificationService.getUnreadCount(user)));
     }
 
     @PostMapping("/{id}/read")
     public ResponseEntity<?> markRead(@PathVariable Long id, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).build();
-
+        User user = authHelper.getUser(auth);
         notificationService.markRead(id, user);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/read-all")
     public ResponseEntity<?> markAllRead(Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).build();
-
+        User user = authHelper.getUser(auth);
         notificationService.markAllRead(user);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNotification(@PathVariable Long id, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).build();
-
+        User user = authHelper.getUser(auth);
         notificationService.deleteNotification(id, user);
         return ResponseEntity.ok().build();
     }

@@ -20,22 +20,19 @@ public class PublicationController {
     private final PublicationService publicationService;
     private final UserService userService;
     private final InteractionService interactionService;
+    private final AuthHelper authHelper;
 
-    public PublicationController(PublicationService publicationService, UserService userService, InteractionService interactionService) {
+    public PublicationController(PublicationService publicationService, UserService userService,
+                                 InteractionService interactionService, AuthHelper authHelper) {
         this.publicationService = publicationService;
         this.userService = userService;
         this.interactionService = interactionService;
+        this.authHelper = authHelper;
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         String title = (String) body.get("title");
         String description = (String) body.get("description");
@@ -87,26 +84,14 @@ public class PublicationController {
 
     @GetMapping("/mine")
     public ResponseEntity<?> getMine(Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
         List<Publication> publications = publicationService.getByUser(user);
         return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         Publication updated = Publication.builder()
                 .title((String) body.get("title"))
@@ -123,13 +108,7 @@ public class PublicationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         boolean deleted = publicationService.delete(id, user);
         if (!deleted) {

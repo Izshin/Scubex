@@ -20,25 +20,25 @@ public class InteractionController {
     private final InteractionService interactionService;
     private final PublicationService publicationService;
     private final UserService userService;
+    private final AuthHelper authHelper;
 
     public InteractionController(InteractionService interactionService,
                                  PublicationService publicationService,
-                                 UserService userService) {
+                                 UserService userService,
+                                 AuthHelper authHelper) {
         this.interactionService = interactionService;
         this.publicationService = publicationService;
         this.userService = userService;
+        this.authHelper = authHelper;
     }
 
     // ── Likes ──
 
     @PostMapping("/like")
     public ResponseEntity<?> toggleLike(@PathVariable Long pubId, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        User user = authHelper.getUser(auth);
         Publication pub = publicationService.getById(pubId);
         if (pub == null) return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
-
         boolean liked = interactionService.toggleLike(pub, user);
         long count = interactionService.getLikeCount(pubId);
         return ResponseEntity.ok(Map.of("liked", liked, "count", count));
@@ -64,9 +64,7 @@ public class InteractionController {
 
     @PostMapping("/save")
     public ResponseEntity<?> toggleSave(@PathVariable Long pubId, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        User user = authHelper.getUser(auth);
         Publication pub = publicationService.getById(pubId);
         if (pub == null) return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
 
@@ -102,9 +100,7 @@ public class InteractionController {
 
     @PostMapping("/comments")
     public ResponseEntity<?> addComment(@PathVariable Long pubId, @RequestBody Map<String, String> body, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        User user = authHelper.getUser(auth);
         Publication pub = publicationService.getById(pubId);
         if (pub == null) return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
 
@@ -122,9 +118,7 @@ public class InteractionController {
 
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable Long pubId, @PathVariable Long commentId, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        User user = authHelper.getUser(auth);
 
         boolean deleted = interactionService.deleteComment(commentId, user);
         if (!deleted) {

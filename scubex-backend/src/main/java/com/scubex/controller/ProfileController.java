@@ -15,22 +15,17 @@ public class ProfileController {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final AuthHelper authHelper;
 
-    public ProfileController(UserService userService, JwtService jwtService) {
+    public ProfileController(UserService userService, JwtService jwtService, AuthHelper authHelper) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.authHelper = authHelper;
     }
 
     @GetMapping
     public ResponseEntity<?> getProfile(Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        String googleId = auth.getName();
-        User user = userService.findByGoogleId(googleId);
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
         return ResponseEntity.ok(Map.of(
                 "name", user.getDisplayName() != null ? user.getDisplayName() : "",
                 "email", user.getEmail(),
@@ -42,34 +37,27 @@ public class ProfileController {
 
     @PutMapping
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        String googleId = auth.getName();
-
+        User user = authHelper.getUser(auth);
         String customName = body.get("customName");
         String customPictureUrl = body.get("customPictureUrl");
 
-        User user = userService.updateProfile(googleId, customName, customPictureUrl);
-        String newToken = jwtService.generateToken(user);
+        User updated = userService.updateProfile(user.getGoogleId(), customName, customPictureUrl);
+        String newToken = jwtService.generateToken(updated);
 
         return ResponseEntity.ok(Map.of(
                 "token", newToken,
                 "user", Map.of(
-                        "name", user.getDisplayName() != null ? user.getDisplayName() : "",
-                        "email", user.getEmail(),
-                        "picture", user.getDisplayPicture() != null ? user.getDisplayPicture() : ""
+                        "name", updated.getDisplayName() != null ? updated.getDisplayName() : "",
+                        "email", updated.getEmail(),
+                        "picture", updated.getDisplayPicture() != null ? updated.getDisplayPicture() : ""
                 )
         ));
     }
 
     @DeleteMapping
     public ResponseEntity<?> deleteAccount(Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        String googleId = auth.getName();
-        userService.deleteAccount(googleId);
+        User user = authHelper.getUser(auth);
+        userService.deleteAccount(user.getGoogleId());
         return ResponseEntity.noContent().build();
     }
 }

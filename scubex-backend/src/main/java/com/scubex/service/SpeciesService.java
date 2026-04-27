@@ -16,6 +16,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,12 +168,29 @@ public class SpeciesService {
             .collect(Collectors.toList());
 
         List<SpeciesResponse> enrichedSpecies = futures.stream()
-            .map(CompletableFuture::join)
+            .map(f -> {
+                try {
+                    return f.get(10, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    f.cancel(true);
+                    return Optional.<SpeciesResponse>empty();
+                } catch (Exception e) {
+                    return Optional.<SpeciesResponse>empty();
+                }
+            })
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
 
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(15, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
 
         // Save to cache
         saveToCache(roundedLat, roundedLng, radius, enrichedSpecies);

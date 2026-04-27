@@ -27,22 +27,25 @@ public class UserPublicController {
     private final PublicationService publicationService;
     private final FollowService followService;
     private final InteractionService interactionService;
+    private final AuthHelper authHelper;
 
     public UserPublicController(UserService userService, UserRepository userRepository,
                                 PublicationService publicationService,
-                                FollowService followService, InteractionService interactionService) {
+                                FollowService followService, InteractionService interactionService,
+                                AuthHelper authHelper) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.publicationService = publicationService;
         this.followService = followService;
         this.interactionService = interactionService;
+        this.authHelper = authHelper;
     }
 
     // ── User search (for mention autocomplete) ──
 
     @GetMapping("/search")
     public ResponseEntity<?> searchUsers(@RequestParam String q, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
+        authHelper.getUser(auth); // require login
         if (q == null || q.isBlank() || q.length() < 2) return ResponseEntity.ok(List.of());
         List<User> users = userRepository.searchByQuery(q.trim(), PageRequest.of(0, 8));
         return ResponseEntity.ok(users.stream().map(this::userToDto).toList());
@@ -86,9 +89,7 @@ public class UserPublicController {
 
     @PostMapping("/{email}/follow")
     public ResponseEntity<?> toggleFollow(@PathVariable String email, Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User me = userService.findByGoogleId(auth.getName());
-        if (me == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        User me = authHelper.getUser(auth);
         User target = userService.findByEmail(email);
         if (target == null) return ResponseEntity.status(404).body(Map.of("error", "Target user not found"));
 
@@ -125,10 +126,7 @@ public class UserPublicController {
 
     @GetMapping("/me/saved")
     public ResponseEntity<?> getSaved(Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        User me = userService.findByGoogleId(auth.getName());
-        if (me == null) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-
+        User me = authHelper.getUser(auth);
         List<PublicationSave> saves = interactionService.getSavedByUser(me.getId());
         return ResponseEntity.ok(saves.stream().map(s -> pubToDto(s.getPublication())).toList());
     }
