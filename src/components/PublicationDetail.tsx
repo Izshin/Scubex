@@ -91,6 +91,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [showComments, setShowComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [optimisticError, setOptimisticError] = useState<string | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -385,6 +386,21 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             </div>
           </div>
 
+          {/* Optimistic error toast */}
+          <AnimatePresence>
+            {optimisticError && (
+              <motion.div
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg pointer-events-none"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {optimisticError}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Scrollable content */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
             {editing ? (
@@ -519,9 +535,22 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                       <button
                         onClick={async () => {
                           if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
-                          const res = await toggleLike(publication.id);
-                          setLiked(res.liked);
-                          setLikeCount(res.count);
+                          // Optimistic update
+                          const prevLiked = liked;
+                          const prevCount = likeCount;
+                          setLiked(!liked);
+                          setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+                          try {
+                            const res = await toggleLike(publication.id);
+                            setLiked(res.liked);
+                            setLikeCount(res.count);
+                          } catch {
+                            // Rollback
+                            setLiked(prevLiked);
+                            setLikeCount(prevCount);
+                            setOptimisticError('No se pudo actualizar el like');
+                            setTimeout(() => setOptimisticError(null), 3000);
+                          }
                         }}
                         className={`flex items-center gap-1.5 text-sm transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
                       >
@@ -558,8 +587,18 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                     <button
                       onClick={async () => {
                         if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
-                        const res = await toggleSave(publication.id);
-                        setSaved(res.saved);
+                        // Optimistic update
+                        const prevSaved = saved;
+                        setSaved(!saved);
+                        try {
+                          const res = await toggleSave(publication.id);
+                          setSaved(res.saved);
+                        } catch {
+                          // Rollback
+                          setSaved(prevSaved);
+                          setOptimisticError('No se pudo actualizar el guardado');
+                          setTimeout(() => setOptimisticError(null), 3000);
+                        }
                       }}
                       className={`transition-colors ${saved ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-400'}`}
                     >
@@ -587,13 +626,35 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                                 e.preventDefault();
                                 if (!userStore.isLoggedIn) { setShowLoginPopup(true); return; }
                                 if (!commentText.trim() || submittingComment) return;
+                                // Optimistic: add temp comment immediately
+                                const tempId = -Date.now();
+                                const capturedText = commentText.trim();
+                                const tempComment = {
+                                  id: tempId,
+                                  text: capturedText,
+                                  createdAt: new Date().toISOString(),
+                                  author: {
+                                    name: userStore.user!.name,
+                                    picture: userStore.user!.picture,
+                                    email: userStore.user!.email,
+                                  },
+                                };
+                                setComments(prev => [...prev, tempComment]);
+                                setCommentCount(n => n + 1);
+                                setCommentText('');
                                 setSubmittingComment(true);
                                 try {
-                                  const c = await addComment(publication.id, commentText.trim());
-                                  setComments(prev => [...prev, c]);
-                                  setCommentCount(n => n + 1);
-                                  setCommentText('');
-                                } catch { /* ignored */ }
+                                  const c = await addComment(publication.id, capturedText);
+                                  // Replace temp with real comment from server
+                                  setComments(prev => prev.map(x => x.id === tempId ? c : x));
+                                } catch {
+                                  // Rollback
+                                  setComments(prev => prev.filter(x => x.id !== tempId));
+                                  setCommentCount(n => Math.max(0, n - 1));
+                                  setCommentText(capturedText);
+                                  setOptimisticError('No se pudo enviar el comentario');
+                                  setTimeout(() => setOptimisticError(null), 3000);
+                                }
                                 setSubmittingComment(false);
                               }}
                               className="flex gap-2"

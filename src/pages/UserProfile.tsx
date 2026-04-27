@@ -37,12 +37,23 @@ export default function UserProfile() {
   }, [email]);
 
   const handleToggleFollow = async () => {
-    if (!email || !userStore.isLoggedIn || togglingFollow) return;
+    if (!email || !userStore.isLoggedIn || togglingFollow || !profile) return;
+    // Optimistic update
+    const prevFollowing = profile.isFollowing;
+    const prevFollowerCount = profile.followerCount;
+    setProfile(prev => prev ? {
+      ...prev,
+      isFollowing: !prev.isFollowing,
+      followerCount: prev.isFollowing ? prev.followerCount - 1 : prev.followerCount + 1,
+    } : prev);
     setTogglingFollow(true);
     try {
       const result = await toggleFollow(email);
       setProfile(prev => prev ? { ...prev, isFollowing: result.following, followerCount: result.followerCount } : prev);
-    } catch { /* ignore */ }
+    } catch {
+      // Rollback
+      setProfile(prev => prev ? { ...prev, isFollowing: prevFollowing, followerCount: prevFollowerCount } : prev);
+    }
     setTogglingFollow(false);
   };
 

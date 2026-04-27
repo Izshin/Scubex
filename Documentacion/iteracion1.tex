@@ -223,6 +223,8 @@ Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para ais
     \item \textbf{shouldEnrichSpeciesWithPhoto}: OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
 
     \item \textbf{shouldHandleINaturalistTimeout}: OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
+
+    \item \textbf{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn}: OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
 \end{itemize}
 
 \subsection{\texttt{JwtServiceTest}}

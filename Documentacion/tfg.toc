@@ -54,21 +54,27 @@
 \contentsline {subsection}{\numberline {7.4.2}\texttt {JwtServiceTest}}{50}{subsection.7.4.2}%
 \contentsline {subsection}{\numberline {7.4.3}\texttt {AuthControllerTest}}{50}{subsection.7.4.3}%
 \contentsline {section}{\numberline {7.5}Despliegue}{51}{section.7.5}%
-\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{53}{part.4}%
-\contentsline {chapter}{\numberline {8}Manual de usuario}{55}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Sección libre}{56}{section.8.1}%
-\contentsline {chapter}{\numberline {9}Conclusiones}{57}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Informe post-mortem}{58}{section.9.1}%
-\contentsline {subsection}{\numberline {9.1.1}Lo que ha ido bien}{58}{subsection.9.1.1}%
-\contentsline {subsection}{\numberline {9.1.2}Lo que ha ido mal}{58}{subsection.9.1.2}%
-\contentsline {subsection}{\numberline {9.1.3}Discusión}{58}{subsection.9.1.3}%
-\contentsline {section}{\numberline {9.2}Trabajos futuros}{58}{section.9.2}%
-\contentsline {part}{V\hspace {1em}Appendices}{59}{part.5}%
-\contentsline {chapter}{\numberline {A}Software Product Lines}{61}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}Software Product Lines}{62}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Feature Models}{62}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Automated Analysis of Feature Models}{64}{section.Alph1.3}%
-\contentsline {subsection}{\numberline {A.3.1}Scope}{64}{subsection.Alph1.3.1}%
-\contentsline {section}{\numberline {A.4}Dynamic Software Product Lines (DSPL)}{67}{section.Alph1.4}%
-\contentsline {section}{\numberline {A.5}Hypothesis and Objectives}{67}{section.Alph1.5}%
-\contentsline {chapter}{Referencias bibliográficas}{70}{table.Alph1.1}%
+\contentsline {chapter}{\numberline {8}Iteración 2: Sistema Climático}{53}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Características desarrolladas esta iteración}{54}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Diseño}{56}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Implementación}{56}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Pruebas}{62}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Despliegue}{62}{section.8.5}%
+\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{63}{part.4}%
+\contentsline {chapter}{\numberline {9}Manual de usuario}{65}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Sección libre}{66}{section.9.1}%
+\contentsline {chapter}{\numberline {10}Conclusiones}{67}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Informe post-mortem}{68}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Lo que ha ido bien}{68}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Lo que ha ido mal}{68}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}Discusión}{68}{subsection.10.1.3}%
+\contentsline {section}{\numberline {10.2}Trabajos futuros}{68}{section.10.2}%
+\contentsline {part}{V\hspace {1em}Appendices}{69}{part.5}%
+\contentsline {chapter}{\numberline {A}Software Product Lines}{71}{appendix.Alph1}%
+\contentsline {section}{\numberline {A.1}Software Product Lines}{72}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}Feature Models}{72}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Automated Analysis of Feature Models}{74}{section.Alph1.3}%
+\contentsline {subsection}{\numberline {A.3.1}Scope}{74}{subsection.Alph1.3.1}%
+\contentsline {section}{\numberline {A.4}Dynamic Software Product Lines (DSPL)}{77}{section.Alph1.4}%
+\contentsline {section}{\numberline {A.5}Hypothesis and Objectives}{77}{section.Alph1.5}%
+\contentsline {chapter}{Referencias bibliográficas}{80}{table.Alph1.1}%

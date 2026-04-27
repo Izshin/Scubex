@@ -1,0 +1,146 @@
+%!TEX root =  tfg.tex
+\chapter{Iteración 2: Sistema Climático}
+
+\begin{abstract}
+Esta iteración añade la segunda parte del MVP de Scubex: El panel de condiciones meteorológicas y marinas, el usuario puede consultar en tiempo real si una zona es apta o no para bucear antes de meterse al agua.\end{abstract}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Características desarrolladas esta iteración}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}
+\item Panel de clima con datos atmosféricos y marinos en tiempo real, evaluación automática de condiciones de buceo y caché de 30 minutos. Ver Tabla~\ref{tab:valorAportadoClima}.
+\end{enumerate}
+
+% ── Tabla 1: Panel de clima ──────────────────────────────────────────────────
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado: Panel de Clima}
+\textbf{Propuesta}&Consulta del estado del mar y la atmósfera para el punto marcado en el mapa, con evaluación automática de si las condiciones son aptas para bucear.\\
+\midrule
+\textbf{Valor}&Un buceador no puede planificar una inmersión sin saber si el mar está en calma. El panel proporciona en un único vistazo los datos que determinan la viabilidad de la salida ---olas, corriente, visibilidad y tiempo--- sin que el usuario tenga que consultar varias fuentes ni interpretar valores crudos.\\
+\textbf{Coste}&Integración con dos endpoints de Open-Meteo (atmospheric forecast y marine API), ambos gratuitos y sin clave. El único esfuerzo no trivial es definir los criterios de evaluación: qué umbrales y pesos determinan si una condición es buena, tolerable o adversa desde el punto de vista del buceo.\\
+\textbf{Opciones}&\textbf{Windy}: mapas muy visuales de viento y oleaje, pero no tiene API pública gratuita para datos en crudo. \textbf{Evaluación manual}: mostrar solo los valores numéricos y dejar que el usuario decida; eliminaba la lógica del servidor pero obligaba al usuario a conocer los umbrales de seguridad.\\
+\textbf{Riesgos}&Open-Meteo no ofrece SLA; una caída devuelve error sin datos de clima. Los datos marinos no existen en zonas continentales o bahías cerradas, por lo que esos campos pueden llegar vacíos. La evaluación automática no distingue condiciones locales como resacas puntuales o fondos con corrientes de fondo intensas.\\
+\textbf{Deuda técnica}&Solo se muestran condiciones en el instante actual; no hay previsión por horas ni por días. Los umbrales de evaluación son globales e iguales para todos los usuarios, sin distinción entre perfiles (principiante vs. avanzado).\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado: Panel de Clima\label{tab:valorAportadoClima}}
+\end{table*}
+
+\clearpage
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Diseño}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El diagrama UML de la Fig.~\ref{fig:diseno02} muestra las relaciones entre los componentes del sistema climático: controlador, servicio, entidad de caché y los dos clientes de Open-Meteo.
+
+\begin{figure}[htbp]
+\begin{center}
+% TODO: insertar diagrama UML iteración 2
+\fbox{\parbox{0.88\textwidth}{\centering\vspace{2.5cm}{\large [Diagrama UML de diseño --- iteración 2]}\vspace{2.5cm}}}
+\caption{Diagrama UML de diseño para la iteración 2\label{fig:diseno02}}
+\end{center}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Implementación}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Se presentan primero los memorandos técnicos con las decisiones de diseño; a continuación, el pseudocódigo que las materializa.
+
+% ── Memorando 006: Doble fuente de datos ─────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 006: \texttt{WeatherResponse} --- Datos de Dos Fuentes}
+\textbf{Asunto}&Los datos atmosféricos (temperatura, viento, lluvia) y los datos marinos (olas, corrientes, temperatura del agua) provienen de dos endpoints distintos de Open-Meteo.\\
+\textbf{Resumen}&Se realizan dos llamadas independientes y sus resultados se fusionan en un único objeto \texttt{WeatherResponse} que el frontend consume en una sola petición.\\
+\midrule
+\textbf{Factores causantes}&Open-Meteo separa su API en dos servicios: el de previsión atmosférica (\texttt{api.open-meteo.com}) y el marino (\texttt{marine-api.open-meteo.com}). El panel de Scubex necesita datos de ambos para ser útil.\\
+\textbf{Solución}&\texttt{WeatherService} llama de forma independiente a \texttt{callForecastApi()} y \texttt{callMarineApi()}, y combina los resultados con \texttt{buildWeatherResponse()}. Si una de las dos APIs falla o devuelve nulo (por ejemplo, la marina en zonas continentales), los campos correspondientes quedan vacíos en la respuesta pero el resto de datos se sigue devolviendo correctamente.\\
+\textbf{Motivación}&Separar las dos llamadas permite tolerancia a fallos parciales: si la API marina no tiene datos para una zona interior, el panel sigue mostrando temperatura, viento y lluvia, que sí están disponibles en cualquier punto del planeta.\\
+\textbf{Cuestiones abiertas}&Las dos llamadas se realizan de forma secuencial. Paralelizarlas con \texttt{CompletableFuture} reduciría la latencia en los casos sin caché.\\
+\textbf{Alternativas}&\textbf{Windy Meteo API}: requiere suscripción de pago para acceso a datos en crudo.\\
+	\end{coolTable}
+	\caption{Memorando técnico 006: \texttt{WeatherResponse}\label{tab:memo006}}
+\end{table*}
+
+% ── Memorando 007: Evaluación de condiciones ─────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 007: Evaluación Automática de Condiciones de Buceo}
+\textbf{Asunto}&El usuario necesita saber si puede bucear sin tener que interpretar él mismo una tabla de valores meteorológicos.\\
+\textbf{Resumen}&Un algoritmo de puntuación ponderada clasifica las condiciones en \emph{buenas}, \emph{tolerables} o \emph{adversas}, con anulaciones directas ante valores extremos en los factores más críticos.\\
+\midrule
+\textbf{Factores causantes}&Un buceador no pide saber exactamente que hay olas de 1{,}3\,m; quiere saber si puede entrar al agua. Presentar solo los valores crudos obliga al usuario a conocer umbrales de seguridad que varían según su experiencia y el tipo de buceo.\\
+\textbf{Solución}&\texttt{evaluateDivingCondition()} aplica primero un conjunto de anulaciones críticas: oleaje~$>$~2{,}5\,m, corriente~$>$~5\,km/h, viento~$>$~40\,km/h, tormenta eléctrica (código WMO 95/96/99) o visibilidad~$<$~1\,000\,m devuelven inmediatamente \texttt{"bad"}. Si no se cumple ninguna anulación, se puntúan seis factores con pesos distintos (oleaje~=~3, corriente~=~3, visibilidad~=~2, viento~=~2, código meteorológico~=~2, probabilidad de lluvia~=~1) y se calcula la media ponderada: $\geq$~1{,}5 es \emph{buenas}, $\geq$~0{,}8 es \emph{tolerables}, resto \emph{adversas}.\\
+\textbf{Motivación}&El oleaje y la corriente son los factores más peligrosos para un buceador; por eso tienen el peso más alto y los umbrales de anulación más conservadores. La probabilidad de lluvia tiene el peso mínimo porque no afecta directamente a la seguridad bajo el agua.\\
+\textbf{Cuestiones abiertas}&Los umbrales son fijos e iguales para todos los usuarios. Un perfil de ``buceador avanzado'' podría tolerar corrientes de hasta 4\,km/h sin problema, mientras que un principiante debería ver \emph{adversas} con corriente de 2\,km/h.\\
+\textbf{Alternativas}&\textbf{Umbrales fijos sin ponderación}: más simple, pero no distingue entre situaciones ligeramente adversas y peligrosas. \textbf{Externalizar la lógica al frontend}: el cliente calcularía la condición con los valores crudos, pero requeriría duplicar la lógica si en el futuro se añade otra interfaz.\\
+	\end{coolTable}
+	\caption{Memorando técnico 007: Evaluación de Condiciones\label{tab:memo007}}
+\end{table*}
+
+% ── Memorando 008: Caché de clima ────────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 008: Caché de Clima (\texttt{CachedWeather})}
+\textbf{Asunto}&Cada vez que el usuario mueve el mapa o cambia el punto, se lanzarían dos llamadas a Open-Meteo, añadiendo latencia innecesaria.\\
+\textbf{Resumen}&Los datos de clima se guardan en base de datos durante 30 minutos por coordenadas redondeadas, evitando repetir las llamadas para puntos cercanos o consultas frecuentes sobre la misma zona.\\
+\midrule
+\textbf{Factores causantes}&El mapa es interactivo y el usuario puede mover el punto libremente. Sin caché, cada pequeño desplazamiento generaría dos peticiones HTTP hacia Open-Meteo, con la latencia acumulada correspondiente.\\
+\textbf{Solución}&Se aplica el mismo esquema de redondeo de coordenadas descrito en el Memorando~\ref{tab:memo003}: las coordenadas se truncan antes de usarlas como clave de búsqueda, agrupando puntos cercanos bajo la misma entrada. Si existe un registro de menos de 30 minutos para esas coordenadas en la tabla \texttt{cached\_weather}, se devuelve directamente sin tocar Open-Meteo. El TTL de 30 minutos equilibra frescura de los datos climáticos con eficiencia: el tiempo meteorológico no cambia de forma significativa en ventanas menores.\\
+\textbf{Motivación}&Los datos de clima son mucho más volátiles que los de biodiversidad, por lo que el TTL es 30 minutos frente a las 48 horas del caché de escaneos (Memorando~\ref{tab:memo003}). Reutilizar el mismo mecanismo de caché en base de datos evita añadir nuevos servicios: la tabla \texttt{cached\_weather} sigue exactamente el mismo patrón que \texttt{CachedScan}.\\
+\textbf{Cuestiones abiertas}&El caso límite del redondeo (dos puntos muy próximos que caen en celdas distintas) es el mismo ya reconocido en el Memorando~\ref{tab:memo003} para el caché de escaneos, y se acepta por la misma razón: baja frecuencia e impacto despreciable.\\
+\textbf{Alternativas}&\textbf{TTL más corto (5--10 min)}: más fresco, pero aumenta significativamente las llamadas a Open-Meteo. \textbf{Sin caché}: máxima frescura, pero penaliza la experiencia en sesiones de exploración del mapa.\\
+	\end{coolTable}
+	\caption{Memorando técnico 008: Caché de Clima\label{tab:memo008}}
+\end{table*}
+
+\clearpage
+% ── asigResponsabilidad 003: WeatherService ───────────────────────────────────
+\begin{asigResponsabilidad}{003}{WeatherService}
+{WeatherResponse getWeather(lat:double, lng:double)}
+\pasoPseudo{1. Se redondean las coordenadas a 2 decimales para agrupar puntos cercanos en la misma clave de caché.}
+\pasoPseudo{2. Se busca en base de datos un resultado reciente (menos de 30 min) para esas coordenadas. Si existe, se convierte al DTO de respuesta y se devuelve directamente --- fin.}
+\pasoPseudo{3. Si no hay caché, se consulta la API de previsión atmosférica con \texttt{callForecastApi()}: temperatura, humedad, viento, precipitación, visibilidad y código meteorológico WMO.}
+\pasoPseudo{4. Se consulta la API marina con \texttt{callMarineApi()}: altura de ola, periodo, corriente oceánica, temperatura superficial del mar y oleaje de fondo. Si la zona no tiene datos marinos (zona continental), esta llamada devuelve nulo y esos campos quedan vacíos.}
+\pasoPseudo{5. Se fusionan los datos de ambas APIs en un \texttt{WeatherResponse} con \texttt{buildWeatherResponse()}.}
+\pasoPseudo{6. Se evalúan las condiciones de buceo con \texttt{evaluateDivingCondition()} y se añade el resultado (\texttt{"good"}, \texttt{"moderate"} o \texttt{"bad"}) al \texttt{WeatherResponse}.}
+\pasoPseudo{7. Se guarda el resultado completo en caché con \texttt{saveToCache()} y se devuelve al cliente.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{1}{WeatherSvc.}{double roundCoord(value)}{008}{SI}
+\pasoCodigo{2}{WeatherRepo.}{Optional<CachedWeather> findFirstByRoundedLatAndRoundedLngAndCreatedAtAfter(lat, lng, cutoff)}{008}{SI}
+\pasoCodigo{3}{WeatherSvc.}{ForecastApiResponse.CurrentWeather callForecastApi(lat, lng)}{006}{SI}
+\pasoCodigo{4}{WeatherSvc.}{MarineApiResponse.CurrentMarine callMarineApi(lat, lng)}{006}{SI}
+\pasoCodigo{5}{WeatherSvc.}{WeatherResponse buildWeatherResponse(atmosphere, marine)}{006}{SI}
+\pasoCodigo{6}{WeatherSvc.}{String evaluateDivingCondition(wr)}{007}{SI}
+\pasoCodigo{7}{WeatherSvc.}{void saveToCache(roundedLat, roundedLng, wr)}{008}{SI}
+\end{asigResponsabilidad}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Las pruebas unitarias de \texttt{WeatherService} se han implementado en \texttt{WeatherServiceTest}, siguiendo el mismo patrón basado en Mockito que el resto del proyecto. Los cuatro casos de prueba son los siguientes:
+
+\begin{itemize}
+    \item \textbf{Cache hit} (\texttt{cacheHit\_returnsCachedDataWithoutCallingExternalApis}): se inyecta en el repositorio un \texttt{CachedWeather} con antigüedad de 10 minutos. El servicio devuelve los campos cacheados y no invoca a \texttt{RestTemplate} en ningún momento (\texttt{verifyNoInteractions}).
+
+    \item \textbf{Evaluación adversa por anulación crítica} (\texttt{criticalOverride\_waveHeightExceeds2\_5m\_returnsDivingConditionBad}): la API marina devuelve oleaje de 3{,}0\,m con condiciones atmosféricas ideales. Se verifica que \texttt{divingCondition} es \texttt{"bad"}, lo que confirma que la anulación crítica se dispara antes de calcular la puntuación ponderada.
+
+    \item \textbf{Evaluación correcta sin datos marinos} (\texttt{noMarineData\_continentalArea\_computesConditionFromAtmosphereOnly}): la API marina devuelve cuerpo nulo (\texttt{ResponseEntity} con \texttt{null}). Se verifica que no se lanza excepción, que los campos marinos son nulos y que \texttt{divingCondition} no es nulo, es decir, el algoritmo evalúa correctamente con solo factores atmosféricos.
+
+    \item \textbf{Tolerancia a fallo de API} (\texttt{forecastApiFailure\_returnsNullAtmosphericFieldsWithoutThrowing}): \texttt{restTemplate.getForEntity} lanza \texttt{RestClientException} para la URL atmosférica. Se verifica que el servicio no propaga la excepción, que los campos atmosféricos son nulos y que los datos marinos siguen presentes en la respuesta.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Despliegue}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Esta iteración no requirió cambios en la infraestructura existente. Open-Meteo es una API pública sin autenticación, por lo que no fue necesario añadir nuevas variables de entorno ni credenciales. La tabla \texttt{cached\_weather} fue creada automáticamente por Hibernate al arrancar el servicio en Railway con \texttt{ddl-auto=update}.
+
+Las URLs de los dos endpoints de Open-Meteo se externalizan en \texttt{application.properties} mediante las propiedades \texttt{open-meteo.weather.url} y \texttt{open-meteo.marine.url}, lo que permite cambiarlas sin recompilar la aplicación.
