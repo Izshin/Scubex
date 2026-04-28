@@ -1,270 +1,83 @@
-# 🌊 Scubex
+﻿# Scubex
 
-**Scubex** es una aplicación web full-stack para exploradores marinos que permite descubrir especies de vida marina reales por ubicación geográfica. Combina un backend robusto en Spring Boot con APIs científicas y un frontend moderno para una experiencia inmersiva de exploración marina.
+Scubex es una aplicación web para buceadores que combina un mapa interactivo con herramientas de planificación de inmersiones. Desde el mapa puedes explorar la fauna marina de cualquier zona consultando datos científicos reales, ver las condiciones meteorológicas y marinas actuales para decidir si el día es apto para bucear, y leer o publicar experiencias de otras personas en ese mismo punto.
 
-## 🚀 Características
+La aplicación tiene un frontend en React con TypeScript, desplegado en Vercel, y un backend en Spring Boot con Java 21, desplegado en Railway con una base de datos PostgreSQL.
 
-- **🗺️ Mapa Interactivo**: Explora especies marinas con MapLibre GL JS y animaciones de escaneo
-- **🐠 Datos Científicos Reales**: Integración con OBIS e iNaturalist para especies auténticas
-- **📡 Escaneo de Fauna Marina**: Animación de radar que busca especies en tiempo real
-- **📱 Diseño Responsivo**: Optimizado para móviles y desktop con Tailwind CSS
-- **⚡ Backend Moderno**: Spring Boot con procesamiento JSON automático
-- **🎨 Animaciones Fluidas**: Framer Motion para transiciones y efectos visuales
+## Qué puedes hacer en Scubex
 
-## 🛠️ Stack Tecnológico
+**Escáner de biodiversidad marina.** Haz clic en cualquier punto del mapa y elige un radio de búsqueda. Scubex consulta la base de datos científica OBIS, que tiene más de 150 millones de registros de ocurrencias marinas validados, y enriquece cada especie con la foto y el nombre común de iNaturalist. El resultado es una lista de los animales que han sido avistados científicamente en esa zona, con datos de profundidad, temperatura, estado IUCN y registros históricos. Los resultados se cachean en base de datos para que consultas repetidas de la misma zona sean instantáneas.
 
-### 🖥️ Backend (Spring Boot)
-- **Framework**: Spring Boot 4.0.0-M3 con Java 21
-- **Procesamiento JSON**: Jackson ObjectMapper con deserialización automática
-- **Cliente HTTP**: RestTemplate para APIs externas
-- **Seguridad**: Spring Security con configuración CORS
-- **APIs Integradas**:
-  - **OBIS API**: Datos de ocurrencias reales de especies marinas
-  - **iNaturalist API**: Fotos y nombres comunes de especies
-  - **Open-Meteo API**: Datos climáticos y oceanográficos (sin API key, plan gratuito generoso)
+**Panel de condiciones climáticas.** Antes de meterte al agua, el panel de clima muestra en tiempo real la temperatura, el viento, la visibilidad, la altura del oleaje, la corriente oceánica y la temperatura del mar para el punto marcado. Un algoritmo de puntuación ponderada evalúa automáticamente si las condiciones son buenas, tolerables o adversas para bucear, teniendo en cuenta que el oleaje y la corriente pesan más que si va a llover.
 
-### 🎨 Frontend (React)
-- **Framework**: React 18 + TypeScript + Vite
-- **Mapas**: MapLibre GL JS con animaciones personalizadas
-- **Estado**: Zustand para gestión de estado global
-- **Data Fetching**: TanStack Query con cache inteligente
-- **Animaciones**: Framer Motion para efectos de escaneo
-- **Estilos**: Tailwind CSS + PostCSS
-- **Build**: Vite con HMR
+**Publicaciones geolocalizadas.** Los usuarios autenticados pueden crear publicaciones ancladas a un punto del mapa, con título, descripción y foto. Cualquier visitante puede ver las publicaciones de la zona que está explorando directamente desde los marcadores del mapa. Las publicaciones incluyen likes, comentarios y la posibilidad de guardarlas para después.
 
-## 🌐 APIs Integradas
+**Autenticación con Google.** El inicio de sesión es en un solo clic con la cuenta de Google. El backend verifica la identidad con Google y emite un token propio que autentica las peticiones posteriores sin volver a consultar a Google.
 
-### OBIS (Ocean Biodiversity Information System)
-- **Propósito**: Obtener ocurrencias reales de especies marinas por coordenadas
-- **Endpoint**: `https://api.obis.org/v3/occurrence`
-- **Datos**: Ubicaciones GPS, nombres científicos, fechas de avistamiento
-- **Procesamiento**: Jackson ObjectMapper con deserialización automática
+**Perfiles de usuario.** Cada usuario tiene un perfil con sus publicaciones, sus guardados y la posibilidad de seguir a otros usuarios. Hay notificaciones cuando alguien te sigue, comenta o da like a tus publicaciones.
 
-### iNaturalist
-- **Propósito**: Enriquecer datos con fotos y nombres comunes de especies
-- **Endpoint**: `https://api.inaturalist.org/v1/taxa`
-- **Datos**: Imágenes de especies, nombres vernáculos, información taxonómica
-- **Integración**: Mapeo automático con anotaciones `@JsonProperty`
+## Cómo ejecutarlo localmente
 
-### Open-Meteo
-- **Propósito**: Datos climáticos y oceanográficos en tiempo real
-- **Endpoints**: 
-  - Marine: `https://marine-api.open-meteo.com/v1/marine`
-  - Weather: `https://api.open-meteo.com/v1/forecast`
-- **Datos**: Temperatura del agua, altura de olas, corrientes, viento, temperatura del aire
-- **Ventajas**: Sin necesidad de API key, plan gratuito generosísimo (10,000 peticiones/día)
+Necesitas Java 21 o superior, Maven y Node.js 20 o superior.
 
-## 🏗️ Estructura del Proyecto
+Primero arranca el backend:
 
-```
-├── scubex-backend/                    # 🖥️ Backend Spring Boot
-│   ├── src/main/java/com/scubex/
-│   │   ├── controller/
-│   │   │   └── SpeciesController.java # Endpoints REST de especies
-│   │   ├── service/
-│   │   │   └── SpeciesService.java    # Lógica de APIs marinas
-│   │   ├── model/
-│   │   │   ├── Species.java           # Modelo de especies
-│   │   │   └── INaturalistResponse.java # DTO de iNaturalist
-│   │   └── config/
-│   │       └── SecurityConfig.java    # Configuración CORS
-│   └── pom.xml                        # Dependencias Maven
-├── src/                               # 🎨 Frontend React
-│   ├── App.tsx                        # Router principal con animaciones
-│   ├── main.tsx                       # Punto de entrada
-│   ├── pages/
-│   │   ├── Home.tsx                   # Página de inicio con radar
-│   │   └── Map.tsx                    # Mapa interactivo con escaneo
-│   ├── components/
-│   │   ├── MapView.tsx               # Mapa con animación de beam
-│   │   ├── SpeciesPanel.tsx          # Panel de especies encontradas
-│   │   └── WaveTransition.tsx        # Transiciones fluidas
-│   ├── lib/
-│   │   ├── api.ts                    # Cliente API para backend
-│   │   ├── store.ts                  # Estado Zustand
-│   │   └── transition.ts             # Configuración de animaciones
-│   └── index.css                     # Estilos Tailwind
-└── package.json                      # Dependencias Node.js
-```
-
-## 🚀 Inicio Rápido
-
-### Prerrequisitos
-- **Java 21+** (para el backend Spring Boot)
-- **Maven 3.8+** (gestión de dependencias Java) 
-- **Node.js 20.19+ o 22.12+** (para el frontend React)
-- npm o yarn
-
-### Instalación Full-Stack
-
-1. **Clona el repositorio**
-   ```bash
-   git clone [repo-url]
-   cd scubex
-   ```
-
-2. **🖥️ Configurar y ejecutar Backend (Spring Boot)**
-   ```bash
-   cd scubex-backend
-   ./mvnw clean install        # Windows: mvnw.cmd clean install
-   ./mvnw spring-boot:run      # Ejecuta en http://localhost:8080
-   ```
-   
-   El backend estará disponible en `http://localhost:8080` con endpoints:
-   - `/api/species/scan?lat={lat}&lng={lng}` - Buscar especies por coordenadas
-
-3. **🎨 Configurar Frontend (React)**
-   
-   En una nueva terminal:
-   ```bash
-   cd ..                       # Volver al directorio raíz
-   npm install                 # Instalar dependencias React
-   ```
-
-4. **Configura variables de entorno**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edita `.env` con tus configuraciones:
-   ```env
-   VITE_MAPTILER_KEY=tu_api_key_aqui
-   VITE_API_BASE_URL=http://localhost:8080
-   ```
-
-5. **Ejecuta el frontend**
-   ```bash
-   npm run dev                 # Ejecuta en http://localhost:5173
-   ```
-
-6. **🌊 ¡Explora especies marinas reales!**
-   - Visita `http://localhost:5173`
-   - Usa el mapa interactivo para navegar
-   - Haz clic en "Scan" para buscar especies científicas reales
-   - Disfruta de las animaciones de escaneo beam
-
-## 📦 Scripts Disponibles
-
-- `npm run dev` - Servidor de desarrollo con HMR
-- `npm run build` - Construcción para producción
-- `npm run preview` - Vista previa del build de producción
-- `npm run lint` - Linting con ESLint
-
-## 🗺️ Configuración del Mapa
-
-Para usar el mapa necesitas una API key gratuita de [MapTiler](https://www.maptiler.com/):
-
-1. Registrate en MapTiler
-2. Crea un nuevo proyecto
-3. Copia tu API key
-4. Añádela al archivo `.env` como `VITE_MAPTILER_KEY`
-
-## 🌐 Backend Spring Boot
-
-La aplicación utiliza un backend robusto en **Spring Boot 4.0.0-M3** que se conecta a APIs científicas reales para obtener datos de especies marinas.
-
-### Endpoints Disponibles
-- `GET /api/species/scan?lat={lat}&lng={lng}` - Escanear especies por coordenadas GPS
-- `GET /api/species/health` - Estado del servicio
-
-### Integración con APIs Científicas
-El backend integra automáticamente datos de:
-- **OBIS**: Ocurrencias reales de especies marinas con ubicaciones GPS
-- **iNaturalist**: Fotos de alta calidad y nombres comunes de especies
-
-### Características Técnicas
-- **Procesamiento JSON**: Jackson ObjectMapper con deserialización automática
-- **HTTP Client**: RestTemplate para llamadas eficientes a APIs externas  
-- **CORS**: Configuración completa para desarrollo frontend-backend
-- **Filtrado Inteligente**: Eliminación automática de datos nulos o incompletos
-- **Ordenamiento**: Especies ordenadas por número de ocurrencias (más comunes primero)
-
-## 🏗️ Arquitectura Técnica
-
-### Backend (Spring Boot)
-```java
-@RestController
-@RequestMapping("/api/species")
-public class SpeciesController {
-    
-    @GetMapping("/scan")
-    public ResponseEntity<List<Species>> scanSpecies(
-        @RequestParam double lat, 
-        @RequestParam double lng) {
-        // Lógica de escaneo con APIs reales
-    }
-}
-```
-
-### Procesamiento JSON Automático
-```java
-@JsonProperty("total_results")
-private Integer totalResults;
-
-// Jackson ObjectMapper deserializa automáticamente
-ResponseEntity<INaturalistResponse> response = 
-    restTemplate.getForEntity(url, INaturalistResponse.class);
-```
-
-### Frontend Reactivo
-```typescript
-// Zustand Store para estado global
-interface AppStore {
-  species: Species[];
-  isScanning: boolean;
-  scanSpecies: (lat: number, lng: number) => Promise<void>;
-}
-
-// TanStack Query para cache inteligente
-const { data: species, isLoading } = useQuery({
-  queryKey: ['species', lat, lng],
-  queryFn: () => scanSpecies(lat, lng)
-});
-```
-
-## 🚀 Despliegue
-
-### Frontend
-```bash
-npm run build  # Genera dist/ para despliegue estático
-```
-
-### Backend
 ```bash
 cd scubex-backend
-./mvnw package  # Genera JAR ejecutable
-java -jar target/scubex-backend-1.0.jar
+./mvnw spring-boot:run
 ```
 
-### Opciones recomendadas:
-- **Frontend**: Vercel, Netlify, GitHub Pages
-- **Backend**: Railway, Render, AWS Elastic Beanstalk
+En Windows usa `mvnw.cmd spring-boot:run`. El backend estará disponible en `http://localhost:8080`.
 
-## 🤝 Contribución
+Luego arranca el frontend en otra terminal:
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+```bash
+npm install
+npm run dev
+```
 
-## 📄 Licencia
+El frontend estará disponible en `http://localhost:5173`.
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Para que el mapa funcione necesitas una clave gratuita de MapTiler. Regístrate en [maptiler.com](https://www.maptiler.com), crea un proyecto y copia la clave. Luego crea un archivo `.env` en la raíz del proyecto con:
 
-## 🙏 Agradecimientos
+```
+VITE_MAPTILER_KEY=tu_clave_aqui
+VITE_API_BASE_URL=http://localhost:8080
+```
 
-### Backend & APIs
-- **Spring Boot** - Framework robusto de Java para APIs RESTful
-- **OBIS** - Ocean Biodiversity Information System por datos científicos reales
-- **iNaturalist** - Plataforma de biodiversidad por fotos y nombres comunes
-- **Jackson** - Procesamiento JSON automático y eficiente
+La autenticación con Google requiere configurar un cliente OAuth2 en Google Cloud Console. Para desarrollo local puedes omitir esta parte: el escáner de biodiversidad y el panel de clima funcionan sin autenticación.
 
-### Frontend & UI
-- **Vite** - Herramienta de build ultra-rápida para desarrollo moderno
-- **React** - Librería de UI declarativa y componentes
-- **MapLibre GL JS** - Mapas interactivos open source
-- **Framer Motion** - Animaciones fluidas y transiciones elegantes
-- **Tailwind CSS** - Framework de CSS utility-first
-- **Zustand** - Gestión de estado ligera y reactiva
-- **TanStack Query** - Data fetching inteligente con cache
+## Stack tecnológico
+
+El frontend usa React 18 con TypeScript, Vite como bundler, MapLibre GL JS para el mapa, Zustand para el estado global, TanStack Query para la gestión de peticiones y caché, Framer Motion para las animaciones y Tailwind CSS para los estilos.
+
+El backend usa Spring Boot con Java 21, Spring Security para la autenticación JWT, Spring Data JPA con Hibernate para la persistencia en PostgreSQL y RestTemplate para las llamadas a las APIs externas. Las pruebas unitarias usan JUnit 5 con Mockito.
+
+## APIs externas
+
+Scubex utiliza cuatro servicios externos, todos gratuitos y sin cuota de uso significativa para el volumen de la aplicación:
+
+- **OBIS** (`api.obis.org`): registros científicos de biodiversidad marina. Sin clave de API.
+- **iNaturalist** (`api.inaturalist.org`): fotografías y nombres comunes de especies. Sin clave de API, con límite de 100 peticiones por minuto.
+- **Open-Meteo** (`api.open-meteo.com` y `marine-api.open-meteo.com`): datos atmosféricos y marinos en tiempo real. Sin clave de API.
+- **Nominatim** (`nominatim.openstreetmap.org`): geocoding directo e inverso para el buscador de lugares y los nombres de ubicación en las publicaciones. Sin clave de API.
+
+## Despliegue
+
+El frontend está desplegado en Vercel directamente desde el repositorio. El backend y la base de datos PostgreSQL están en Railway. Las variables de entorno sensibles (clave JWT, Client ID de Google, URL de la base de datos) se configuran en los paneles de cada servicio y no se incluyen en el repositorio.
+
+## Scripts disponibles
+
+```bash
+npm run dev       # Servidor de desarrollo con recarga en caliente
+npm run build     # Compilación para producción
+npm run preview   # Vista previa del build de producción
+npm run lint      # Análisis estático con ESLint
+```
+
+```bash
+cd scubex-backend
+./mvnw test                    # Ejecutar pruebas unitarias
+./mvnw test jacoco:report      # Ejecutar pruebas y generar informe de cobertura
+./mvnw package                 # Compilar y empaquetar como JAR
+```
