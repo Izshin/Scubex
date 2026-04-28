@@ -5,7 +5,9 @@ import com.scubex.model.iNaturalist.INaturalistInfo;
 import com.scubex.model.iNaturalist.INaturalistResponse;
 import com.scubex.model.obis.ObisOccurrence;
 import com.scubex.model.obis.ObisResponse;
+import com.scubex.model.SpeciesEnrichmentCache;
 import com.scubex.repository.CachedScanRepository;
+import com.scubex.repository.SpeciesEnrichmentCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,13 +23,17 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 /**
  * Test suite for SpeciesService following TDD approach
@@ -46,6 +52,9 @@ class SpeciesServiceTest {
     @Mock
     private CachedScanRepository cachedScanRepository;
 
+    @Mock
+    private SpeciesEnrichmentCacheRepository speciesEnrichmentCacheRepository;
+
     @InjectMocks
     private SpeciesService speciesService;
 
@@ -55,9 +64,14 @@ class SpeciesServiceTest {
         ReflectionTestUtils.setField(speciesService, "obisApiUrl", "https://api.obis.org/v3");
         ReflectionTestUtils.setField(speciesService, "iNaturalistApiUrl", "https://api.inaturalist.org/v1");
 
-        // Default: no cache hits
-        when(cachedScanRepository.findFirstByRoundedLatAndRoundedLngAndRadiusAndCreatedAtAfter(
+        // Default: no cache hits (L1)
+        when(cachedScanRepository.findFirstByRoundedLatAndRoundedLngAndRadiusGreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc(
                 any(Double.class), any(Double.class), any(Double.class), any(Instant.class)))
+                .thenReturn(Optional.empty());
+
+        // Default: no enrichment cache hits (L2) — lenient: no todos los tests llegan a esta rama
+        lenient().when(speciesEnrichmentCacheRepository.findByScientificNameAndCachedAtAfter(
+                any(String.class), any(Instant.class)))
                 .thenReturn(Optional.empty());
     }
 
@@ -291,5 +305,106 @@ class SpeciesServiceTest {
         // Verificamos que se llamó a iNaturalist DOS veces (una falló, otra funcionó)
         verify(restTemplate, times(2))
                 .getForEntity(any(URI.class), eq(INaturalistResponse.class));
+    }
+
+    /**
+     * Test: shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn
+     *
+     * Cubre los tres lambdas de callObisEcoStats (lambda$7, lambda$8, lambda$9) que
+     * capturan scientificName (String) y son invocados via CompletableFuture.supplyAsync.
+     * Los tests anteriores no mockeaban las llamadas con Map.class, por lo que Mockito
+     * devolvía null → NullPointerException silenciosa → los lambdas nunca ejecutaban
+     * sus ramas internas.
+     *
+     * Este test mockeA los tres endpoints de OBIS eco-stats con datos reales:
+     * - /statistics            → globalRecords, firstYear, lastYear
+     * - /statistics/env        → depthMin, depthMax, tempMin, tempMax  (lambda$8)
+     * - /checklist/redlist     → iucnCategory
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn() {
+        // Given: una única especie en OBIS
+        ObisOccurrence occurrence = new ObisOccurrence();
+        occurrence.setScientificName("Octopus vulgaris");
+        occurrence.setPhylum("Mollusca");
+        occurrence.setDecimalLatitude(36.5);
+        occurrence.setDecimalLongitude(-4.0);
+        occurrence.setEventDate("2024-03-01");
+
+        ObisResponse obisResponse = new ObisResponse();
+        obisResponse.setTotal(1);
+        obisResponse.setResults(List.of(occurrence));
+
+        when(restTemplate.getForEntity(any(URI.class), eq(ObisResponse.class)))
+                .thenReturn(new ResponseEntity<>(obisResponse, HttpStatus.OK));
+
+        // iNaturalist: respuesta válida
+        INaturalistInfo info = new INaturalistInfo();
+        info.setPreferred_common_name("Common Octopus");
+        info.setPhotoUrl("https://inaturalist-open-data.s3.amazonaws.com/photos/1/medium.jpg");
+
+        INaturalistResponse iNatResponse = new INaturalistResponse();
+        iNatResponse.setTotalResults(5000);
+        iNatResponse.setResults(List.of(info));
+
+        when(restTemplate.getForEntity(any(URI.class), eq(INaturalistResponse.class)))
+                .thenReturn(new ResponseEntity<>(iNatResponse, HttpStatus.OK));
+
+        // OBIS /statistics  → globalRecords=1500, firstYear=1980, lastYear=2024
+        Map<String, Object> statsBody = new HashMap<>();
+        statsBody.put("records", 1500);
+        statsBody.put("yearrange", List.of(1980, 2024));
+
+        when(restTemplate.getForEntity(
+                argThat((URI uri) -> uri != null && uri.toString().contains("/statistics")
+                        && !uri.toString().contains("/env")
+                        && !uri.toString().contains("redlist")),
+                eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(statsBody, HttpStatus.OK));
+
+        // OBIS /statistics/env  → depthMin=5, depthMax=40, tempMin=18, tempMax=26
+        // Dos entradas de profundidad y dos de temperatura para ejercitar los min/max
+        Map<String, Object> envBody = new HashMap<>();
+        envBody.put("depth", List.of(
+                Map.of("from", 5,  "records", 100),
+                Map.of("from", 40, "records", 50)));
+        envBody.put("sst", List.of(
+                Map.of("sst", 18, "records", 80),
+                Map.of("sst", 26, "records", 60)));
+
+        when(restTemplate.getForEntity(
+                argThat((URI uri) -> uri != null && uri.toString().contains("/statistics/env")),
+                eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(envBody, HttpStatus.OK));
+
+        // OBIS /checklist/redlist  → category=LC
+        Map<String, Object> redlistResult = new HashMap<>();
+        redlistResult.put("category", "LC");
+        Map<String, Object> redlistBody = new HashMap<>();
+        redlistBody.put("results", List.of(redlistResult));
+
+        when(restTemplate.getForEntity(
+                argThat((URI uri) -> uri != null && uri.toString().contains("redlist")),
+                eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(redlistBody, HttpStatus.OK));
+
+        // When
+        List<SpeciesResponse> result = speciesService.getSpeciesInSelectedArea(36.5, -4.0, 5000.0);
+
+        // Then: la especie tiene todos los campos de eco-estadísticas rellenos
+        assertFalse(result.isEmpty(), "Debe devolver al menos una especie");
+        SpeciesResponse species = result.get(0);
+
+        assertEquals("Octopus vulgaris", species.getScientificName());
+        assertEquals("Common Octopus",   species.getCommonName());
+        assertEquals("LC",               species.getIucnCategory());
+        assertEquals(1500,               species.getGlobalRecords());
+        assertEquals(1980,               species.getFirstYear());
+        assertEquals(2024,               species.getLastYear());
+        assertEquals(5,                  species.getDepthMin());
+        assertEquals(40,                 species.getDepthMax());
+        assertEquals(18,                 species.getTempMin());
+        assertEquals(26,                 species.getTempMax());
     }
 }

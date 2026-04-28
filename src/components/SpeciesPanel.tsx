@@ -1,4 +1,24 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const IUCN_STYLES: Record<string, string> = {
+  LC: 'bg-green-100 text-green-800',
+  NT: 'bg-lime-100 text-lime-800',
+  VU: 'bg-yellow-100 text-yellow-800',
+  EN: 'bg-orange-100 text-orange-800',
+  CR: 'bg-red-100 text-red-800',
+  EW: 'bg-gray-200 text-gray-800',
+  EX: 'bg-gray-900 text-white',
+};
+const IUCN_LABELS: Record<string, string> = {
+  LC: 'Preocupación menor',
+  NT: 'Casi amenazada',
+  VU: 'Vulnerable',
+  EN: 'En peligro',
+  CR: 'En peligro crítico',
+  EW: 'Extinta en estado silvestre',
+  EX: 'Extinta',
+};
 
 // Function to get emoji based on phylum
 const getPhylumEmoji = (phylum?: string, commonName?: string): string => {
@@ -39,6 +59,14 @@ type Props = {
       last_record: string;
       photoUrl?: string;
       phylum?: string;
+      depthMin?: number;
+      depthMax?: number;
+      tempMin?: number;
+      tempMax?: number;
+      firstYear?: number;
+      lastYear?: number;
+      globalRecords?: number;
+      iucnCategory?: string;
     }>;
     counts?: {
       total_taxa: number;
@@ -49,6 +77,8 @@ type Props = {
 };
 
 export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
   if (loading) {
     return (
       <motion.div 
@@ -173,7 +203,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
             data.species?.map((s, index) => (
               <motion.div 
                 key={s.taxon_id} 
-                className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-default group"
+                className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
                 initial={{ opacity: 0, x: -20, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 20, scale: 0.95 }}
@@ -182,7 +212,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                   delay: index * 0.1,
                   ease: "easeOut"
                 }}
-                
+                onClick={() => toggleExpand(s.taxon_id)}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex justify-between items-start mb-2">
@@ -235,7 +265,70 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                       🗓️ {s.last_record}
                     </motion.span>
                   </div>
+                  <motion.svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ml-auto w-4 h-4 text-cyan-500 flex-shrink-0"
+                    animate={{ rotate: expandedId === s.taxon_id ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </motion.svg>
                 </div>
+
+                <AnimatePresence>
+                  {expandedId === s.taxon_id && (
+                    <motion.div
+                      key="eco"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs">
+                        {s.depthMin != null && (
+                          <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                            <div className="text-blue-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Profundidad</div>
+                            <div className="text-blue-800 font-bold text-sm">{s.depthMin} – {s.depthMax ?? '?'} m</div>
+                          </div>
+                        )}
+                        {s.tempMin != null && (
+                          <div className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-2">
+                            <div className="text-orange-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Temperatura</div>
+                            <div className="text-orange-800 font-bold text-sm">{s.tempMin} – {s.tempMax ?? '?'} °C</div>
+                          </div>
+                        )}
+                        {s.firstYear != null && (
+                          <div className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                            <div className="text-purple-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Primer avistamiento</div>
+                            <div className="text-purple-800 font-bold text-sm">{s.firstYear} · último {s.lastYear ?? '?'}</div>
+                          </div>
+                        )}
+                        {s.globalRecords != null && (
+                          <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                            <div className="text-green-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Registros globales</div>
+                            <div className="text-green-800 font-bold text-sm">{s.globalRecords.toLocaleString()}</div>
+                          </div>
+                        )}
+                        {s.iucnCategory && (
+                          <div className={`col-span-2 border rounded-lg px-3 py-2 ${IUCN_STYLES[s.iucnCategory] ?? 'bg-gray-100 text-gray-700'}`}>
+                            <div className="font-semibold uppercase tracking-wide text-[10px] mb-0.5 opacity-70">Estado UICN</div>
+                            <div className="font-bold text-sm">{s.iucnCategory} — {IUCN_LABELS[s.iucnCategory] ?? s.iucnCategory}</div>
+                          </div>
+                        )}
+                        {s.depthMin == null && s.tempMin == null && s.firstYear == null && s.globalRecords == null && !s.iucnCategory && (
+                          <span className="col-span-2 text-gray-400 italic">Sin datos ecológicos disponibles</span>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             ))
           )}

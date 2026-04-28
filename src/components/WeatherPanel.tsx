@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Spinner from './Spinner';
 import type { WeatherData } from '../lib/api';
 
 // WMO Weather Code → description + icon
@@ -49,7 +50,7 @@ type Condition = 'good' | 'moderate' | 'bad';
 function getConditionStyles(condition: Condition) {
   switch (condition) {
     case 'good': return { bg: 'bg-emerald-50/90', border: 'border-emerald-300/60', badge: 'bg-emerald-100 text-emerald-700', label: 'Buenas condiciones' };
-    case 'moderate': return { bg: 'bg-amber-50/90', border: 'border-amber-300/60', badge: 'bg-amber-100 text-amber-700', label: 'Condiciones aceptables' };
+    case 'moderate': return { bg: 'bg-amber-50/90', border: 'border-amber-300/60', badge: 'bg-amber-100 text-amber-700', label: 'Condiciones tolerables' };
     case 'bad': return { bg: 'bg-red-50/90', border: 'border-red-300/60', badge: 'bg-red-100 text-red-700', label: 'Condiciones adversas' };
   }
 }
@@ -99,15 +100,18 @@ type Props = {
   data: WeatherData | null;
   loading: boolean;
   error: string | null;
+  hidden?: boolean;
+  onInfoOpen?: () => void;
+  onInfoClose?: () => void;
 };
 
-export default function WeatherPanel({ data, loading, error }: Props) {
+export default function WeatherPanel({ data, loading, error, hidden = false, onInfoOpen, onInfoClose }: Props) {
   const [showInfo, setShowInfo] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
   return (
     <AnimatePresence>
-      {loading && (
+      {!hidden && loading && (
         <motion.div
           key="weather-loading"
           className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 px-4 py-3"
@@ -116,17 +120,13 @@ export default function WeatherPanel({ data, loading, error }: Props) {
           exit={{ opacity: 0, x: -20 }}
         >
           <div className="flex items-center gap-2">
-            <motion.div
-              className="rounded-full h-4 w-4 border-2 border-blue-300 border-t-blue-600"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            />
+            <Spinner size="w-4 h-4" color="border-blue-300 border-t-blue-600" />
             <span className="text-xs text-gray-500">Cargando clima...</span>
           </div>
         </motion.div>
       )}
 
-      {error && !loading && (
+      {!hidden && error && !loading && (
         <motion.div
           key="weather-error"
           className="absolute top-4 left-4 z-10 bg-red-50/90 backdrop-blur-md rounded-2xl shadow-lg border border-red-200/60 px-4 py-3"
@@ -138,13 +138,14 @@ export default function WeatherPanel({ data, loading, error }: Props) {
         </motion.div>
       )}
 
-      {data && !loading && (() => {
+      {!hidden && data && !loading && (() => {
         const condition: Condition = data.divingCondition ?? 'moderate';
         const styles = getConditionStyles(condition);
         return (
         <motion.div
           key="weather-data"
           className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/60 p-3"
+          style={{ maxWidth: 'calc(100vw - 5rem)' }}
           initial={{ opacity: 0, x: -20, scale: 0.95 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -20, scale: 0.95 }}
@@ -154,10 +155,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
           <div className="flex items-center gap-2">
             <span className="text-2xl leading-none">{getWeatherInfo(data.weatherCode).icon}</span>
             <span className="text-lg font-bold text-gray-900 whitespace-nowrap">{fmt(data.temperature, '°C')}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${styles.badge}`}>{styles.label}</span>
-            {data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode) && (
-              <span className="text-xs text-red-600 font-semibold">{getWeatherInfo(data.weatherCode).desc}</span>
-            )}
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{styles.label}</span>
             <span className="ml-auto" />
             <button
               onClick={() => setMinimized(!minimized)}
@@ -173,7 +171,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
             </button>
             {!minimized && (
               <button
-                onClick={() => setShowInfo(true)}
+                onClick={() => { setShowInfo(true); onInfoOpen?.(); }}
                 className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
                 title="Más información"
               >
@@ -181,6 +179,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
               </button>
             )}
           </div>
+
 
           {/* Collapsible body */}
           <AnimatePresence initial={false}>
@@ -194,7 +193,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
                 className="overflow-hidden"
               >
                 {/* Compact grid */}
-                <div className="grid grid-cols-4 gap-x-3 gap-y-2 text-[13px] mt-2 min-w-[18rem]">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-2 text-[13px] mt-2">
                   <Stat label="Humedad" value={fmt(data.humidity, '%', 0)} color={statColor('Humedad', data)} />
                   <Stat label="Viento" value={`${fmt(data.windSpeed, '')} ${windDirectionLabel(data.windDirection)}`} color={statColor('Viento', data)} />
                   <Stat label="Visib." value={fmt(data.visibility ? data.visibility / 1000 : null, 'km', 1)} color={statColor('Visib.', data)} />
@@ -207,10 +206,15 @@ export default function WeatherPanel({ data, loading, error }: Props) {
                   <Stat label="Nivel mar" value={fmt(data.seaLevelHeight, 'm')} color={statColor('Nivel mar', data)} />
                 </div>
 
-                {/* Extra row if precipitation */}
-                {(data.precipitation !== null && data.precipitation > 0) && (
-                  <div className="mt-1.5 text-[11px] text-gray-600">
-                    Precipitación: {fmt(data.precipitation, 'mm')}
+                {/* Extra row: precipitation and/or storm badge */}
+                {((data.precipitation !== null && data.precipitation > 0) || (data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode))) && (
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    {data.precipitation !== null && data.precipitation > 0 ? (
+                      <span className="text-[11px] text-gray-600">Precipitación: {fmt(data.precipitation, 'mm')}</span>
+                    ) : <span />}
+                    {data.weatherCode !== null && [95, 96, 99].includes(data.weatherCode) && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 whitespace-nowrap">{getWeatherInfo(data.weatherCode).desc}</span>
+                    )}
                   </div>
                 )}
               </motion.div>
@@ -230,7 +234,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
           exit={{ opacity: 0 }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowInfo(false)} />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setShowInfo(false); onInfoClose?.(); }} />
 
           {/* Modal */}
           <motion.div
@@ -249,8 +253,8 @@ export default function WeatherPanel({ data, loading, error }: Props) {
                 </p>
               </div>
               <button
-                onClick={() => setShowInfo(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none font-bold"
+                onClick={() => { setShowInfo(false); onInfoClose?.(); }}
+                className="text-gray-400 hover:text-cyan-600 text-lg leading-none font-bold transition-colors"
               >
                 ×
               </button>
@@ -314,7 +318,7 @@ export default function WeatherPanel({ data, loading, error }: Props) {
             {/* Footer */}
             <div className="p-3 border-t border-gray-100 text-center">
               <button
-                onClick={() => setShowInfo(false)}
+                onClick={() => { setShowInfo(false); onInfoClose?.(); }}
                 className="text-xs text-cyan-600 hover:text-cyan-700 font-semibold"
               >
                 Entendido

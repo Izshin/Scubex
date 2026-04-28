@@ -2,12 +2,14 @@ package com.scubex.controller;
 
 import com.scubex.model.Publication;
 import com.scubex.model.User;
+import com.scubex.service.InteractionService;
 import com.scubex.service.PublicationService;
 import com.scubex.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,21 +19,20 @@ public class PublicationController {
 
     private final PublicationService publicationService;
     private final UserService userService;
+    private final InteractionService interactionService;
+    private final AuthHelper authHelper;
 
-    public PublicationController(PublicationService publicationService, UserService userService) {
+    public PublicationController(PublicationService publicationService, UserService userService,
+                                 InteractionService interactionService, AuthHelper authHelper) {
         this.publicationService = publicationService;
         this.userService = userService;
+        this.interactionService = interactionService;
+        this.authHelper = authHelper;
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         String title = (String) body.get("title");
         String description = (String) body.get("description");
@@ -83,26 +84,14 @@ public class PublicationController {
 
     @GetMapping("/mine")
     public ResponseEntity<?> getMine(Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
         List<Publication> publications = publicationService.getByUser(user);
         return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         Publication updated = Publication.builder()
                 .title((String) body.get("title"))
@@ -119,13 +108,7 @@ public class PublicationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, Authentication auth) {
-        if (auth == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
-        }
-        User user = userService.findByGoogleId(auth.getName());
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-        }
+        User user = authHelper.getUser(auth);
 
         boolean deleted = publicationService.delete(id, user);
         if (!deleted) {
@@ -135,19 +118,21 @@ public class PublicationController {
     }
 
     private Map<String, Object> toDto(Publication p) {
-        return Map.of(
-                "id", p.getId(),
-                "title", p.getTitle(),
-                "description", p.getDescription() != null ? p.getDescription() : "",
-                "imageUrl", p.getImageUrl() != null ? p.getImageUrl() : "",
-                "latitude", p.getLatitude(),
-                "longitude", p.getLongitude(),
-                "createdAt", p.getCreatedAt().toString(),
-                "author", Map.of(
-                        "email", p.getUser().getEmail() != null ? p.getUser().getEmail() : "",
-                        "name", p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : "",
-                        "picture", p.getUser().getDisplayPicture() != null ? p.getUser().getDisplayPicture() : ""
-                )
-        );
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("id", p.getId());
+        dto.put("title", p.getTitle());
+        dto.put("description", p.getDescription() != null ? p.getDescription() : "");
+        dto.put("imageUrl", p.getImageUrl() != null ? p.getImageUrl() : "");
+        dto.put("latitude", p.getLatitude());
+        dto.put("longitude", p.getLongitude());
+        dto.put("createdAt", p.getCreatedAt().toString());
+        dto.put("author", Map.of(
+                "email", p.getUser().getEmail() != null ? p.getUser().getEmail() : "",
+                "name", p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : "",
+                "picture", p.getUser().getDisplayPicture() != null ? p.getUser().getDisplayPicture() : ""
+        ));
+        dto.put("likeCount", interactionService.getLikeCount(p.getId()));
+        dto.put("commentCount", interactionService.getCommentCount(p.getId()));
+        return dto;
     }
 }

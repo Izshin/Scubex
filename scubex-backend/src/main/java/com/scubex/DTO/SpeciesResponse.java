@@ -19,6 +19,14 @@ public class SpeciesResponse {
     private Double latitude;
     private Double longitude;
     private Integer numberOfOccurrences;
-    
+
+    // Eco-data from OBIS statistics
+    private Integer depthMin;
+    private Integer depthMax;
+    private Integer tempMin;
+    private Integer tempMax;
+    private Integer firstYear;
+    private Integer lastYear;
+    private Integer globalRecords;
+    private String iucnCategory;
 }
-    

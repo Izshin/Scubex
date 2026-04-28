@@ -16,7 +16,7 @@ Como ya hemos comentado, la idea de Scubex es centralizar funcionalidades para e
 
 \begin{description}
 \item \textbf{Objetivo 1. Implementar un sistema de autenticación de usuarios} \\
-Desarrollar un sistema de autenticación seguro, permitiendo a los usuarios registrarse e iniciar sesión de forma sencilla. El sistema debe guardar los perfiles de usuario y sus datos (nombre, foto, incursiones, comentarios).
+Desarrollar un sistema de autenticación seguro, permitiendo a los usuarios registrarse e iniciar sesión de forma sencilla. El sistema debe guardar los perfiles de usuario y datos tales como: nombre, foto, incursiones o publicaciones.
 
 \item \textbf{Objetivo 2. Crear un mapa interactivo de exploración marina} \\
 Integrar un mapa interactivo con controles de zoom y navegación que permita a los usuarios explorar zonas de buceo de forma intuitiva y fluida.
@@ -25,15 +25,18 @@ Integrar un mapa interactivo con controles de zoom y navegación que permita a l
 Desarrollar un escáner de especies que consulte APIs científicas para identificar fauna marina en una zona determinada. 
 
 \item \textbf{Objetivo 4. Proporcionar información climatológica y oceanográfica en tiempo real} \\
-Ofrecer datos actualizados sobre condiciones climatológicas de la zona: viento, temperatura del agua, corrientes marinas, altura de olas y datos atmosféricos relevantes para la planificación de inmersiones en un punto de buceo concreto.
+Ofrecer datos actualizados sobre condiciones climatológicas de la zona: viento, temperatura del agua, corrientes marinas, oleaje y demas datos atmosféricos relevantes para la planificación de inmersiones en una zona de inmersión.
 
-\item \textbf{Objetivo 5. Implementar un sistema de registro de avistamientos} \\
-Permitir a los usuarios registrar avistamientos de especies marinas mediante clicks en el mapa interactivo, asociando coordenadas geográficas, especies observadas, fecha y opcionalmente fotografías y descripción.
+\item \textbf{Objetivo 5. Implementar un sistema de registro de publicaciones} \\
+Permitir a los usuarios publicar sus inmersiones en el mapa interactivo con título, descripción opcional, fotografía y coordenadas geográficas. El autor puede editar y eliminar sus propias publicaciones, y cada publicación es compartible mediante enlace directo.
 
-\item \textbf{Objetivo 6. Crear una red social geoespacial para buceadores} \\
-Desarrollar un sistema de publicaciones geolocalizadas donde los usuarios puedan compartir sus experiencias de buceo, avistamientos y fotografías. Otros usuarios podrán visualizar estos posts en el mapa e interactuar con ellos con likes y comentarios.
+\item \textbf{Objetivo 6. Crear un sistema de interacción social sobre publicaciones} \\
+Desarrollar un sistema de interacciones sobre publicaciones: likes, guardado para acceso posterior y comentarios con menciones a otros usuarios. Las menciones generan notificaciones al usuario mencionado.
 
-\item \textbf{Objetivo 7. Gestionar perfiles de usuario con historial de avistamientos} \\
-Implementar un sistema de perfil personal donde cada usuario pueda visualizar su historial completo de avistamientos registrados, con la posibilidad de generar enlaces compartibles para mostrar sus descubrimientos a otros buceadores.
+\item \textbf{Objetivo 7. Implementar una red social de seguimiento entre usuarios} \\
+Desarrollar perfiles públicos navegables con número de seguidores y seguidos, posibilidad de seguir o dejar de seguir a cualquier usuario, y acceso al historial de publicaciones de cada perfil. Los perfiles son compartibles mediante enlace directo.
+
+\item \textbf{Objetivo 8. Implementar un sistema de notificaciones} \\
+Proporcionar notificaciones al usuario sobre eventos relevantes: nuevos seguidores, likes, comentarios en sus publicaciones y menciones. Las notificaciones son gestionables, pudiendo borrarlas o marcarlas como leidas.
 
 \end{description}

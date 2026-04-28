@@ -4,6 +4,7 @@ import com.scubex.model.Publication;
 import com.scubex.model.User;
 import com.scubex.repository.PublicationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class PublicationService {
         return publicationRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public Publication update(Long id, Publication updated, User user) {
         Publication existing = publicationRepository.findById(id).orElse(null);
         if (existing == null || !existing.getUser().getId().equals(user.getId())) {
@@ -47,6 +49,7 @@ public class PublicationService {
         return publicationRepository.save(existing);
     }
 
+    @Transactional
     public boolean delete(Long id, User user) {
         Publication existing = publicationRepository.findById(id).orElse(null);
         if (existing == null || !existing.getUser().getId().equals(user.getId())) {

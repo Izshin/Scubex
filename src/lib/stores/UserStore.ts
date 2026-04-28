@@ -1,5 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { updateProfile } from '../api';
+import { updateProfile, deleteAccount } from '../api';
 
 export interface UserData {
   name: string;
@@ -61,6 +61,24 @@ class UserStore {
         this.profileError = e instanceof Error ? e.message : 'Error updating profile';
         this.profileLoading = false;
       });
+    }
+  }
+
+  async deleteAccount() {
+    this.profileLoading = true;
+    this.profileError = null;
+    try {
+      await deleteAccount();
+      runInAction(() => {
+        this.logout();
+        this.profileLoading = false;
+      });
+    } catch (e) {
+      runInAction(() => {
+        this.profileError = e instanceof Error ? e.message : 'Error al eliminar la cuenta';
+        this.profileLoading = false;
+      });
+      throw e;
     }
   }
 }

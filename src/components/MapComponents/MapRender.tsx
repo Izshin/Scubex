@@ -35,6 +35,7 @@ interface MapRenderProps {
   isScanning?: boolean;
   scanCenter?: { lat: number; lng: number } | null;
   scanRadius?: number;
+  publishCenter?: { lat: number; lng: number } | null;
   publications?: PublicationData[];
 }
 
@@ -43,7 +44,7 @@ export type MapRenderRef = {
   getContainer: () => HTMLDivElement | null;
 };
 
-export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publications = [] }, forwardedRef) {
+export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publishCenter, publications = [] }, forwardedRef) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const onMapClickRef = useRef(onMapClick);
@@ -88,12 +89,11 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
       center: [-5.98, 36.52], // Cádiz
       zoom: 8,
       maxZoom: 18,
-      minZoom: 3
+      minZoom: 3,
+      attributionControl: false,
     });
 
-    // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
-    map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
     
     mapRef.current = map;
 
@@ -210,7 +210,7 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     };
   }, [onViewportIdle]);
 
-  // Update scan circle when center/radius change
+  // Update scan circle when center/radius change — hide during scanning (ScanningAnimation handles it)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -218,13 +218,13 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     const source = map.getSource("scan-circle") as maplibregl.GeoJSONSource | undefined;
     if (!source) return;
 
-    if (scanCenter && scanRadius) {
+    if (scanCenter && scanRadius && !isScanning) {
       const circle = createCircleGeoJSON([scanCenter.lng, scanCenter.lat], scanRadius);
       source.setData({ type: "FeatureCollection", features: [circle] });
     } else {
       source.setData({ type: "FeatureCollection", features: [] });
     }
-  }, [scanCenter, scanRadius]);
+  }, [scanCenter, scanRadius, isScanning]);
 
   // Pin marker at scan center
   useEffect(() => {
@@ -251,25 +251,41 @@ export default forwardRef<MapRenderRef, MapRenderProps>(function MapRender({ onV
     };
   }, [scanCenter]);
 
+  // Pin marker at publish center
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    let marker: maplibregl.Marker | null = null;
+
+    if (publishCenter) {
+      const el = document.createElement('div');
+      el.innerHTML = `<svg width="28" height="40" viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.268 21.732 0 14 0z" fill="#06b6d4"/>
+        <circle cx="14" cy="14" r="6" fill="white"/>
+      </svg>`;
+      el.style.cursor = 'pointer';
+
+      marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([publishCenter.lng, publishCenter.lat])
+        .addTo(map);
+    }
+
+    return () => {
+      if (marker) marker.remove();
+    };
+  }, [publishCenter]);
+
   // Control map interactions based on scanning state
   useEffect(() => {
     if (!mapRef.current) return;
-    
-    if (isScanning) {
-      mapRef.current.dragPan.disable();
-      mapRef.current.scrollZoom.disable();
-      mapRef.current.boxZoom.disable();
-      mapRef.current.keyboard.disable();
-      mapRef.current.doubleClickZoom.disable();
-      mapRef.current.touchZoomRotate.disable();
-    } else {
-      mapRef.current.dragPan.enable();
-      mapRef.current.scrollZoom.enable();
-      mapRef.current.boxZoom.enable();
-      mapRef.current.keyboard.enable();
-      mapRef.current.doubleClickZoom.enable();
-      mapRef.current.touchZoomRotate.enable();
-    }
+    // Never block map interaction — scanning runs in background
+    mapRef.current.dragPan.enable();
+    mapRef.current.scrollZoom.enable();
+    mapRef.current.boxZoom.enable();
+    mapRef.current.keyboard.enable();
+    mapRef.current.doubleClickZoom.enable();
+    mapRef.current.touchZoomRotate.enable();
   }, [isScanning]);
 
   // Publication markers

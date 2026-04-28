@@ -12,12 +12,28 @@
 \contentsline {table}{\numberline {5.2}{\ignorespaces Coste total del proyecto Scubex}}{25}{table.5.2}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {6.1}{\ignorespaces Estrategia de entornos del proyecto}}{32}{table.6.1}%
-\contentsline {table}{\numberline {6.2}{\ignorespaces Resumen de APIs externas}}{33}{table.6.2}%
+\contentsline {table}{\numberline {6.2}{\ignorespaces Resumen de APIs externas}}{34}{table.6.2}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {7.1}{\ignorespaces Análisis de valor aportado: Escáner}}{45}{table.7.1}%
-\contentsline {table}{\numberline {7.2}{\ignorespaces Memorando técnico 001: Geometría}}{46}{table.7.2}%
-\contentsline {table}{\numberline {7.3}{\ignorespaces Memorando técnico 002: Filtrado}}{47}{table.7.3}%
+\contentsline {table}{\numberline {7.1}{\ignorespaces Análisis de valor aportado: Mapa Interactivo}}{37}{table.7.1}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces Análisis de valor aportado: Escáner}}{38}{table.7.2}%
+\contentsline {table}{\numberline {7.3}{\ignorespaces Análisis de valor aportado: Autenticación}}{39}{table.7.3}%
+\contentsline {table}{\numberline {7.4}{\ignorespaces Memorando técnico 001: Geometría WKT}}{42}{table.7.4}%
+\contentsline {table}{\numberline {7.5}{\ignorespaces Memorando técnico 002: Filtrado de Calidad Visual}}{43}{table.7.5}%
+\contentsline {table}{\numberline {7.6}{\ignorespaces Memorando técnico 003: Caché L1 --- \texttt {CachedScan}}}{44}{table.7.6}%
+\contentsline {table}{\numberline {7.7}{\ignorespaces Memorando técnico 004: Caché L2 --- \texttt {SpeciesEnrichmentCache}}}{45}{table.7.7}%
+\contentsline {table}{\numberline {7.8}{\ignorespaces Memorando técnico 005: Autenticación OAuth2 + JWT}}{48}{table.7.8}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {8.1}{\ignorespaces Análisis de valor aportado: Panel de Clima}}{55}{table.8.1}%
+\contentsline {table}{\numberline {8.2}{\ignorespaces Memorando técnico 006: \texttt {WeatherResponse}}}{58}{table.8.2}%
+\contentsline {table}{\numberline {8.3}{\ignorespaces Memorando técnico 007: Evaluación de Condiciones}}{59}{table.8.3}%
+\contentsline {table}{\numberline {8.4}{\ignorespaces Memorando técnico 008: Caché de Clima}}{60}{table.8.4}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {9.1}{\ignorespaces Análisis de valor aportado: Publicaciones Geolocalizadas}}{65}{table.9.1}%
+\contentsline {table}{\numberline {9.2}{\ignorespaces Análisis de valor aportado: Almacenamiento de Imágenes}}{66}{table.9.2}%
+\contentsline {table}{\numberline {9.3}{\ignorespaces Memorando técnico 009: Almacenamiento de Imágenes como BLOB}}{68}{table.9.3}%
+\contentsline {table}{\numberline {9.4}{\ignorespaces Memorando técnico 010: Geocoding Inverso con Nominatim}}{69}{table.9.4}%
+\contentsline {table}{\numberline {9.5}{\ignorespaces Memorando técnico 011: Filtrado por Viewport del Mapa}}{70}{table.9.5}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {A.1}{\ignorespaces Most frequently used explanatory operations and their corresponding information extraction operations}}{65}{table.Alph1.1}%
+\contentsline {table}{\numberline {A.1}{\ignorespaces Most frequently used explanatory operations and their corresponding information extraction operations}}{91}{table.Alph1.1}%

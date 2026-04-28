@@ -47,11 +47,8 @@ public class WeatherService {
                 .findFirstByRoundedLatAndRoundedLngAndCreatedAtAfter(roundedLat, roundedLng, cutoff);
 
         if (cached.isPresent()) {
-            System.out.println("✅ Cache HIT for weather at " + roundedLat + ", " + roundedLng);
             return convertFromCache(cached.get());
         }
-
-        System.out.println("⏳ Cache MISS for weather at " + roundedLat + ", " + roundedLng);
 
         ForecastApiResponse.CurrentWeather atmosphere = callForecastApi(lat, lng);
         MarineApiResponse.CurrentMarine marine = callMarineApi(lat, lng);
@@ -80,21 +77,16 @@ public class WeatherService {
                     .encode()
                     .toUri();
 
-            System.out.println("🌤️ Forecast API URI: " + uri);
-
             ResponseEntity<ForecastApiResponse> response = restTemplate.getForEntity(uri, ForecastApiResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null
                     && response.getBody().getCurrent() != null) {
-                System.out.println("✅ Forecast API response successful");
                 return response.getBody().getCurrent();
             }
 
-            System.err.println("❌ Forecast API HTTP " + response.getStatusCode() + " or empty body");
             return null;
 
         } catch (Exception e) {
-            System.err.println("❌ Error calling Forecast API: " + e.getMessage());
             return null;
         }
     }
@@ -113,21 +105,16 @@ public class WeatherService {
                     .encode()
                     .toUri();
 
-            System.out.println("🌊 Marine API URI: " + uri);
-
             ResponseEntity<MarineApiResponse> response = restTemplate.getForEntity(uri, MarineApiResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null
                     && response.getBody().getCurrent() != null) {
-                System.out.println("✅ Marine API response successful");
                 return response.getBody().getCurrent();
             }
 
-            System.err.println("❌ Marine API HTTP " + response.getStatusCode() + " or empty body");
             return null;
 
         } catch (Exception e) {
-            System.err.println("❌ Error calling Marine API: " + e.getMessage());
             return null;
         }
     }
@@ -271,9 +258,8 @@ public class WeatherService {
                     .build();
 
             cachedWeatherRepository.save(cw);
-            System.out.println("💾 Cached weather for " + roundedLat + ", " + roundedLng);
         } catch (Exception e) {
-            System.err.println("⚠️ Failed to save weather cache: " + e.getMessage());
+            // ignore cache save errors
         }
     }
 }

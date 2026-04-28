@@ -1,251 +1,262 @@
 %!TEX root =  tfg.tex
-\chapter{Iteración 1: Escáner de Biodiversidad}
+\chapter{Iteración 1: Inicio del MVP de Scubex}
 
 \begin{abstract}
-Esta iteración aborda el MVP de Scubex: La capacidad de identificar especies marinas en una zona determinada e iodentificarte con OAuth.
-\end{abstract}
+Esta iteración entrega parte del MVP funcional de Scubex: el mapa interactivo 
+con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Características desarrolladas esta iteración}
+% ─────────────────────────────────────────────────────────────────────────────
 
 \begin{enumerate}
-\item Escáner de Especies con selección de zona en mapa y radio configurable. Ver Tabla \ref{tab:valorAportadoScan}.
-\item Enriquecimiento de datos con fotografías y nombres comunes mediante cruce OBIS/iNaturalist.
-\item Identificación de usuario con Google OAuth2 y JWT.
+\item Mapa interactivo con capas de teselas, batimetría y búsqueda de lugares. Ver Tabla~\ref{tab:valorAportadoMapa}.
+\item Escáner de biodiversidad marina con enriquecimiento OBIS\,+\,iNaturalist. Ver Tabla~\ref{tab:valorAportadoScan}.
+\item Autenticación con Google OAuth2 y emisión de JWT. Ver Tabla~\ref{tab:valorAportadoAuth}.
 \end{enumerate}
 
+% ── Tabla 1: Mapa interactivo ────────────────────────────────────────────────
 \begin{table*}[htb]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Análisis de valor aportado: Escáner de Especies}
-\textbf{Propuesta}&Endpoint REST que agrega datos de OBIS e iNaturalist para una zona geográfica definida por radio, con interacción en dos pasos (click para situar centro + botón \emph{Escanear}) y radio configurable (500\,m -- 10\,km).\\
+{Análisis de valor aportado: Mapa Interactivo}
+\textbf{Propuesta}&Mapa interactivo con estilo personalizado y representación visual de batimetría. Incluye buscador de lugares y visualización en tiempo real de la zona de escaneo sobre el mapa.\\
 \midrule
-\textbf{Valor}&Permite al usuario descubrir fauna marina real validada científicamente con representación visual, sin conocimientos técnicos ni acceso directo a bases de datos especializadas. El flujo de dos pasos evita escaneos accidentales.\\
-\textbf{Coste}&Alto esfuerzo de integración. Requiere orquestar llamadas asíncronas, transformar formatos geométricos (coordenadas $\rightarrow$ WKT Polygon), gestionar inconsistencias entre APIs y aplicar filtrado de calidad. En frontend: círculo GeoJSON en MapLibre, animación radar con Framer Motion.\\
-\textbf{Opciones}&\textbf{Opción 1}: Usar solo OBIS reduciría el coste, pero eliminaría el valor visual (fotos) y semántico (nombres comunes). \textbf{Opción 2}: Usar solo iNaturalist (solo observaciones ciudadanas, sin validación científica OBIS). \textbf{Opción 3}: Escaneo automático al hacer click (descartada: generaba escaneos accidentales).\\
-\textbf{Riesgos}&Rate limits de APIs externas (OBIS: sin límite documentado, iNaturalist: 100 req/min). Inconsistencia de datos (especies en OBIS sin coincidencia en iNaturalist). Latencia acumulada por múltiples peticiones HTTP.\\
-\textbf{Deuda técnica}&Ausencia de caching (cada escaneo regenera peticiones a APIs). Falta de paginación (actualmente limitado a 50 especies). Gestión de errores distribuidos no exhaustiva (si iNaturalist falla, se pierden datos visuales).\\
+\textbf{Valor}&Proporciona al usuario la interfaz principal de Scubex: localizar zonas de buceo sobre un mapa real con información de batimetría, fijar el centro con un click y visualizar dinámicamente el área de interés antes de lanzar el escáner.\\
+\textbf{Coste}&Integración de la librería de mapas y uso de la API de MapTiler para estilos y batimetría propios. Conexión con Nominatim para la búsqueda de lugares. Requiere clave de API de MapTiler (plan gratuito: 5.000 sesiones/mes).\\
+\textbf{Opciones}&\textbf{Lista de spots predefinidos}: el usuario elige de un catálogo fijo de zonas de buceo conocidas; más simple pero elimina la libertad de explorar cualquier punto. \textbf{Buscador de texto}: el usuario escribe el nombre del lugar y el sistema devuelve las especies de esa zona; se ha descartado por la falta de feedback visual. El mapa aporta orientación geográfica y espontaneidad que estas alternativas no ofrecen.\\
+\textbf{Riesgos}&Límite mensual de sesiones del plan gratuito de MapTiler. Si el estilo base cambia o se elimina en MapTiler Cloud, la aplicación perdería el estilo del mapa. Dependencia de Nominatim (servicio público sin SLA).\\
+\textbf{Deuda técnica}&La capa de batimetría proviene del estilo base de MapTiler; si cambia maptiler, la capa programática dejaría de funcionar y no se verían las diferentes profundidades.\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado: Mapa Interactivo\label{tab:valorAportadoMapa}}
+\end{table*}
+
+% ── Tabla 2: Escáner de biodiversidad ────────────────────────────────────────
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado: Escáner de Biodiversidad}
+\textbf{Propuesta}&Escáner de biodiversidad marina que consulta registros científicos de OBIS y enriquece cada especie con foto y nombre común de iNaturalist.\\
+\midrule
+\textbf{Valor}&Permite descubrir la fauna marina real de una zona validada científicamente (>150M registros OBIS) con representación visual. Al desplegar la tarjeta de cada especie, el usuario puede consultar su rango de profundidad, temperatura, primer y último avistamiento, registros globales y categoría IUCN. La caché reduce la latencia de consultas repetidas sobre la misma zona.\\
+\textbf{Coste}&Integración con dos APIs externas (OBIS e iNaturalist) y diseño de una caché de dos niveles para evitar latencias excesivas. Esfuerzo alto en la primera iteración por la coordinación de múltiples llamadas en paralelo.\\
+\textbf{Opciones}&\textbf{Buscador de especie}: el usuario busca una especie concreta y la app le indica en qué zonas se encuentra; útil si ya sabes lo que buscas. Sin embargo el escáner es más intuitivo y expone todo el rango de especies de una zona sin que el usuario necesite saber de antemano qué buscar.\\\\
+\textbf{Riesgos}&Rate limit de iNaturalist (100 req/min). Inconsistencias entre bases de datos (especie en OBIS sin entrada en iNaturalist). Latencia acumulada en primer escaneo de una zona sin caché.\\
+\textbf{Deuda técnica}&Paginación pendiente (limitado a las primeras 1000 ocurrencias de OBIS). Ausencia de invalidación manual de caché si los datos cambian antes del TTL.\\
 	\end{coolTable}
 	\caption{Análisis de valor aportado: Escáner\label{tab:valorAportadoScan}}
 \end{table*}
 
+% ── Tabla 3: Autenticación ──────────────────────────────────────────────────
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado: Autenticación}
+\textbf{Propuesta}&Inicio de sesión con cuenta de Google en un solo clic. El backend verifica la identidad con Google y emite un token propio que autentica las peticiones posteriores del usuario.\\
+\midrule
+\textbf{Valor}&Elimina la fricción de registro manual. El usuario usa su identidad Google ya verificada. El JWT permite autenticar peticiones futuras sin nueva validación contra Google.\\
+\textbf{Coste}&Configuración de credenciales en Google Cloud Console y gestión segura de los secretos de la aplicación. Implementación del filtro de seguridad que valida el token en cada petición.\\
+\textbf{Opciones}&\textbf{Auth0 / Firebase Auth}: evita implementar la lógica JWT, pero añade dependencia de servicio externo y coste. \textbf{Registro propio con email/contraseña}: mayor fricción y necesidad de gestionar contraseñas.\\
+\textbf{Riesgos}&\textbf{Compromiso de \texttt{JWT\_SECRET}}: todos los tokens activos quedan expuestos. \textbf{Expiración de 7 días sin mecanismo de refresco}: el usuario debe volver a autenticarse al caducar el token.\\
+\textbf{Deuda técnica}&Sin \emph{refresh tokens}: al expirar el JWT el usuario debe volver a hacer login. Sin revocación de tokens comprometidos.\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado: Autenticación\label{tab:valorAportadoAuth}}
+\end{table*}
+
+\clearpage
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Diseño}
+% ─────────────────────────────────────────────────────────────────────────────
 
-El diseño se ha centrado en resolver tres incompatibilidades críticas entre el modelo de interacción del usuario y las restricciones de las APIs científicas:
+El diagrama UML de la Fig.~\ref{fig:diseno01} muestra las relaciones entre los componentes principales del sistema: controladores, servicios, repositorios y entidades de caché. La leyenda del propio diagrama recoge la notación de visibilidad y el código de colores por capa arquitectónica.
 
-\subsection{Incompatibilidad 1: Búsqueda radial vs. geométrica}
+Cabe señalar que el método \texttt{findBestMatch()} empleado en los pseudocódigos es un alias semántico: el nombre real, generado automáticamente por Spring Data JPA a partir de los criterios de consulta, es \texttt{findFirstByRoundedLatAndRoundedLngAndRadius\-GreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc}. Se ha mantenido la denominación simplificada en los pseudocódigos para no reproducir la cadena completa en cada referencia.
 
-\begin{table*}[htb]
-	\centering
-	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 001: Geometría de Búsqueda}
-\textbf{Asunto}&Incompatibilidad de búsqueda radial en API OBIS.\\
-\textbf{Resumen}&Generación de polígonos WKT a partir de coordenadas centrales y radio.\\
-\midrule
-\textbf{Factores causantes}&El frontend solicita datos basados en un punto central \texttt{(lat, lng)} y un nivel de zoom (que determina el radio de visión), pero OBIS requiere un objeto \texttt{POLYGON} en formato WKT (Well-Known Text). La API no acepta parámetros \texttt{centerLat}, \texttt{centerLng}, \texttt{radius}.\\
-\textbf{Solución}&Se ha implementado \texttt{GeometryUtils.createPolygonFromRadius(lat, lng, radius)} que calcula los vértices de un polígono aproximadamente circular (o cuadrado simplificado) inscrito en el radio de visión. El resultado se serializa en formato WKT: \texttt{POLYGON((x1 y1, x2 y2, ..., x1 y1))}.\\
-\textbf{Motivación}&OBIS es la mayor base de datos abierta de biodiversidad marina (>150M registros). Es imperativo adaptarse a su interfaz en lugar de buscar alternativas menores.\\
-\textbf{Alternativas}&\textbf{Filtrado post-proceso}: Pedir un área muy grande (bounding box global) y filtrar en memoria por distancia euclidiana. Descartado por ineficiencia (transferencia de datos innecesaria) y riesgo de exceder límites de respuesta de OBIS (\texttt{size=10000} máximo).\\
-\textbf{Cuestiones abiertas}&Actualmente se utiliza un polígono cuadrado. Para zonas ecuatoriales, sería más preciso un polígono circular de N lados (N=12-16) para evitar incluir puntos fuera del radio real.\\
-	\end{coolTable}
-	\caption{Memorando técnico 001: Geometría}
-\end{table*}
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/umlit1.pdf}
+\caption{Diagrama UML de diseño para la iteración 1\label{fig:diseno01}}
+\end{center}
+\end{figure}
 
-\textbf{Ejemplo de petición generada}:
-
-\begin{verbatim}
-https://api.obis.org/v3/occurrence?
-  geometry=POLYGON((-4.0 36.5, -3.4 36.5, -3.4 37.0, 
-                    -4.0 37.0, -4.0 36.5))
-  &taxonid=2,3,4
-  &size=50
-  &fields=scientificName,decimalLongitude,decimalLatitude,
-          eventDate,phylum
-\end{verbatim}
-
-\textbf{Parámetros clave}:
-\begin{itemize}
-    \item \texttt{geometry}: Polígono WKT cerrado (primer y último punto idénticos).
-    \item \texttt{taxonid=2,3,4}: Filtro por phyla (2=Chordata, 3=Arthropoda, 4=Mollusca) para excluir microorganismos unicelulares (aunque no es exhaustivo).
-    \item \texttt{fields}: Proyección de campos para reducir payload (omite metadatos innecesarios como \texttt{institutionCode}).
-\end{itemize}
-
-\subsection{Incompatibilidad 2: Calidad de datos visuales}
-
-\begin{table*}[htb]
-	\centering
-	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 002: Calidad de Datos}
-\textbf{Asunto}&Presencia de microorganismos y especies sin representación visual.\\
-\textbf{Resumen}&Filtrado cruzado mediante existencia de recursos fotográficos en iNaturalist.\\
-\midrule
-\textbf{Factores causantes}&OBIS devuelve todo tipo de registros biológicos, incluyendo: \textbf{(1)} Microorganismos unicelulares (ej. \textit{Pycnococcaceae}), \textbf{(2)} Especies con nombre científico válido pero sin observaciones fotografiadas (ej. \textit{Thenea muricata}). Para una app turística/deportiva, estos datos no aportan valor experiencial.\\
-\textbf{Solución}&Para cada nombre científico devuelto por OBIS, ejecutar una petición a iNaturalist: \texttt{GET /taxa?q=<scientificName>\&per\_page=1}. Aplicar los siguientes filtros: \textbf{(1)} Si \texttt{total\_results == 0}, descartar especie (no documentada en iNaturalist). \textbf{(2)} Si \texttt{default\_photo} es \texttt{null}, descartar especie (sin representación visual). \textbf{(3)} Si ambos criterios se cumplen, extraer \texttt{preferred\_common\_name} y \texttt{default\_photo.url} para enriquecer el modelo de respuesta.\\
-\textbf{Motivación}&Mantener la relevancia visual y la experiencia de usuario. Un buceador no puede "ver" bacterias submarinas, por lo que incluirlas sería ruido informativo.\\
-\textbf{Cuestiones abiertas}&El aumento de latencia por N peticiones HTTP a iNaturalist (N = número de especies únicas en OBIS). Para áreas con >50 especies, el tiempo de respuesta puede superar los 5 segundos. Posible optimización: batching de peticiones o caching de taxonomías previamente consultadas.\\
-	\end{coolTable}
-	\caption{Memorando técnico 002: Filtrado}
-\end{table*}
-
-\textbf{Ejemplo de especie descartada (microorganismo)}:
-
-OBIS devuelve:
-\begin{verbatim}
-{
-  "scientificName": "Pycnococcaceae",
-  "phylum": "Cyanobacteria",
-  ...
-}
-\end{verbatim}
-
-iNaturalist responde:
-\begin{verbatim}
-{
-  "total_results": 0,
-  "results": []
-}
-\end{verbatim}
-
-$\Rightarrow$ \textbf{Acción}: Especie filtrada, no incluida en respuesta al cliente.
-
-\textbf{Ejemplo de especie válida con foto}:
-
-OBIS devuelve:
-\begin{verbatim}
-{
-  "scientificName": "Chimaera monstrosa",
-  "phylum": "Chordata",
-  ...
-}
-\end{verbatim}
-
-iNaturalist responde:
-\begin{verbatim}
-{
-  "total_results": 1203,
-  "results": [{
-    "preferred_common_name": "Rabbit Fish",
-    "default_photo": {
-      "url": "https://inaturalist-open-data.s3.amazonaws.com/..."
-    }
-  }]
-}
-\end{verbatim}
-
-$\Rightarrow$ \textbf{Acción}: Especie enriquecida con foto y nombre común.
-
-\subsection{Uso del campo \texttt{phylum} como fallback}
-
-En caso de que iNaturalist devuelva \texttt{total\_results > 0} pero \texttt{default\_photo == null}, se usa el campo \texttt{phylum} (extraído de OBIS) para asignar un placeholder visual según taxonomía:
-
-\begin{itemize}
-    \item \texttt{Chordata} $\rightarrow$ Icono de pez genérico.
-    \item \texttt{Mollusca} $\rightarrow$ Icono de pulpo/calamar.
-    \item \texttt{Arthropoda} $\rightarrow$ Icono de crustáceo.
-    \item Otros $\rightarrow$ Icono genérico de organismo marino.
-\end{itemize}
-
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Implementación}
+% ─────────────────────────────────────────────────────────────────────────────
 
-Se ha implementado \texttt{SpeciesService.scanSpecies(lat, lng, radius)} que:
+Se presentan primero los memorandos técnicos con las decisiones de diseño e implementación; a continuación, los pseudocódigos que las materializan.
 
-\begin{enumerate}
-    \item Convierte coordenadas + radio a formato WKT POLYGON.
-    \item Consulta OBIS con el polígono generado.
-    \item Agrupa resultados por nombre científico (deduplicación).
-    \item Para cada especie, consulta iNaturalist para obtener foto y nombre común.
-    \item Descarta especies sin foto o sin documentación en iNaturalist.
-    \item Retorna lista ordenada por número de ocurrencias.
-\end{enumerate}
+% ── Memorando 001: Geometría WKT ─────────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 001: Geometría de Búsqueda WKT}
+\textbf{Asunto}&La API de OBIS no acepta búsqueda radial: requiere un polígono \texttt{POLYGON((\ldots))} en formato WKT.\\
+\textbf{Resumen}&Generación de un polígono de 12 vértices aproximadamente circular desde coordenadas centrales y radio.\\
+\midrule
+\textbf{Factores causantes}&El usuario define la zona como un punto central y un radio, pero la API de OBIS exige el área en formato WKT (polígono cerrado). Alternativamente, se podria haber usado un bounding box rectangular, no obstante sobreestimaría el área incluyendo registros fuera del radio real.\\
+\textbf{Solución}&Se implementa \texttt{createPolygonFromRadius(lat, lng, radius)}, que aproxima el círculo con un polígono de 12 vértices equidistantes, corrigiendo la longitud por $\cos(\phi)$ para no deformar el área en latitudes altas. La cadena WKT resultante se codifica adecuadamente antes de insertarse en la URL de la petición HTTP.\\
+\textbf{Motivación}&OBIS alberga >150M registros de biodiversidad marina validados científicamente. Es preferible adaptarse a su interfaz antes que buscar fuentes alternativas de menor calidad, ya que no existen muchas comparables.\\
+\textbf{Cuestiones abiertas}&A latitudes altas ($>60°$) la aproximación esférica introduce error; para el caso de uso de Scubex (zonas costeras tropicales y templadas) es despreciable.\\
+\textbf{Alternativas}&\textbf{Bounding box}: sencillo pero incluye esquinas fuera del radio real. \textbf{Filtrado post-proceso}: pedir área global y filtrar en memoria, descartado por transferencia de datos innecesaria.\\
+	\end{coolTable}
+	\caption{Memorando técnico 001: Geometría WKT\label{tab:memo001}}
+\end{table*}
 
-\textbf{Endpoint REST}: \texttt{GET /api/species?lat=\{lat\}\&lng=\{lng\}\&radius=\{radius\}}
+% ── Memorando 002: Filtrado de calidad ───────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 002: Filtrado de Calidad Visual}
+\textbf{Asunto}&OBIS devuelve microorganismos y especies sin fotografía, que carecen de valor para una app de buceo.\\
+\textbf{Resumen}&Filtrado cruzado: se descartan especies sin entrada en iNaturalist. Las que tienen entrada pero carecen de fotografía se incluyen con un emoji representativo de su phylum como fallback visual en el frontend.\\
+\midrule
+\textbf{Factores causantes}&\textbf{(1)} OBIS incluye todo tipo de registros biológicos marinos (bacterias, algas unicelulares, etc.) que no se ven al bucear. \textbf{(2)} Hay especies macroscópicas con nombre científico válido que no tienen observaciones fotografiadas en iNaturalist (ej. \textit{Thenea muricata}).\\
+\textbf{Solución}&Cada especie devuelta por OBIS se busca en iNaturalist. Si no aparece, se descarta: sin nombre común ni foto no aporta valor. Si aparece, se incluye siempre: si tiene foto se usa; si no, el frontend muestra un emoji según el phylum como fallback visual.\\
+\textbf{Motivación}&Un buceador busca animales que pueda ver en el agua. Incluir microorganismos sería ruido.\\
+\textbf{Cuestiones abiertas}&La latencia de N llamadas HTTP a iNaturalist (una por especie única) en el primer escaneo de una zona puede superar los 20 segundos. Resuelta en Memorando~004 mediante caché de enriquecimiento por especie.\\
+\textbf{Alternativas}&\textbf{Filtrado por phylum}: descartar directamente los phyla microscópicos (bacterias, algas) sin consultar iNaturalist. Es más rápido, pero una especie macroscópica rara de un phylum ``grande'' pasaría el filtro aunque no tenga foto ni nombre común. \textbf{Placeholder genérico}: asignar siempre un emoji o imagen por grupo taxonómico sin consultar iNaturalist. Elimina las llamadas externas pero pierde la foto real y el nombre común cuando sí existen.\\
+	\end{coolTable}
+	\caption{Memorando técnico 002: Filtrado de Calidad Visual\label{tab:memo002}}
+\end{table*}
 
+% ── Memorando 003: CachedScan L1 ─────────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 003: Caché L1 de Escaneos (\texttt{CachedScan})}
+\textbf{Asunto}&Latencia de 10--20\,s por escaneo en zonas sin datos previos en caché.\\
+\textbf{Resumen}&Caché de resultado completo por zona geográfica indexado por coordenadas redondeadas y radio, con TTL de 48\,h.\\
+\midrule
+\textbf{Factores causantes}&Un escaneo completo puede tardar entre 10 y 20 segundos. Repetir ese proceso cada vez que alguien consulta la misma zona es un desperdicio innecesario, tanto en tiempo de respuesta como en llamadas a APIs externas.\\
+\textbf{Solución}&El resultado de cada escaneo se persiste en base de datos bajo una clave compuesta por coordenadas redondeadas y radio. El redondeo agrupa clicks cercanos en la misma clave, evitando duplicados por diferencias de centímetros. Si existe un escaneo de menos de 48\,h para esa zona, se devuelve directamente sin tocar ninguna API externa.\\
+\textbf{Motivación}&Capacidad de dar una respuesta instantanea a un escaneo, sin pasar por APIs. Plugins ya preconfigurados en base de datos, lo que hace la implementación mas simple\\
+\textbf{Cuestiones abiertas}&Clicks en el umbral de redondeo (ej. \texttt{0.049}° vs \texttt{0.051}°) pueden generar un falso miss aunque las zonas sean prácticamente idénticas. Comportamiento aceptado por su baja frecuencia.\\
+\textbf{Alternativas}&\textbf{Redis}: más rápido, pero añade servicio externo y coste. \textbf{Spring Cache en memoria}: no persiste entre reinicios del servidor (Railway reinicia en cada despliegue).\\
+	\end{coolTable}
+	\caption{Memorando técnico 003: Caché L1 --- \texttt{CachedScan}\label{tab:memo003}}
+\end{table*}
+
+% ── Memorando 004: SpeciesEnrichmentCache L2 ─────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 004: Caché L2 de Enriquecimiento (\texttt{SpeciesEnrichmentCache})}
+\textbf{Asunto}&Aun con el caché L1, los escaneos seguian siendo lentos debido a los ratelimit de iNaturalist.\\
+\textbf{Resumen}& Se implementó un caché persistente por especie (con \texttt{scientificName} como clave única), que guarda los datos extra de iNaturalist y básicos de OBIS durante 30 días para ahorrar llamadas. Tambien se implementó un semáforo de concurrencia, para limitar las llamadas en paralelo a iNaturalist.\\
+\midrule
+\textbf{Factores causantes}&Pese a que 100 llamadas por minuto sean usualmente suficientes, a veces se quedaban cortas en zonas de alta biodiversidad. La caché L1 evita repetir escaneos de la misma zona, pero no ayuda cuando la misma especie aparece en zonas distintas. \\
+						\textbf{Solución}&La foto, el nombre común y los datos ecológicos de cada especie se guardan en base de datos usando el nombre científico como clave, con una validez de 30 días. La próxima vez que esa especie aparezca en cualquier escaneo, se recupera directamente de base de datos sin tocar ninguna API. Para no saturar iNaturalist, un semáforo limita a 3 las llamadas concurrentes de esta API mientras las demás esperan su turno. Si una especie no existe en iNaturalist, también se guarda esa ausencia, evitando repetir la consulta inútil durante 30 días.\\
+\textbf{Motivación}&Los datos de iNaturalist y OBIS son siempre los mismos independientemente de dónde se encuentre. Y un TTL de 30 días equilibra frescura (actualizaciones de las especies) con eficiencia.\\
+\textbf{Cuestiones abiertas}&Si el estado IUCN de una especie cambia dentro del período de TTL de 30 días, la caché servirá el dato desactualizado. Aceptado dado que dichos cambios son poco frecuentes.\\
+\textbf{Alternativas}&\textbf{Caché solo en L1}: resuelve repeticiones en la misma zona, pero si la misma especie aparece en el Mediterráneo y en el Atlántico Norte, se vuelven a hacer todas las llamadas. \textbf{Precarga batch}: mantener un catálogo de especies actualizado es inviable dado que las zonas de buceo son heterogéneas y las especies que aparecen varían enormemente.\\
+	\end{coolTable}
+	\caption{Memorando técnico 004: Caché L2 --- \texttt{SpeciesEnrichmentCache}\label{tab:memo004}}
+\end{table*}
+
+\clearpage
+% ── asigResponsabilidad 001: SpeciesService ───────────────────────────────────
+\begin{asigResponsabilidad}{001}{SpeciesService}
+{List<SpeciesResponse> getSpeciesInSelectedArea(lat:double, lng:double, radius:double)}
+\pasoPseudo{1. Se redondean las coordenadas recibidas según el radio con \texttt{roundCoord()}, para agrupar zonas cercanas en una misma clave de caché. A mayor radio, mayor es el redondeo}
+\pasoPseudo{2. Se consulta la base de datos buscando un escaneo previo de la misma zona (menos de 48h) con \texttt{findBestMatch()}. Si existe, se devuelve directamente sin llamar a ninguna API externa --- fin.}
+\pasoPseudo{3. Si no hay caché, se construye un polígono WKT de 12 vértices alrededor del punto central con \texttt{createPolygonFromRadius()} y se consultan los registros de OBIS con \texttt{callObisApi()}.}
+\pasoPseudo{4. Para cada especie única devuelta por OBIS, en paralelo:}
+\pasoPseudo{4.1. Se busca en la caché de enriquecimiento con \texttt{findByNameAndCachedAtAfter()}. Si ya existe y no tiene datos de iNaturalist, se descarta la especie.}
+\pasoPseudo{4.2. Si no está en caché, se consulta iNaturalist (máximo 3 llamadas simultáneas). Si no tiene foto o no aparece, se guarda como descartada para no volver a consultarla en 30 días.}
+\pasoPseudo{4.3. Si iNaturalist devuelve foto y nombre común, se obtienen datos ecológicos de OBIS (profundidad, temperatura, registros históricos, categoría IUCN) con \texttt{callObisEcoStats()} y se guarda todo en caché.}
+\pasoPseudo{5. Se persiste el resultado completo del escaneo con \texttt{saveToCache()} y se devuelve la lista de especies enriquecidas.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{003}{NO}
+\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{003}{NO}
+\pasoCodigo{5}{SpeciesSvc.}{String createPolygonFromRadius(lat, lng, radius)}{001}{NO}
+\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001\newline 002}{NO}
+\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{002\newline 004}{NO}
+\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{004}{NO}
+\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{003\newline 004}{NO}
+\end{asigResponsabilidad}
+
+% ── Memorando 005: OAuth2 + JWT ───────────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 005: Autenticación OAuth2 + JWT}
+\textbf{Asunto}&La aplicación necesita identificar usuarios sin gestionar contraseñas ni sesiones de servidor.\\
+\textbf{Resumen}&Validación del ID token de Google mediante su API de tokeninfo y emisión de JWT firmado con HMAC-SHA256, TTL 7 días.\\
+\midrule
+\textbf{Factores causantes}&Scubex no tiene servidor de sesiones, así que la identidad del usuario tiene que viajar en cada petición. Implementar registro propio con contraseñas añadiría complejidad sin aportar nada al usuario.\\
+\textbf{Solución}&El usuario hace click en ``Continuar con Google''; Google devuelve un token que el backend valida directamente contra su API. Si es válido y el campo \texttt{aud} corresponde a la app (evitando suplantación), se crea o recupera el usuario y se emite un JWT propio firmado con HMAC-SHA256 que el cliente usará en todas sus peticiones autenticadas.\\
+\textbf{Motivación}&Sin sesiones de servidor: compatible con despliegue stateless en Railway. Sin contraseñas: menor superficie de ataque. Google verifica la identidad: Scubex no almacena credenciales sensibles.\\
+\textbf{Cuestiones abiertas}&Sin \emph{refresh tokens}: tras 7 días el usuario debe volver a autenticarse. Sin revocación de tokens individuales (logout invalida solo la copia en \texttt{localStorage}).\\
+\textbf{Alternativas}&\textbf{Auth0 / Firebase Authentication}: delega toda la lógica de autenticación a un servicio externo, simplificando la implementación, pero introduce dependencia y coste si el uso escala. \textbf{Session cookies HttpOnly}: Requieren que el servidor mantenga estado de sesión, incompatible con el despliegue stateless en Railway.\\
+	\end{coolTable}
+	\caption{Memorando técnico 005: Autenticación OAuth2 + JWT\label{tab:memo005}}
+\end{table*}
+
+\clearpage
+% ── asigResponsabilidad 002: AuthController (Memo 005) ───────────────────────
+\begin{asigResponsabilidad}{002}{AuthController}
+{ResponseEntity<?> loginWithGoogle(body:Map<String,String>)}
+\pasoPseudo{1. Se extrae el token de Google del cuerpo de la petición. Si está vacío o no se ha enviado, se rechaza con \texttt{400 Bad Request}.}
+\pasoPseudo{2. Se valida el token contactando a Google con \texttt{getForObject(tokeninfo?id\_token=...)}. Si Google no responde o el token es inválido, se rechaza con \texttt{401 Unauthorized}.}
+\pasoPseudo{3. Se verifica que el campo \texttt{aud} de la respuesta coincide con el \texttt{GOOGLE\_CLIENT\_ID} de la aplicación, para evitar que tokens emitidos para otras apps sean aceptados.}
+\pasoPseudo{4. Con los datos de identidad confirmados (sub, email, nombre, foto), se busca o crea el usuario en la base de datos con \texttt{findOrCreate()}. Si el usuario ya existe, se recupera; si es nuevo, se registra.}
+\pasoPseudo{5. Se genera un JWT firmado con HMAC-SHA256 mediante \texttt{generateToken()} y se devuelve al cliente junto con los datos básicos del perfil. A partir de aquí el cliente usa este JWT en todas sus peticiones autenticadas.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{005}{NO}
+\pasoCodigo{6}{UserSvc.}{User findOrCreate(sub, email, name, picture)}{005}{SI}
+\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{005}{NO}
+\end{asigResponsabilidad}
+
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
 
-Se han implementado los siguientes casos de prueba antes del código productivo:
+Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para aislar las dependencias externas (OBIS, iNaturalist, Google).
+
+\subsection{\texttt{SpeciesServiceTest}}
 
 \begin{itemize}
-    \item \textbf{shouldGenerateValidWKTPolygon}: Verifica que, dado un punto \texttt{(36.5, -4.0)} y radio \texttt{5000m}, se genera un String \texttt{POLYGON((...))} geométricamente cerrado (primer y último punto idénticos).
-    
-    \item \textbf{shouldFilterMicroorganismsWithZeroResults}: Mockea una respuesta de OBIS con \textit{Pycnococcaceae} y simula \texttt{total\_results=0} en iNaturalist. Verifica que la lista final de \texttt{SpeciesResponse} está vacía.
-    
-    \item \textbf{shouldEnrichSpeciesWithPhoto}: Mockea OBIS devolviendo \textit{Chimaera monstrosa} e iNaturalist devolviendo foto + nombre común. Verifica que \texttt{SpeciesResponse.photoUrl} no es null y \texttt{commonName == "Rabbit Fish"}.
-    
-    \item \textbf{shouldHandleINaturalistTimeout}: Simula timeout en petición a iNaturalist. Verifica que el sistema descarta esa especie y continúa procesando las demás (resilencia).
+    \item Generación de polígono WKT válido (\texttt{shouldGenerateValidWKTPolygon}): dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
+
+    \item Filtrado de microorganismos sin resultados (\texttt{shouldFilterMicroorganismsWithZeroResults}): OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
+
+    \item Enriquecimiento de especie con foto (\texttt{shouldEnrichSpeciesWithPhoto}): OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
+
+    \item Tolerancia a timeout de iNaturalist (\texttt{shouldHandleINaturalistTimeout}): OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
+
+    \item Estadísticas ecológicas: profundidad, temperatura e IUCN (\texttt{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn}): OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
 \end{itemize}
 
-\subsection{Documentación de API (TD1)}
+\subsection{\texttt{JwtServiceTest}}
 
-Se ha integrado Swagger/OpenAPI 3.0 con \texttt{springdoc-openapi-ui}:
 \begin{itemize}
-    \item \textbf{Interfaz interactiva}: Swagger UI en \texttt{http://localhost:8080/swagger-ui.html}
-    \item \textbf{Especificación}: JSON/YAML generado automáticamente desde anotaciones
-    \item \textbf{Validación}: Parámetros validados mediante anotaciones \texttt{@Parameter}
-    \item \textbf{Respuestas}: \texttt{200 OK} con lista de especies, \texttt{400 Bad Request} para coordenadas inválidas
+    \item Generación de token con claims correctos (\texttt{generateToken\_containsExpectedClaims}): dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
+
+    \item Validación de token: devuelve subject (\texttt{validateToken\_returnsSubject}): token válido devuelve \texttt{googleId} como subject.
+
+    \item Validación de token manipulado: lanza excepción (\texttt{validateToken\_tamperedToken\_throwsException}): token con firma modificada lanza excepción al validar.
 \end{itemize}
 
-\subsection{Integración frontend (TD2)}
+\subsection{\texttt{AuthControllerTest}}
 
-El frontend React consume el endpoint mediante:
 \begin{itemize}
-    \item \textbf{Componentes}: \texttt{MapView.tsx} (mapa interactivo con MapLibre GL JS), \texttt{MapRender.tsx} (renderizado de círculo GeoJSON y gestión de clicks), \texttt{SpeciesPanel.tsx} (resultados), \texttt{ScanningAnimation.tsx} (animación de radar con barrido rotatorio y puntos sincronizados)
-    \item \textbf{Estado}: MobX gestiona especies, carga, errores, centro de escaneo y radio configurado (\texttt{MapStore} + \texttt{SpeciesStore})
-    \item \textbf{Flujo}: Click en mapa $\rightarrow$ fija centro de escaneo y dibuja círculo GeoJSON $\rightarrow$ usuario selecciona radio (500\,m--10\,km) $\rightarrow$ pulsa \emph{Escanear} $\rightarrow$ animación de radar con puntos en sector sincronizado $\rightarrow$ petición HTTP $\rightarrow$ actualización estado $\rightarrow$ renderizado panel
-    \item \textbf{Animación}: Barrido rotatorio (3\,s/vuelta) implementado con Framer Motion. Los puntos de detección se generan cada 80\,ms únicamente en un sector de 45° justo detrás de la línea de barrido, usando \texttt{map.project()} para convertir coordenadas geográficas a píxeles. Los puntos desaparecen tras una rotación completa.
+    \item Login sin credencial: devuelve 400 (\texttt{login\_missingCredential\_returns400}): petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
+
+    \item Login con token rechazado por Google: devuelve 401 (\texttt{login\_googleRejectsToken\_returns401}): \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
+
+    \item Login válido: devuelve 200 con token JWT (\texttt{login\_validCredential\_returns200WithToken}): \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
 \end{itemize}
 
-\subsection{Configuración del proyecto (TD3)}
-
-\textbf{Backend (Spring Boot)}:
-\begin{itemize}
-    \item \textbf{Puerto}: 8080 para el servidor.
-    \item \textbf{APIs externas}: URLs de OBIS, iNaturalist y Open-Meteo configuradas en \texttt{application.properties}.
-    \item \textbf{Base de datos}: H2 en memoria (\texttt{jdbc:h2:mem:scubexdb}) para desarrollo rápido sin persistencia.
-    \item \textbf{Seguridad}: CSRF deshabilitado (API REST), endpoints públicos (\texttt{/api/species}, \texttt{/swagger-ui}). Google OAuth2 implementado con validación de tokens mediante \texttt{googleapis.com/tokeninfo} y generación de JWT (HMAC-SHA256, 7 días de expiración) con \texttt{JwtAuthFilter}.
-    \item \textbf{CORS}: Frontend local (\texttt{localhost:5173}) permitido para desarrollo.
-\end{itemize}
-
-\textbf{Frontend (React + Vite)}:
-\begin{itemize}
-    \item \textbf{Puerto}: 5173 con Hot Module Replacement.
-    \item \textbf{Proxy}: Peticiones a \texttt{/api} redirigidas a \texttt{localhost:8080} (evita CORS).
-    \item \textbf{Gestión de estado}: MobX para estado reactivo de especies y carga.
-\end{itemize}
-
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
+% ─────────────────────────────────────────────────────────────────────────────
 
-El despliegue del proyecto aún no se ha realizado. Actualmente se ejecuta en entorno de desarrollo local:
+Al cierre de esta iteración la aplicación quedó desplegada en la infraestructura descrita en el Arranque del proyecto:
 
 \begin{itemize}
-    \item \textbf{Backend}: \texttt{mvn spring-boot:run} en puerto 8080.
-    \item \textbf{Frontend}: \texttt{npm run dev} en puerto 5173.
+    \item \textbf{Backend (Railway)}: el proceso de arranque ejecuta \texttt{mvn package} y lanza el JAR resultante. Las variables de entorno \texttt{GOOGLE\_CLIENT\_ID}, \texttt{JWT\_SECRET}, \texttt{DATABASE\_URL} y \texttt{CORS\_ALLOWED\_ORIGINS} se configuran desde el panel de Railway.
+    \item \textbf{Frontend (Vercel)}: cada \texttt{push} a \texttt{main} desencadena un despliegue automático. La variable \texttt{VITE\_API\_BASE\_URL} apunta a la URL pública del backend en Railway y \texttt{VITE\_MAPTILER\_KEY} provee acceso a las teselas marineras de MapTiler.
+    \item \textbf{Base de datos (PostgreSQL en Railway)}: accedida mediante \texttt{DATABASE\_URL}; Hibernate gestiona el esquema automáticamente (\texttt{ddl-auto=update}).
 \end{itemize}
 
-En iteraciones futuras se planea despliegue en contenedores Docker y hosting en la nube.
-
-\section{Seguimiento y control}
-
-\textbf{Fase del proyecto}: Iteración 1 (Fases 3-5 de FDD).
-
-\textbf{Estado}:
-\begin{itemize}
-    \item [OK] Endpoint \texttt{/api/species} implementado y testeado.
-    \item [OK] Transformación geométrica (WKT Polygon) funcionando.
-    \item [OK] Filtrado de microorganismos operativo.
-    \item [OK] Enriquecimiento con iNaturalist completo (foto + nombre común).
-    \item [OK] Flujo de escaneo en dos pasos (click + botón) con radio configurable (500\,m--10\,km).
-    \item [OK] Animación de radar con barrido rotatorio y puntos sincronizados en sector.
-    \item [OK] Google OAuth2 con JWT implementado (login, persistencia en \texttt{localStorage}, página de perfil).
-    \item [ADVERTENCIA] Latencia observable en zonas con >30 especies (5-7 segundos). Candidata a optimización en Iteración 3 (sistema de caché).
-\end{itemize}
-
-\textbf{Métricas}:
-\begin{itemize}
-    \item \textbf{Cobertura de tests}: 87\% en \texttt{SpeciesService}.
-    \item \textbf{Tiempo de respuesta (promedio)}: 3.2s para radio de 5km.
-\end{itemize}
-
-\textbf{Decisiones técnicas pendientes}:
-\begin{itemize}
-    \item Implementar caching de taxonomías previamente consultadas en iNaturalist (Redis o in-memory LRU cache).
-    \item Añadir paginación al endpoint (\texttt{?page=1\&size=20}) para manejar áreas con alta biodiversidad.
-\end{itemize}
+La aplicación es accesible públicamente en \texttt{https://scubex.vercel.app} desde la finalización de esta iteración.

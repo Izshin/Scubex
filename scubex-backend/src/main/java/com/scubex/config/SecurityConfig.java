@@ -41,6 +41,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/images/**").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/publications/**").permitAll()
                 .requestMatchers("/api/publications/**").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/**").permitAll()
+                .requestMatchers("/api/users/**").authenticated()
                 .requestMatchers("/api/profile/**").authenticated()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()

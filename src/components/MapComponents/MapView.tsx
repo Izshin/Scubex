@@ -11,12 +11,13 @@ type Props = {
   isScanning?: boolean;
   scanCenter?: { lat: number; lng: number } | null;
   scanRadius?: number;
+  publishCenter?: { lat: number; lng: number } | null;
   publications?: PublicationData[];
 };
 
 export type MapViewRef = { getMap: () => Map | null };
 
-export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publications }, forwardedRef) {
+export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, onMapClick, onPublicationClick, isScanning = false, scanCenter, scanRadius, publishCenter, publications }, forwardedRef) {
   const mapRenderRef = useRef<MapRenderRef>(null);
 
   useImperativeHandle(forwardedRef, () => ({
@@ -46,6 +47,7 @@ export default forwardRef<MapViewRef, Props>(function MapView({ onViewportIdle, 
         isScanning={isScanning}
         scanCenter={scanCenter}
         scanRadius={scanRadius}
+        publishCenter={publishCenter}
         publications={publications}
       />
       <ScanningAnimation 

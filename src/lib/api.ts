@@ -8,6 +8,14 @@ interface BackendSpeciesResponse {
   recordDate?: string;
   photoUrl?: string;
   phylum?: string;
+  depthMin?: number;
+  depthMax?: number;
+  tempMin?: number;
+  tempMax?: number;
+  firstYear?: number;
+  lastYear?: number;
+  globalRecords?: number;
+  iucnCategory?: string;
 }
 
 // Frontend display types  
@@ -19,6 +27,14 @@ interface FrontendSpeciesData {
   last_record: string;
   photoUrl?: string;
   phylum?: string;
+  depthMin?: number;
+  depthMax?: number;
+  tempMin?: number;
+  tempMax?: number;
+  firstYear?: number;
+  lastYear?: number;
+  globalRecords?: number;
+  iucnCategory?: string;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -60,6 +76,16 @@ export async function updateProfile(customName: string, customPictureUrl: string
   return response.json();
 }
 
+export async function deleteAccount(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  if (!response.ok) {
+    throw new Error(`Delete account failed: ${response.status}`);
+  }
+}
+
 // Test function to check if backend is running
 export async function testBackendConnection(): Promise<boolean> {
   try {
@@ -74,16 +100,7 @@ export async function testBackendConnection(): Promise<boolean> {
 }
 
 export async function getZoneSpecies(scanData: { lat: number; lng: number; radius: number }) {
-  console.log('🌊 Calling real backend API:', scanData);
-  
-  // Test backend connection first
-  const isBackendRunning = await testBackendConnection();
-  if (!isBackendRunning) {
-    console.warn(`⚠️ Backend is not running or not accessible at ${API_BASE_URL}`);
-  }
-  
   try {
-    // Build the API URL with query parameters
     const params = new URLSearchParams({
       lat: scanData.lat.toString(),
       lng: scanData.lng.toString(),
@@ -91,7 +108,6 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
     });
     
     const apiUrl = `${API_BASE_URL}/api/species?${params.toString()}`;
-    console.log('📡 API Call:', apiUrl);
     
     // Make the API call to your Spring Boot backend
     const response = await fetch(apiUrl, {
@@ -107,9 +123,7 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
     }
     
     const backendData: BackendSpeciesResponse[] = await response.json();
-    console.log('✅ Backend response:', backendData);
-    
-    // Transform backend data to frontend format and sort by number of records (most first)
+
     const transformedSpecies: FrontendSpeciesData[] = backendData
       .map((species, index) => ({
         taxon_id: index.toString(), // Use index as ID since backend doesn't provide one
@@ -118,35 +132,30 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         records: species.numberOfOccurrences,
         last_record: species.recordDate ? formatDate(species.recordDate) : 'Fecha desconocida',
         photoUrl: species.photoUrl,
-        phylum: species.phylum
+        phylum: species.phylum,
+        depthMin: species.depthMin,
+        depthMax: species.depthMax,
+        tempMin: species.tempMin,
+        tempMax: species.tempMax,
+        firstYear: species.firstYear,
+        lastYear: species.lastYear,
+        globalRecords: species.globalRecords,
+        iucnCategory: species.iucnCategory,
       }))
-      .sort((a, b) => b.records - a.records); // Sort by records in descending order (most records first)
-    
-    console.log('📊 Species sorted by records (highest first):', transformedSpecies.map(s => `${s.scientific_name}: ${s.records} records`));
-    
-    // Calculate total occurrences across all species
+      .sort((a, b) => b.records - a.records);
+
     const totalOccurrences = transformedSpecies.reduce((sum, species) => sum + species.records, 0);
-    console.log('🔢 Total occurrences found:', totalOccurrences);
-    
-    // Return in the format expected by the frontend
-    const frontendData = {
+
+    return {
       species: transformedSpecies,
       counts: {
         total_taxa: transformedSpecies.length,
         total_occurrences: totalOccurrences
       },
-      source: ["OBIS", "iNaturalist"] // Your backend uses these APIs
+      source: ["OBIS", "iNaturalist"]
     };
     
-    console.log('🐠 Transformed data:', frontendData);
-    return frontendData;
-    
   } catch (error) {
-    console.error('❌ Error calling backend API:', error);
-    
-    // Provide helpful error information
-    console.log('🔄 Providing error information instead of mock data...');
-    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const isConnectionError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Network');
     
@@ -194,8 +203,7 @@ function formatDate(dateString: string): string {
     // Format as "YYYY-MM-DD"
     return date.toISOString().split('T')[0];
     
-  } catch (error) {
-    console.warn('⚠️ Error formatting date:', dateString, error);
+  } catch {
     return 'Fecha inválida';
   }
 }
@@ -209,6 +217,8 @@ export interface PublicationData {
   latitude: number;
   longitude: number;
   createdAt: string;
+  likeCount: number;
+  commentCount: number;
   author: {
     email: string;
     name: string;
@@ -287,6 +297,166 @@ export async function updatePublication(id: number, data: { title: string; descr
   return response.json();
 }
 
+// Interaction types
+export interface CommentData {
+  id: number;
+  text: string;
+  createdAt: string;
+  author: {
+    name: string;
+    picture: string;
+    email: string;
+  };
+}
+
+export interface LikeStatus {
+  liked: boolean;
+  count: number;
+}
+
+export interface SaveStatus {
+  saved: boolean;
+}
+
+// Like/Unlike
+export async function toggleLike(pubId: number): Promise<LikeStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/like`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle like failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getLikeStatus(pubId: number): Promise<LikeStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/like`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get like status failed: ${response.status}`);
+  return response.json();
+}
+
+// Save/Unsave
+export async function toggleSave(pubId: number): Promise<SaveStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle save failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getSaveStatus(pubId: number): Promise<SaveStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/save`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get save status failed: ${response.status}`);
+  return response.json();
+}
+
+// Comments
+export async function getComments(pubId: number): Promise<CommentData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get comments failed: ${response.status}`);
+  return response.json();
+}
+
+export async function addComment(pubId: number, text: string): Promise<CommentData> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) throw new Error(`Add comment failed: ${response.status}`);
+  return response.json();
+}
+
+export async function deleteComment(pubId: number, commentId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/publications/${pubId}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Delete comment failed: ${response.status}`);
+}
+
+// ── User / Social types ──
+
+export interface UserSummary {
+  name: string;
+  email: string;
+  picture: string;
+}
+
+export interface PublicProfileData {
+  name: string;
+  email: string;
+  picture: string;
+  followerCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  publicationCount: number;
+  publications: PublicationData[];
+}
+
+export interface FollowStatus {
+  following: boolean;
+  followerCount: number;
+}
+
+// Public profile
+export async function getPublicProfile(email: string): Promise<PublicProfileData> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get profile failed: ${response.status}`);
+  return response.json();
+}
+
+// Follow / Unfollow
+export async function toggleFollow(email: string): Promise<FollowStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/follow`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Toggle follow failed: ${response.status}`);
+  return response.json();
+}
+
+// Followers / Following lists
+export async function getFollowers(email: string): Promise<UserSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/followers`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get followers failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getFollowingList(email: string): Promise<UserSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}/following`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Get following failed: ${response.status}`);
+  return response.json();
+}
+
+// Saved publications (own profile)
+export async function getSavedPublications(): Promise<PublicationData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/users/me/saved`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Get saved failed: ${response.status}`);
+  return response.json();
+}
+
 // Weather types
 export interface WeatherData {
   // Atmospheric
@@ -333,4 +503,69 @@ export async function getWeather(lat: number, lng: number): Promise<WeatherData>
   const data: WeatherData = await response.json();
   console.log('✅ Weather response:', data);
   return data;
+}
+
+// ── Notifications ──
+
+export interface NotificationData {
+  id: number;
+  type: 'FOLLOW' | 'LIKE' | 'COMMENT' | 'MENTION';
+  read: boolean;
+  createdAt: string;
+  actorName: string;
+  actorPicture: string;
+  actorEmail: string;
+  publicationId: number | null;
+  publicationTitle: string;
+  commentSnippet: string;
+}
+
+export async function getNotifications(): Promise<NotificationData[]> {
+  const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error('Failed to fetch notifications');
+  return res.json();
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const res = await fetch(`${API_BASE_URL}/api/notifications/unread-count`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) return 0;
+  const data = await res.json();
+  return data.count ?? 0;
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+export async function deleteNotification(id: number): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+// ── User search (mention autocomplete) ──
+
+export async function searchUsers(q: string): Promise<UserSummary[]> {
+  if (q.length < 2) return [];
+  const res = await fetch(
+    `${API_BASE_URL}/api/users/search?q=${encodeURIComponent(q)}`,
+    { headers: { ...getAuthHeaders() } },
+  );
+  if (!res.ok) return [];
+  return res.json();
 }
