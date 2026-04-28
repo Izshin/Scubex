@@ -77,7 +77,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Solución}&\texttt{evaluateDivingCondition()} aplica primero un conjunto de anulaciones críticas: oleaje~$>$~2{,}5\,m, corriente~$>$~5\,km/h, viento~$>$~40\,km/h, tormenta eléctrica (código WMO 95/96/99) o visibilidad~$<$~1\,000\,m devuelven inmediatamente \texttt{"bad"}. Si no se cumple ninguna anulación, se puntúan seis factores con pesos distintos (oleaje~=~3, corriente~=~3, visibilidad~=~2, viento~=~2, código meteorológico~=~2, probabilidad de lluvia~=~1) y se calcula la media ponderada: $\geq$~1{,}5 es \emph{buenas}, $\geq$~0{,}8 es \emph{tolerables}, resto \emph{adversas}.\\
 \textbf{Motivación}&El oleaje y la corriente son los factores más peligrosos para un buceador; por eso tienen el peso más alto y los umbrales de anulación más conservadores. La probabilidad de lluvia tiene el peso mínimo porque no afecta directamente a la seguridad bajo el agua.\\
 \textbf{Cuestiones abiertas}&Los umbrales son fijos e iguales para todos los usuarios. Un perfil de ``buceador avanzado'' podría tolerar corrientes de hasta 4\,km/h sin problema, mientras que un principiante debería ver \emph{adversas} con corriente de 2\,km/h.\\
-\textbf{Alternativas}&\textbf{Umbrales fijos sin ponderación}: más simple, pero no distingue entre situaciones ligeramente adversas y peligrosas. \textbf{Externalizar la lógica al frontend}: el cliente calcularía la condición con los valores crudos, pero requeriría duplicar la lógica si en el futuro se añade otra interfaz.\\
+\textbf{Alternativas}&\textbf{Umbrales fijos sin ponderación}: más simple, pero no tiene una correspondencia correcta con los factores del buceo, el oleaje siempre importará mas que si va a llover.\\
 	\end{coolTable}
 	\caption{Memorando técnico 007: Evaluación de Condiciones\label{tab:memo007}}
 \end{table*}
@@ -91,7 +91,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Resumen}&Los datos de clima se guardan en base de datos durante 30 minutos por coordenadas redondeadas, evitando repetir las llamadas para puntos cercanos o consultas frecuentes sobre la misma zona.\\
 \midrule
 \textbf{Factores causantes}&El mapa es interactivo y el usuario puede mover el punto libremente. Sin caché, cada pequeño desplazamiento generaría dos peticiones HTTP hacia Open-Meteo, con la latencia acumulada correspondiente.\\
-\textbf{Solución}&Se aplica el mismo esquema de redondeo de coordenadas descrito en el Memorando~\ref{tab:memo003}: las coordenadas se truncan antes de usarlas como clave de búsqueda, agrupando puntos cercanos bajo la misma entrada. Si existe un registro de menos de 30 minutos para esas coordenadas en la tabla \texttt{cached\_weather}, se devuelve directamente sin tocar Open-Meteo. El TTL de 30 minutos equilibra frescura de los datos climáticos con eficiencia: el tiempo meteorológico no cambia de forma significativa en ventanas menores.\\
+\textbf{Solución}&Se aplica el mismo esquema de redondeo de coordenadas descrito en el Memorando~\ref{tab:memo003}: las coordenadas se redondean antes de usarlas como clave de búsqueda, agrupando puntos cercanos bajo la misma entrada. Si existe un registro de menos de 30 minutos para esas coordenadas en la tabla \texttt{cached\_weather}, se devuelve directamente sin tocar Open-Meteo. El TTL de 30 minutos equilibra frescura de los datos climáticos con eficiencia: el tiempo meteorológico no cambia de forma significativa en ventanas menores.\\
 \textbf{Motivación}&Los datos de clima son mucho más volátiles que los de biodiversidad, por lo que el TTL es 30 minutos frente a las 48 horas del caché de escaneos (Memorando~\ref{tab:memo003}). Reutilizar el mismo mecanismo de caché en base de datos evita añadir nuevos servicios: la tabla \texttt{cached\_weather} sigue exactamente el mismo patrón que \texttt{CachedScan}.\\
 \textbf{Cuestiones abiertas}&El caso límite del redondeo (dos puntos muy próximos que caen en celdas distintas) es el mismo ya reconocido en el Memorando~\ref{tab:memo003} para el caché de escaneos, y se acepta por la misma razón: baja frecuencia e impacto despreciable.\\
 \textbf{Alternativas}&\textbf{TTL más corto (5--10 min)}: más fresco, pero aumenta significativamente las llamadas a Open-Meteo. \textbf{Sin caché}: máxima frescura, pero penaliza la experiencia en sesiones de exploración del mapa.\\
@@ -104,20 +104,20 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \begin{asigResponsabilidad}{003}{WeatherService}
 {WeatherResponse getWeather(lat:double, lng:double)}
 \pasoPseudo{1. Se redondean las coordenadas a 2 decimales para agrupar puntos cercanos en la misma clave de caché.}
-\pasoPseudo{2. Se busca en base de datos un resultado reciente (menos de 30 min) para esas coordenadas. Si existe, se convierte al DTO de respuesta y se devuelve directamente --- fin.}
+\pasoPseudo{2. Se busca en base de datos un resultado reciente (menos de 30 min) para esas coordenadas. Si existe, se convierte al DTO de respuesta y se devuelve directamente, fin.}
 \pasoPseudo{3. Si no hay caché, se consulta la API de previsión atmosférica con \texttt{callForecastApi()}: temperatura, humedad, viento, precipitación, visibilidad y código meteorológico WMO.}
 \pasoPseudo{4. Se consulta la API marina con \texttt{callMarineApi()}: altura de ola, periodo, corriente oceánica, temperatura superficial del mar y oleaje de fondo. Si la zona no tiene datos marinos (zona continental), esta llamada devuelve nulo y esos campos quedan vacíos.}
 \pasoPseudo{5. Se fusionan los datos de ambas APIs en un \texttt{WeatherResponse} con \texttt{buildWeatherResponse()}.}
 \pasoPseudo{6. Se evalúan las condiciones de buceo con \texttt{evaluateDivingCondition()} y se añade el resultado (\texttt{"good"}, \texttt{"moderate"} o \texttt{"bad"}) al \texttt{WeatherResponse}.}
 \pasoPseudo{7. Se guarda el resultado completo en caché con \texttt{saveToCache()} y se devuelve al cliente.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{1}{WeatherSvc.}{double roundCoord(value)}{008}{SI}
-\pasoCodigo{2}{WeatherRepo.}{Optional<CachedWeather> findFirstByRoundedLatAndRoundedLngAndCreatedAtAfter(lat, lng, cutoff)}{008}{SI}
-\pasoCodigo{3}{WeatherSvc.}{ForecastApiResponse.CurrentWeather callForecastApi(lat, lng)}{006}{SI}
-\pasoCodigo{4}{WeatherSvc.}{MarineApiResponse.CurrentMarine callMarineApi(lat, lng)}{006}{SI}
+\pasoCodigo{1}{WeatherSvc.}{double roundCoord(value)}{008}{NO}
+\pasoCodigo{2}{WeatherRepo.}{Optional<CachedWeather> findFirstByRoundedLatAndRoundedLngAndCreatedAtAfter(lat, lng, cutoff)}{008}{NO}
+\pasoCodigo{3}{WeatherSvc.}{ForecastApiResponse.CurrentWeather callForecastApi(lat, lng)}{006}{NO}
+\pasoCodigo{4}{WeatherSvc.}{MarineApiResponse.CurrentMarine callMarineApi(lat, lng)}{006}{NO}
 \pasoCodigo{5}{WeatherSvc.}{WeatherResponse buildWeatherResponse(atmosphere, marine)}{006}{SI}
 \pasoCodigo{6}{WeatherSvc.}{String evaluateDivingCondition(wr)}{007}{SI}
-\pasoCodigo{7}{WeatherSvc.}{void saveToCache(roundedLat, roundedLng, wr)}{008}{SI}
+\pasoCodigo{7}{WeatherSvc.}{void saveToCache(roundedLat, roundedLng, wr)}{008}{NO}
 \end{asigResponsabilidad}
 
 % ─────────────────────────────────────────────────────────────────────────────

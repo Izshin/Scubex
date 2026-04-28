@@ -1,0 +1,159 @@
+%!TEX root =  tfg.tex
+\chapter{Iteración 3: Publicaciones}
+
+\begin{abstract}
+Esta iteración añade el sistema de publicaciones de Scubex. Los usuarios autenticados pueden crear publicaciones geolocalizadas con imagen desde cualquier punto del mapa, y cualquier visitante puede consultarlas directamente desde los marcadores del mapa.\end{abstract}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Características desarrolladas esta iteración}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}
+\item Publicaciones geolocalizadas: crear, editar y eliminar entradas con título, descripción e imagen, ancladas a un punto del mapa. Ver Tabla~\ref{tab:valorAportadoPub}.
+\item Almacenamiento de imágenes embebido en base de datos, sin dependencias de servicios externos de almacenamiento. Ver Tabla~\ref{tab:valorAportadoImg}.
+\end{enumerate}
+
+% ── Tabla 1: Publicaciones geolocalizadas ────────────────────────────────────
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado: Publicaciones Geolocalizadas}
+\textbf{Propuesta}&Sistema de publicaciones con geolocalización integrada en el mapa: el usuario hace clic en un punto y puede crear una entrada con título, descripción e imagen anclada a esas coordenadas.\\
+\midrule
+\textbf{Valor}&Permite a los usuarios compartir experiencias de buceo en el punto exacto del mapa donde ocurrieron, creando un diario colectivo georreferenciado de inmersiones. Otros usuarios pueden descubrir publicaciones de zonas cercanas simplemente explorando el mapa, sin necesidad de buscar por texto.\\
+\textbf{Coste}&Modelo de datos con coordenadas indexadas, gestión de imágenes en base de datos, filtrado por \emph{bounding box} del viewport, formulario de creación anclado visualmente al marcador con geocoding inverso del nombre del lugar.\\
+\textbf{Opciones}&\textbf{Feed cronológico sin mapa}: más simple (tipo Instagram), pero pierde la dimensión geográfica que es el elemento diferenciador de Scubex; el usuario no puede descubrir publicaciones por zona. \textbf{Lista de spots predefinidos}: limita la libertad del usuario a zonas conocidas y no permite compartir descubrimientos propios.\\
+\textbf{Riesgos}&Sin paginación en el endpoint de área, se devuelven todas las publicaciones del \emph{bounding box} visible; en zonas de alta densidad podría generar respuestas pesadas. Los usuarios pueden publicar en cualquier coordenada, incluyendo puntos terrestres sin relación con el buceo.\\
+\textbf{Deuda técnica}&Sin paginación. Sin moderación de contenido. Sin validación del tamaño máximo del \emph{bounding box} para evitar consultas excesivamente amplias. Sin tests unitarios para \texttt{PublicationService} ni \texttt{PublicationController}.\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado: Publicaciones Geolocalizadas\label{tab:valorAportadoPub}}
+\end{table*}
+
+% ── Tabla 2: Almacenamiento de imágenes ──────────────────────────────────────
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Análisis de valor aportado: Almacenamiento de Imágenes}
+\textbf{Propuesta}&Las imágenes adjuntas a publicaciones se almacenan como \emph{blob} binario en PostgreSQL. El backend las sirve directamente vía \texttt{GET /api/images/\{id\}} con cabeceras de caché HTTP de un año.\\
+\midrule
+\textbf{Valor}&Permite adjuntar fotografías a las publicaciones sin coste adicional ni dependencias externas. Las imágenes son permanentes mientras la base de datos exista y la caché HTTP inmutable evita recargas innecesarias en el navegador.\\
+\textbf{Coste}&El almacenamiento de la base de datos crece linealmente con cada imagen subida. Sin compresión ni redimensionado del lado del servidor. Railway, donde se despliega el backend, tiene un límite de almacenamiento en el plan gratuito.\\
+\textbf{Opciones}&\textbf{Cloudinary}: CDN integrado y transformaciones automáticas (redimensionado, compresión), pero requiere credenciales y tiene cuota de uso. \textbf{Amazon S3}: más escalable, pero añade coste y dependencia de AWS. Ambas opciones escalan mejor a largo plazo pero añaden complejidad innecesaria para el MVP.\\
+\textbf{Riesgos}&Si Railway limita el almacenamiento del plan gratuito, las imágenes podrían quedar inaccesibles. El campo \texttt{@Lob} puede provocar carga en memoria inesperada si se recuperan entidades \texttt{UploadedImage} en consultas de lista.\\
+\textbf{Deuda técnica}&Sin redimensionado ni compresión: las imágenes se sirven siempre al tamaño original. Sin generación de miniaturas para vistas de lista. Sin límite de imágenes por usuario.\\
+	\end{coolTable}
+	\caption{Análisis de valor aportado: Almacenamiento de Imágenes\label{tab:valorAportadoImg}}
+\end{table*}
+
+\clearpage
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Diseño}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El diagrama UML de la Fig.~\ref{fig:diseno03} muestra los componentes del sistema de publicaciones: controladores, servicio, repositorios y entidades, así como la dependencia del módulo de geocoding en el frontend.
+
+\begin{figure}[htbp]
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2cm}Diagrama UML pendiente de generación\vspace{2cm}}}
+\caption{Diagrama UML de diseño para la iteración 3\label{fig:diseno03}}
+\end{center}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Implementación}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Se presentan primero los memorandos técnicos con las decisiones de diseño; a continuación, los pseudocódigos que las materializan.
+
+% ── Memorando 009: Imágenes como BLOB ────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 009: Almacenamiento de Imágenes como BLOB}
+\textbf{Asunto}&Las publicaciones requieren imágenes pero el backend no dispone de servicio de almacenamiento de ficheros.\\
+\textbf{Resumen}&Las imágenes se almacenan como array de bytes en la entidad \texttt{UploadedImage} dentro de PostgreSQL; el servidor las sirve directamente con caché HTTP de un año.\\
+\midrule
+\textbf{Factores causantes}&Railway no ofrece almacenamiento de ficheros en su plan gratuito, por lo que no es posible guardar imágenes en disco. Los servicios externos como Cloudinary o S3 añaden dependencias y coste que no están justificados en el MVP.\\
+\textbf{Solución}&\texttt{ImageController.upload()} valida el tipo MIME (solo JPEG, PNG, GIF y WebP) y el tamaño máximo (5\,MB). Si el archivo pasa la validación, se leen sus bytes con \texttt{file.getBytes()} y se persisten en la tabla \texttt{uploaded\_images} junto al \texttt{contentType}. La URL devuelta al cliente es \texttt{/api/images/\{id\}}, que el servidor resuelve leyendo el blob de base de datos y respondiendo con el \texttt{Content-Type} correcto y la cabecera \texttt{Cache-Control: public, max-age=31536000, immutable}, evitando peticiones repetidas para la misma imagen.\\
+\textbf{Motivación}&Cero dependencias externas adicionales. PostgreSQL, ya presente en el proyecto, puede almacenar blobs sin configuración extra. La cabecera \texttt{Cache-Control: immutable} garantiza que el navegador no vuelva a pedir la misma imagen durante un año, dado que el contenido de un blob identificado por \texttt{id} nunca cambia.\\
+\textbf{Cuestiones abiertas}&A medida que crezca el número de publicaciones, el tamaño de la base de datos crecerá de forma proporcional. Las consultas que recuperen entidades \texttt{UploadedImage} completas cargarán el campo \texttt{@Lob} en memoria aunque no se use el binario.\\
+\textbf{Alternativas}&\textbf{Cloudinary}: CDN y transformaciones automáticas, pero requiere cuenta y cuota. \textbf{MinIO auto-alojado}: más escalable, pero añade un servicio adicional a mantener y desplegar.\\
+	\end{coolTable}
+	\caption{Memorando técnico 009: Almacenamiento de Imágenes como BLOB\label{tab:memo009}}
+\end{table*}
+
+% ── Memorando 010: Geocoding inverso ─────────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 010: Geocoding Inverso con Nominatim}
+\textbf{Asunto}&Las publicaciones se anclan a coordenadas, pero mostrar latitud y longitud crudas no aporta contexto al usuario.\\
+\textbf{Resumen}&El frontend resuelve las coordenadas a un nombre de lugar legible usando Nominatim con estrategia de zoom descendente y caché a nivel de módulo.\\
+\midrule
+\textbf{Factores causantes}&El popup de creación y el detalle de publicación muestran dónde está el punto marcado en el mapa. Para el usuario es mucho más informativo ver ``Cabo de Gata'' que ver ``36.7291,\,-2.1929''.\\
+\textbf{Solución}&\texttt{reverseGeocode(lat, lng)} prueba los niveles de zoom 14\,$\to$\,10\,$\to$\,5 de Nominatim buscando progresivamente nombres menos específicos: playa o zona turística (\texttt{zoom=14}), ciudad o municipio (\texttt{zoom=10}), región (\texttt{zoom=5}). Si ningún nivel devuelve nombre, se usa ``Mar abierto'' como \emph{fallback}. Los resultados se guardan en un \texttt{Map<string,\,string>} a nivel de módulo con la clave \texttt{lat.toFixed(4),lng.toFixed(4)} (\,$\approx$\,11\,m de precisión), de modo que el mismo punto no genera más de una petición HTTP durante la sesión.\\
+\textbf{Motivación}&Nominatim es gratuito y sin clave de API. La caché de módulo evita llamadas repetidas cuando el usuario vuelve al mismo punto en la misma sesión. El zoom descendente garantiza el nombre más específico disponible sin requerir peticiones paralelas.\\
+\textbf{Cuestiones abiertas}&Nominatim impone un límite de 1\,req/s para uso no comercial. En sesiones de exploración intensa, el \texttt{AbortController} cancela las peticiones de puntos que el usuario abandona rápidamente, mitigando la carga, pero sin una cola controlada podría alcanzarse el límite.\\
+\textbf{Alternativas}&\textbf{Google Maps Geocoding API}: mayor precisión, pero de pago. \textbf{MapTiler Geocoding}: ya integrado en el proyecto para el buscador del mapa, pero consume la cuota mensual de peticiones del plan gratuito.\\
+	\end{coolTable}
+	\caption{Memorando técnico 010: Geocoding Inverso con Nominatim\label{tab:memo010}}
+\end{table*}
+
+% ── Memorando 011: Filtrado por viewport ─────────────────────────────────────
+\begin{table*}[!ht]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 011: Filtrado de Publicaciones por Viewport del Mapa}
+\textbf{Asunto}&Cargar la totalidad de publicaciones en cada renderizado del mapa sería ineficiente conforme crece el volumen de datos.\\
+\textbf{Resumen}&Las publicaciones se consultan filtradas por el \emph{bounding box} visible del mapa (\texttt{/api/publications/area}), limitando la transferencia a lo que el usuario puede ver en pantalla.\\
+\midrule
+\textbf{Factores causantes}&Un endpoint \texttt{GET /api/publications} global devolvería todas las publicaciones de la base de datos en cada petición. A medida que crece el contenido, la transferencia y el tiempo de respuesta se vuelven prohibitivos.\\
+\textbf{Solución}&\texttt{PublicationController} expone \texttt{GET /api/publications/area?latMin=\&latMax=\&lngMin=\&lngMax=}. El repositorio filtra por las columnas \texttt{latitude} y \texttt{longitude} dentro del rango con \texttt{findByLatitudeBetweenAndLongitudeBetween()}. La entidad \texttt{Publication} declara un índice compuesto \texttt{idx\_publication\_coords\,(latitude,\,longitude)} que acelera la consulta. El frontend calcula los \emph{bounds} actuales del mapa y los pasa como parámetros en cada petición de refresco.\\
+\textbf{Motivación}&Solo se transfieren los datos visibles. El índice compuesto en coordenadas hace que la consulta de área sea eficiente incluso con miles de publicaciones.\\
+\textbf{Cuestiones abiertas}&Sin un límite de tamaño del \emph{bounding box}, un zoom muy alejado podría devolver un número elevado de publicaciones en una sola respuesta. Sin paginación, la respuesta no está acotada en tamaño.\\
+\textbf{Alternativas}&\textbf{Paginación clásica (offset/limit)}: más simple pero no tiene en cuenta la posición geográfica; el usuario recibiría entradas de zonas que no está viendo. \textbf{Agrupación geográfica (\emph{clustering})}: reduce la carga visual de marcadores, pero no reduce la transferencia de datos.\\
+	\end{coolTable}
+	\caption{Memorando técnico 011: Filtrado por Viewport del Mapa\label{tab:memo011}}
+\end{table*}
+
+\clearpage
+% ── asigResponsabilidad 004: PublicationController.create() ──────────────────
+\begin{asigResponsabilidad}{004}{PublicationController}
+{ResponseEntity<?> create(body:Map<String,Object>, auth:Authentication)}
+\pasoPseudo{1. Se verifica la identidad del usuario con \texttt{authHelper.getUser(auth)}. Si no hay sesión activa, se lanza una excepción que Spring convierte en \texttt{401 Unauthorized}.}
+\pasoPseudo{2. Se extraen y validan los campos del cuerpo: \texttt{title} no puede estar vacío, \texttt{latitude} y \texttt{longitude} son obligatorios. Si alguno falta, se devuelve \texttt{400 Bad Request}.}
+\pasoPseudo{3. Se construye la entidad \texttt{Publication} con los datos del cuerpo (título, descripción, URL de imagen y coordenadas) y el usuario autenticado.}
+\pasoPseudo{4. Se persiste la publicación con \texttt{publicationService.create()}, que delega en \texttt{publicationRepository.save()}. El \texttt{@PrePersist} asigna \texttt{createdAt} automáticamente.}
+\pasoPseudo{5. Se proyecta la entidad persistida en un \texttt{Map<String,Object>} con \texttt{toDto()}, incluyendo los datos del autor y los contadores de interacciones, y se devuelve \texttt{200 OK}.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{1}{AuthHelper}{User getUser(auth)}{005}{NO}
+\pasoCodigo{4}{PubRepo.}{Publication save(publication)}{011}{NO}
+\pasoCodigo{5}{PubController}{Map<String,Object> toDto(p)}{011}{SI}
+\end{asigResponsabilidad}
+
+% ── asigResponsabilidad 005: ImageController.upload() ────────────────────────
+\begin{asigResponsabilidad}{005}{ImageController}
+{ResponseEntity<?> upload(file:MultipartFile, auth:Authentication)}
+\pasoPseudo{1. Se verifica que el usuario está autenticado. Si \texttt{auth} es nulo, se devuelve \texttt{401 Unauthorized}.}
+\pasoPseudo{2. Se valida el archivo: no puede estar vacío, no puede superar los 5\,MB y el \texttt{Content-Type} debe ser JPEG, PNG, GIF o WebP. Cualquier violación devuelve \texttt{400 Bad Request}.}
+\pasoPseudo{3. Se leen los bytes del archivo con \texttt{file.getBytes()} y se construye la entidad \texttt{UploadedImage} con el array de bytes y el \texttt{contentType}.}
+\pasoPseudo{4. Se persiste la imagen en base de datos con \texttt{imageRepository.save()}. El \texttt{@PrePersist} asigna \texttt{createdAt} automáticamente.}
+\pasoPseudo{5. Se devuelve la URL \texttt{/api/images/\{id\}} al cliente, que la usará como valor del campo \texttt{imageUrl} al crear o editar la publicación.}
+\cabeceraMetodosBajoNivel
+\pasoCodigo{3}{MultipartFile}{byte[] getBytes()}{009}{NO}
+\pasoCodigo{4}{ImageRepo.}{UploadedImage save(image)}{009}{NO}
+\end{asigResponsabilidad}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
+
+No se han implementado pruebas unitarias específicas para \texttt{PublicationService} ni \texttt{PublicationController} en esta iteración. La validación de los endpoints se realizó mediante pruebas manuales con un cliente REST, verificando los flujos de creación, edición, eliminación y consulta por área.
+
+La ausencia de tests automatizados queda recogida como deuda técnica en la Tabla~\ref{tab:valorAportadoPub}. Los casos de prueba prioritarios para una futura cobertura serían: creación con campos obligatorios ausentes (\texttt{400}), intento de edición o borrado de publicación ajena (\texttt{403}), subida de imagen con tipo MIME no permitido (\texttt{400}) y consulta de área con \emph{bounding box} vacío.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Despliegue}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Esta iteración añadió dos nuevas tablas a la base de datos: \texttt{publications} y \texttt{uploaded\_images}, ambas creadas automáticamente por Hibernate al arrancar el servicio en Railway con \texttt{ddl-auto=update}. No fue necesario añadir nuevas variables de entorno ni credenciales, ya que el almacenamiento de imágenes se realiza en la misma base de datos PostgreSQL existente.

@@ -166,13 +166,13 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \pasoPseudo{4.3. Si iNaturalist devuelve foto y nombre común, se obtienen datos ecológicos de OBIS (profundidad, temperatura, registros históricos, categoría IUCN) con \texttt{callObisEcoStats()} y se guarda todo en caché.}
 \pasoPseudo{5. Se persiste el resultado completo del escaneo con \texttt{saveToCache()} y se devuelve la lista de especies enriquecidas.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{003}{SI}
-\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{003}{SI}
-\pasoCodigo{5}{SpeciesSvc.}{String createPolygonFromRadius(lat, lng, radius)}{001}{SI}
-\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001\newline 002}{SI}
-\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{002\newline 004}{SI}
-\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{004}{SI}
-\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{003\newline 004}{SI}
+\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{003}{NO}
+\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{003}{NO}
+\pasoCodigo{5}{SpeciesSvc.}{String createPolygonFromRadius(lat, lng, radius)}{001}{NO}
+\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001\newline 002}{NO}
+\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{002\newline 004}{NO}
+\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{004}{NO}
+\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{003\newline 004}{NO}
 \end{asigResponsabilidad}
 
 % ── Memorando 005: OAuth2 + JWT ───────────────────────────────────────────────
@@ -202,9 +202,9 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \pasoPseudo{4. Con los datos de identidad confirmados (sub, email, nombre, foto), se busca o crea el usuario en la base de datos con \texttt{findOrCreate()}. Si el usuario ya existe, se recupera; si es nuevo, se registra.}
 \pasoPseudo{5. Se genera un JWT firmado con HMAC-SHA256 mediante \texttt{generateToken()} y se devuelve al cliente junto con los datos básicos del perfil. A partir de aquí el cliente usa este JWT en todas sus peticiones autenticadas.}
 \cabeceraMetodosBajoNivel
-\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{005}{SI}
+\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{005}{NO}
 \pasoCodigo{6}{UserSvc.}{User findOrCreate(sub, email, name, picture)}{005}{SI}
-\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{005}{SI}
+\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{005}{NO}
 \end{asigResponsabilidad}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -216,35 +216,35 @@ Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para ais
 \subsection{\texttt{SpeciesServiceTest}}
 
 \begin{itemize}
-    \item \textbf{shouldGenerateValidWKTPolygon}: dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
+    \item Generación de polígono WKT válido (\texttt{shouldGenerateValidWKTPolygon}): dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
 
-    \item \textbf{shouldFilterMicroorganismsWithZeroResults}: OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
+    \item Filtrado de microorganismos sin resultados (\texttt{shouldFilterMicroorganismsWithZeroResults}): OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
 
-    \item \textbf{shouldEnrichSpeciesWithPhoto}: OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
+    \item Enriquecimiento de especie con foto (\texttt{shouldEnrichSpeciesWithPhoto}): OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
 
-    \item \textbf{shouldHandleINaturalistTimeout}: OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
+    \item Tolerancia a timeout de iNaturalist (\texttt{shouldHandleINaturalistTimeout}): OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
 
-    \item \textbf{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn}: OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
+    \item Estadísticas ecológicas: profundidad, temperatura e IUCN (\texttt{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn}): OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
 \end{itemize}
 
 \subsection{\texttt{JwtServiceTest}}
 
 \begin{itemize}
-    \item \textbf{generateToken\_containsExpectedClaims}: dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
+    \item Generación de token con claims correctos (\texttt{generateToken\_containsExpectedClaims}): dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
 
-    \item \textbf{validateToken\_returnsSubject}: token válido devuelve \texttt{googleId} como subject.
+    \item Validación de token: devuelve subject (\texttt{validateToken\_returnsSubject}): token válido devuelve \texttt{googleId} como subject.
 
-    \item \textbf{validateToken\_tamperedToken\_throwsException}: token con firma modificada lanza excepción al validar.
+    \item Validación de token manipulado: lanza excepción (\texttt{validateToken\_tamperedToken\_throwsException}): token con firma modificada lanza excepción al validar.
 \end{itemize}
 
 \subsection{\texttt{AuthControllerTest}}
 
 \begin{itemize}
-    \item \textbf{login\_missingCredential\_returns400}: petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
+    \item Login sin credencial: devuelve 400 (\texttt{login\_missingCredential\_returns400}): petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
 
-    \item \textbf{login\_googleRejectsToken\_returns401}: \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
+    \item Login con token rechazado por Google: devuelve 401 (\texttt{login\_googleRejectsToken\_returns401}): \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
 
-    \item \textbf{login\_validCredential\_returns200WithToken}: \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
+    \item Login válido: devuelve 200 con token JWT (\texttt{login\_validCredential\_returns200WithToken}): \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
 \end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────────────
