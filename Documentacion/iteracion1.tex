@@ -38,7 +38,7 @@ con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 {Análisis de valor aportado: Escáner de Biodiversidad}
 \textbf{Propuesta}&Escáner de biodiversidad marina que consulta registros científicos de OBIS y enriquece cada especie con foto y nombre común de iNaturalist.\\
 \midrule
-\textbf{Valor}&Permite descubrir la fauna marina real de una zona validada científicamente (>150M registros OBIS) con representación visual, reduciendo la latencia de respuestas repetidas gracias a la caché.\\
+\textbf{Valor}&Permite descubrir la fauna marina real de una zona validada científicamente (>150M registros OBIS) con representación visual. Al desplegar la tarjeta de cada especie, el usuario puede consultar su rango de profundidad, temperatura, primer y último avistamiento, registros globales y categoría IUCN. La caché reduce la latencia de consultas repetidas sobre la misma zona.\\
 \textbf{Coste}&Integración con dos APIs externas (OBIS e iNaturalist) y diseño de una caché de dos niveles para evitar latencias excesivas. Esfuerzo alto en la primera iteración por la coordinación de múltiples llamadas en paralelo.\\
 \textbf{Opciones}&\textbf{Buscador de especie}: el usuario busca una especie concreta y la app le indica en qué zonas se encuentra; útil si ya sabes lo que buscas. Sin embargo el escáner es más intuitivo y expone todo el rango de especies de una zona sin que el usuario necesite saber de antemano qué buscar.\\\\
 \textbf{Riesgos}&Rate limit de iNaturalist (100 req/min). Inconsistencias entre bases de datos (especie en OBIS sin entrada en iNaturalist). Latencia acumulada en primer escaneo de una zona sin caché.\\
