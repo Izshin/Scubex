@@ -1,0 +1,195 @@
+﻿@startuml
+' --- Configuración Visual ---
+skinparam shadowing true
+skinparam roundcorner 10
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 70
+
+skinparam legend {
+    BackgroundColor #FFFFFF
+    BorderColor #DDDDDD
+    BorderThickness 1
+}
+
+!define CONTROLLER_COLOR #D5E8D4
+!define SERVICE_COLOR #DAE8FC
+!define REPO_COLOR #FFF2CC
+!define ENTITY_COLOR #F8CECC
+!define CONN_COLOR #8E44AD
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor #333333
+    BorderColor #666666
+}
+skinparam class<<Controller>> {
+    BackgroundColor CONTROLLER_COLOR
+    BorderColor #82B366
+}
+skinparam class<<Service>> {
+    BackgroundColor SERVICE_COLOR
+    BorderColor #6C8EBF
+}
+skinparam class<<Repository>> {
+    BackgroundColor REPO_COLOR
+    BorderColor #D6B656
+}
+skinparam class<<Entity>> {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #B85450
+}
+skinparam class<<Conn>> {
+    BackgroundColor CONN_COLOR
+    BorderColor #6C3483
+    FontColor white
+    FontStyle bold
+    MinimumWidth 26
+    MinimumHeight 26
+}
+
+package "Web Layer" {
+    together {
+        class PublicationController << Controller >> {
+            +create(body, auth)
+            +getAll()
+            +getInArea(latMin, latMax, lngMin, lngMax)
+            +getById(id)
+            +getMine(auth)
+            +update(id, body, auth)
+            +delete(id, auth)
+            -toDto(p)
+        }
+        class ImageController << Controller >> {
+            +upload(file, auth)
+            +get(id)
+        }
+    }
+    together {
+        class ProfileController << Controller >> {
+            +getProfile(auth)
+            +updateProfile(body, auth)
+            +deleteAccount(auth)
+        }
+        class UserPublicController << Controller >> {
+            +getPublicProfile(email, auth)
+            +searchUsers(q, auth)
+        }
+    }
+    ' Conector ①: lado Web (controllers -> AuthHelper)
+    class "①" as conn_auth_w <<Conn>>
+}
+
+package "Business Logic" {
+    ' Conector ①: lado Business (-> AuthHelper)
+    class "①" as conn_auth_b <<Conn>>
+    class AuthHelper << Service >> {
+        +getUser(auth)
+    }
+    together {
+        class PublicationService << Service >> {
+            +create(publication)
+            +getAll()
+            +getByUser(user)
+            +getInArea(latMin, latMax, lngMin, lngMax)
+            +getById(id)
+            +update(id, updated, user)
+            +delete(id, user)
+        }
+        class UserService << Service >> {
+            +findOrCreate(sub, email, name, picture)
+            +findByEmail(email)
+            +findById(id)
+            +updateProfile(googleId, customName, customPictureUrl)
+            +deleteAccount(googleId)
+        }
+        class JwtService << Service >> {
+            +generateToken(user)
+            +validateToken(token)
+        }
+    }
+}
+
+package "Persistence" {
+    interface PublicationRepository << Repository >> {
+        +findAllByOrderByCreatedAtDesc()
+        +findByUser(user)
+        +findByLatitudeBetweenAndLongitudeBetween()
+    }
+    interface ImageRepository << Repository >> {
+        +save(image)
+        +findById(id)
+    }
+    interface UserRepository << Repository >> {
+        +findByGoogleId(googleId)
+        +findByEmail(email)
+    }
+}
+
+package "Domain Models" {
+    class Publication <<Entity>> {
+        -id: Long
+        -title: String
+        -description: String
+        -imageUrl: String
+        -latitude: Double
+        -longitude: Double
+        -createdAt: Instant
+        -updatedAt: Instant
+    }
+    class UploadedImage <<Entity>> {
+        -id: Long
+        -data: byte[]
+        -contentType: String
+        -createdAt: Instant
+    }
+    class User <<Entity>> {
+        -googleId: String
+        -email: String
+        -name: String
+        -customName: String
+        -customPictureUrl: String
+        +getDisplayName()
+        +getDisplayPicture()
+    }
+}
+
+' --- Relaciones ---
+' Web Layer -> Business Logic (servicios directos, flechas cortas)
+PublicationController --> PublicationService
+ProfileController --> UserService
+ProfileController --> JwtService
+UserPublicController --> UserService
+UserPublicController --> PublicationService
+' Web Layer -> Persistence directa (ImageController no pasa por servicio)
+ImageController --> ImageRepository
+' Flechas largas Web->AuthHelper sustituidas por conector ①
+PublicationController --> conn_auth_w
+ProfileController --> conn_auth_w
+UserPublicController --> conn_auth_w
+conn_auth_b --> AuthHelper
+' Business Logic interno
+AuthHelper --> UserService
+UserService --> UserRepository
+PublicationService --> PublicationRepository
+' Persistence -> Domain Models
+PublicationRepository ..> Publication
+ImageRepository ..> UploadedImage
+UserRepository ..> User
+' Relacion entre entidades
+Publication "0..*" -right-> "1" User : author
+
+legend bottom
+  |= Icono |= Visibilidad (Modificador) |
+  | <color:green>●</color> | **Público** (+): Visible para todos |
+  | <color:red>■</color> | **Privado** (-): Solo visible dentro de la clase |
+  | <color:red>□</color> | **Protegido / Package** (# / ~): Acceso restringido/herencia |
+  | <size:8>  </size> | |
+  |= Color |= Capa Arquitectónica |
+  | <back:CONTROLLER_COLOR>      </back> | **Controller**: Entrada de la API |
+  | <back:SERVICE_COLOR>      </back> | **Service**: Lógica de negocio |
+  | <back:REPO_COLOR>      </back> | **Repository**: Acceso a Datos |
+  | <back:ENTITY_COLOR>      </back> | **Entity**: Modelos de DB |
+  | <back:CONN_COLOR><color:white>①</color></back> | **Conector ①**: Controllers delegan auth en AuthHelper |
+endlegend
+@enduml
