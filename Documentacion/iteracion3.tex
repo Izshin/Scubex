@@ -2,7 +2,7 @@
 \chapter{Iteración 3: Publicaciones}
 
 \begin{abstract}
-Esta iteración añade el sistema de publicaciones de Scubex. Los usuarios autenticados pueden crear publicaciones geolocalizadas con imagen desde cualquier punto del mapa, y cualquier visitante puede consultarlas directamente desde los marcadores del mapa.\end{abstract}
+Esta iteración añade el final del MVP de Scubex: Un sistema de publicaciones. Los usuarios autenticados pueden crear publicaciones geolocalizadas con imagen desde cualquier punto del mapa, y cualquier visitante puede consultarlas directamente desde los marcadores del mapa.\end{abstract}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Características desarrolladas esta iteración}
@@ -23,7 +23,7 @@ Esta iteración añade el sistema de publicaciones de Scubex. Los usuarios auten
 \textbf{Coste}&Diseñar el modelo de datos con coordenadas indexadas, gestionar el almacenamiento de imágenes en base de datos, implementar el filtrado por área visible y resolver el nombre del lugar a partir de las coordenadas en el frontend.\\
 \textbf{Opciones}&\textbf{Feed cronológico sin mapa}: más simple de implementar, pero pierde la dimensión geográfica que diferencia Scubex de cualquier otra red social. \textbf{Spots predefinidos}: el usuario solo puede publicar en zonas conocidas de antemano, lo que elimina la libertad de compartir descubrimientos propios.\\
 \textbf{Riesgos}&Si el usuario hace zoom muy hacia fuera, el área visible es tan grande que la respuesta podría incluir un volumen muy alto de publicaciones. Tampoco hay ningún control sobre dónde se publica: un usuario puede anclar una publicación en tierra firme o en cualquier punto sin relación con el buceo.\\
-\textbf{Deuda técnica}&Sin paginación ni límite de área en la consulta. Sin moderación de contenido ni restricción geográfica.\\
+\textbf{Deuda técnica}&Sin límite de área en la consulta. Sin moderación de contenido ni restricción geográfica.\\
 	\end{coolTable}
 	\caption{Análisis de valor aportado: Publicaciones Geolocalizadas\label{tab:valorAportadoPub}}
 \end{table*}
@@ -59,8 +59,8 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Factores causantes}&Si cada vez que se abre el mapa o se mueve se descargaran todas las publicaciones de la base de datos, la respuesta crecería indefinidamente con el tiempo. En zonas con mucho contenido, esto haría la experiencia lenta incluso para usuarios con buena conexión.\\
 \textbf{Solución}&El frontend envía al servidor los límites del área visible (latitud y longitud mínima y máxima) con cada consulta. El servidor filtra y devuelve únicamente las publicaciones que caen dentro de ese rectángulo. Para que esta búsqueda sea eficiente sin importar cuántas publicaciones haya, las coordenadas de cada publicación tienen un índice en base de datos, de modo que la consulta no tiene que recorrer la tabla entera.\\
 \textbf{Motivación}&Es la forma natural de escalar un sistema con contenido georreferenciado: el usuario no necesita lo que no puede ver en pantalla. El índice en coordenadas garantiza que añadir publicaciones no penalice el rendimiento de la consulta.\\
-\textbf{Cuestiones abiertas}&Si el usuario hace zoom muy hacia fuera, los límites del mapa abarcan un área enorme y la respuesta podría incluir un número muy alto de publicaciones de golpe. Sin paginación no hay mecanismo para acotar ese volumen.\\
-\textbf{Alternativas}&\textbf{Paginación clásica (offset/limit)}: más simple, pero no tiene en cuenta la posición geográfica; el usuario recibiría entradas de zonas que no está viendo. \textbf{Agrupación geográfica}: reduce la carga visual de marcadores en el mapa, pero no reduce la cantidad de datos transferidos.\\
+\textbf{Cuestiones abiertas}&Si el usuario hace zoom muy hacia fuera, los límites del mapa abarcan un área enorme y la respuesta podría incluir un número muy alto de publicaciones de golpe.\\
+\textbf{Alternativas}&\textbf{Agrupación geográfica}: reduce la carga visual de marcadores en el mapa, pero no reduce la cantidad de datos transferidos.\\
 	\end{coolTable}
 	\caption{Memorando técnico 009: Filtrado por Viewport del Mapa\label{tab:memo009}}
 \end{table*}
@@ -77,21 +77,22 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Solución}&Cuando se necesita el nombre de un punto, se consulta Nominatim probando primero el nivel de detalle más alto (playas, puntos de interés), luego el intermedio (ciudad o municipio) y finalmente el regional. Si ningún nivel devuelve resultado, se muestra ``Mar abierto'' como alternativa. Para no repetir la misma consulta si el usuario vuelve al mismo punto, los resultados se guardan en memoria durante toda la sesión.\\
 \textbf{Motivación}&Nominatim es gratuito y no requiere ninguna clave de API, lo que lo convierte en la opción más directa. Probar niveles de detalle de mayor a menor garantiza el nombre más concreto posible sin lanzar varias peticiones en paralelo. Guardar los resultados en memoria es suficiente: si el usuario cierra la pestaña, la caché se limpia sola y en la siguiente sesión los datos de Nominatim seguirán siendo los mismos.\\
 \textbf{Cuestiones abiertas}&Nominatim limita las peticiones a una por segundo para uso no comercial. En sesiones de exploración rápida del mapa, las peticiones de puntos que el usuario abandona antes de que se resuelvan se cancelan automáticamente, lo que ayuda a no saturar el servicio; pero sin una cola controlada podría alcanzarse el límite en casos extremos.\\
-\textbf{Alternativas}&\textbf{Google Maps Geocoding API}: mayor precisión, pero de pago. \textbf{MapTiler Geocoding}: ya integrado en el proyecto para el buscador del mapa, pero añadiría carga a la misma cuota que se usa para los estilos del mapa.\\
+\textbf{Alternativas}&\textbf{Google Maps Geocoding API}: mayor precisión, pero de pago.\\
 	\end{coolTable}
 	\caption{Memorando técnico 010: Geocoding Inverso con Nominatim\label{tab:memo010}}
 \end{table*}
-{\footnotesize\textit{Nota: Este memorando no tiene pseudocódigo de backend propio ya que la lógica es íntegramente del frontend; da soporte al flujo de creación de publicaciones, donde el nombre del lugar se muestra al usuario antes de confirmar.}}
+{\footnotesize\textit{Nota: El memorando 10 no tiene pseudocódigo de backend propio ya que la lógica es íntegramente del frontend; da soporte al flujo de creación de publicaciones, donde el nombre del lugar se muestra al usuario antes de confirmar.}}
 
 \clearpage
+
 % ── asigResponsabilidad 004: PublicationController.create() ──────────────────
 \begin{asigResponsabilidad}{004}{PublicationController}
 {ResponseEntity<?> create(body:Map<String,Object>, auth:Authentication)}
-\pasoPseudo{1. Se verifica la identidad del usuario con \texttt{authHelper.getUser(auth)}. Si no hay sesión activa, se lanza una excepción que Spring convierte en \texttt{401 Unauthorized}.}
-\pasoPseudo{2. Se extraen y validan los campos del cuerpo: \texttt{title} no puede estar vacío, \texttt{latitude} y \texttt{longitude} son obligatorios. Si alguno falta, se devuelve \texttt{400 Bad Request}.}
-\pasoPseudo{3. Se construye la entidad \texttt{Publication} con los datos del cuerpo (título, descripción, URL de imagen y coordenadas) y el usuario autenticado.}
-\pasoPseudo{4. Se persiste la publicación con \texttt{publicationService.create()}, que delega en \texttt{publicationRepository.save()}. El \texttt{@PrePersist} asigna \texttt{createdAt} automáticamente.}
-\pasoPseudo{5. Se proyecta la entidad persistida en un \texttt{Map<String,Object>} con \texttt{toDto()}, incluyendo los datos del autor y los contadores de interacciones, y se devuelve \texttt{200 OK}.}
+\pasoPseudo{1. Se comprueba que el usuario tiene sesión activa con \texttt{authHelper.getUser()}. Si no la tiene, se devuelve \texttt{401 Unauthorized}.}
+\pasoPseudo{2. Se comprueba que el cuerpo de la petición incluye un título y unas coordenadas. Si alguno falta o el título está vacío, se devuelve \texttt{400 Bad Request}.}
+\pasoPseudo{3. Se construye la publicación con el título, la descripción, la URL de imagen, las coordenadas y el usuario autenticado como autor.}
+\pasoPseudo{4. Se guarda la publicación en base de datos con \texttt{publicationService.create()}, que delega en \texttt{publicationRepository.save()}. La fecha de creación se asigna automáticamente en el momento de la inserción.}
+\pasoPseudo{5. Se convierte la publicación guardada a un objeto de respuesta con \texttt{toDto()}, incluyendo los datos del autor y los contadores de interacciones, y se devuelve al cliente.}
 \cabeceraMetodosBajoNivel
 \pasoCodigo{1}{AuthHelper}{User getUser(auth)}{005}{NO}
 \pasoCodigo{4}{PubRepo.}{Publication save(publication)}{009}{NO}
@@ -110,19 +111,20 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Solución}&Al subir una fotografía, el servidor comprueba que el formato sea aceptado (JPEG, PNG, GIF o WebP) y que no supere los 5\,MB. Si pasa esa validación, los datos del fichero se guardan en la base de datos junto al tipo de formato. Para recuperarla, el servidor la lee de la base de datos y la envía al navegador indicándole que la almacene en caché durante un año, ya que una imagen identificada por su identificador nunca cambia.\\
 \textbf{Motivación}&PostgreSQL ya forma parte del proyecto, así que no se necesita ningún servicio adicional ni credenciales extra. Para el volumen de imágenes esperado en Scubex la solución es perfectamente suficiente y evita introducir dependencias externas que habría que mantener.\\
 \textbf{Cuestiones abiertas}&Las imágenes se sirven siempre al tamaño original, sin reducción ni compresión. No existe un límite de imágenes por usuario.\\
-\textbf{Alternativas}&\textbf{Cloudinary}: CDN con transformaciones automáticas, pero requiere cuenta externa. \textbf{Amazon S3}: más escalable a largo plazo, pero introduce coste y complejidad innecesarios para el alcance actual.\\
+\textbf{Alternativas}&\textbf{Amazon S3}: más escalable a largo plazo, pero introduce coste y complejidad innecesarios para el alcance actual.\\
 	\end{coolTable}
 	\caption{Memorando técnico 011: Almacenamiento de Imágenes como BLOB\label{tab:memo011}}
 \end{table*}
 
+\clearpage
 % ── asigResponsabilidad 005: ImageController.upload() ────────────────────────
 \begin{asigResponsabilidad}{005}{ImageController}
 {ResponseEntity<?> upload(file:MultipartFile, auth:Authentication)}
-\pasoPseudo{1. Se verifica que el usuario está autenticado. Si \texttt{auth} es nulo, se devuelve \texttt{401 Unauthorized}.}
-\pasoPseudo{2. Se valida el archivo: no puede estar vacío, no puede superar los 5\,MB y el \texttt{Content-Type} debe ser JPEG, PNG, GIF o WebP. Cualquier violación devuelve \texttt{400 Bad Request}.}
-\pasoPseudo{3. Se leen los bytes del archivo con \texttt{file.getBytes()} y se construye la entidad \texttt{UploadedImage} con el array de bytes y el \texttt{contentType}.}
-\pasoPseudo{4. Se persiste la imagen en base de datos con \texttt{imageRepository.save()}. El \texttt{@PrePersist} asigna \texttt{createdAt} automáticamente.}
-\pasoPseudo{5. Se devuelve la URL \texttt{/api/images/\{id\}} al cliente, que la usará como valor del campo \texttt{imageUrl} al crear o editar la publicación.}
+\pasoPseudo{1. Se comprueba que el usuario tiene sesión activa. Si no la tiene, se devuelve \texttt{401 Unauthorized}.}
+\pasoPseudo{2. Se valida el archivo: no puede estar vacío, no puede superar los 5\,MB y el formato debe ser JPEG, PNG, GIF o WebP. Si no cumple alguna de estas condiciones, se devuelve \texttt{400 Bad Request}.}
+\pasoPseudo{3. Se leen los datos del archivo con \texttt{file.getBytes()} y se prepara la entidad de imagen con el contenido binario y el tipo de formato.}
+\pasoPseudo{4. Se guarda la imagen en base de datos con \texttt{imageRepository.save()}. La fecha de subida se asigna automáticamente en el momento de la inserción.}
+\pasoPseudo{5. Se devuelve al cliente la URL que identifica la imagen subida, lista para usarse como referencia al crear o editar la publicación.}
 \cabeceraMetodosBajoNivel
 \pasoCodigo{3}{MultipartFile}{byte[] getBytes()}{011}{NO}
 \pasoCodigo{4}{ImageRepo.}{UploadedImage save(image)}{011}{NO}
@@ -132,9 +134,37 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \section{Pruebas}
 % ─────────────────────────────────────────────────────────────────────────────
 
-No se han implementado pruebas unitarias específicas para \texttt{PublicationService} ni \texttt{PublicationController} en esta iteración. La validación de los endpoints se realizó mediante pruebas manuales con un cliente REST, verificando los flujos de creación, edición, eliminación y consulta por área.
+Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{PublicationServiceTest} e \texttt{ImageControllerTest}, siguiendo el mismo patrón basado en Mockito y MockMvc que el resto del proyecto.
 
-La ausencia de tests automatizados queda recogida como deuda técnica en la Tabla~\ref{tab:valorAportadoPub}. Los casos de prueba prioritarios para una futura cobertura serían: creación con campos obligatorios ausentes (\texttt{400}), intento de edición o borrado de publicación ajena (\texttt{403}), subida de imagen con tipo MIME no permitido (\texttt{400}) y consulta de área con \emph{bounding box} vacío.
+\textbf{\texttt{PublicationServiceTest}} cubre tres casos:
+
+\begin{itemize}
+    \item \textbf{Filtrado por área} (\texttt{getInArea\_returnsOnlyPublicationsInsideBoundingBox}): el repositorio se configura para devolver dos publicaciones concretas al recibir un bounding box; se verifica que el servicio retorna exactamente esas dos y que el repositorio fue invocado con los límites correctos.
+
+    \item \textbf{Edición por propietario ajeno} (\texttt{update\_byNonOwner\_returnsNull}): se intenta editar una publicación con un usuario distinto al propietario; se verifica que el resultado es nulo y que \texttt{publicationRepository.save()} no fue llamado.
+
+    \item \textbf{Eliminación por propietario ajeno} (\texttt{delete\_byNonOwner\_returnsFalse}): se intenta borrar una publicación con un usuario distinto al propietario; se verifica que el resultado es \texttt{false} y que \texttt{publicationRepository.delete()} no fue invocado.
+\end{itemize}
+
+\textbf{\texttt{ImageControllerTest}} cubre ocho casos:
+
+\begin{itemize}
+    \item \textbf{Subida sin autenticación} (\texttt{upload\_unauthenticated\_returns401}): llamar al endpoint sin sesión activa devuelve \texttt{401} sin persistir nada.
+
+    \item \textbf{Archivo vacío} (\texttt{upload\_emptyFile\_returns400}): un archivo de cero bytes devuelve \texttt{400} sin persistir nada.
+
+    \item \textbf{Archivo demasiado grande} (\texttt{upload\_fileTooLarge\_returns400}): un archivo superior a 5\,MB devuelve \texttt{400} sin persistir nada.
+
+    \item \textbf{Content-Type nulo} (\texttt{upload\_nullContentType\_returns400}): un archivo sin tipo de contenido declarado devuelve \texttt{400} sin persistir nada.
+
+    \item \textbf{Formato no permitido} (\texttt{upload\_invalidMimeType\_returns400}): un archivo con \texttt{Content-Type} distinto de JPEG, PNG, GIF o WebP devuelve \texttt{400} sin persistir nada.
+
+    \item \textbf{Subida válida} (\texttt{upload\_validFile\_returns200WithImageUrl}): un JPEG válido con usuario autenticado devuelve \texttt{200} con la \texttt{imageUrl} correcta, y se verifica que \texttt{imageRepository.save()} fue invocado exactamente una vez.
+
+    \item \textbf{Descarga de imagen existente} (\texttt{get\_existingImage\_returns200WithBytes}): solicitar una imagen existente devuelve \texttt{200}, el \texttt{Content-Type} correcto y los bytes de la imagen.
+
+    \item \textbf{Descarga de imagen inexistente} (\texttt{get\_nonExistingImage\_returns404}): solicitar un identificador que no existe en base de datos devuelve \texttt{404}.
+\end{itemize}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}

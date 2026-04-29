@@ -158,7 +158,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \begin{asigResponsabilidad}{001}{SpeciesService}
 {List<SpeciesResponse> getSpeciesInSelectedArea(lat:double, lng:double, radius:double)}
 \pasoPseudo{1. Se redondean las coordenadas recibidas según el radio con \texttt{roundCoord()}, para agrupar zonas cercanas en una misma clave de caché. A mayor radio, mayor es el redondeo}
-\pasoPseudo{2. Se consulta la base de datos buscando un escaneo previo de la misma zona (menos de 48h) con \texttt{findBestMatch()}. Si existe, se devuelve directamente sin llamar a ninguna API externa --- fin.}
+\pasoPseudo{2. Se consulta la base de datos buscando un escaneo previo de la misma zona (menos de 48h) con \texttt{findBestMatch()}. Si existe, se devuelve directamente sin llamar a ninguna API externa fin.}
 \pasoPseudo{3. Si no hay caché, se construye un polígono WKT de 12 vértices alrededor del punto central con \texttt{createPolygonFromRadius()} y se consultan los registros de OBIS con \texttt{callObisApi()}.}
 \pasoPseudo{4. Para cada especie única devuelta por OBIS, en paralelo:}
 \pasoPseudo{4.1. Se busca en la caché de enriquecimiento con \texttt{findByNameAndCachedAtAfter()}. Si ya existe y no tiene datos de iNaturalist, se descarta la especie.}
