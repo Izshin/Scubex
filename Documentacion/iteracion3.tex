@@ -166,6 +166,8 @@ Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{Publ
     \item \textbf{Descarga de imagen inexistente} (\texttt{get\_nonExistingImage\_returns404}): solicitar un identificador que no existe en base de datos devuelve \texttt{404}.
 \end{itemize}
 
+Adicionalmente, se han implementado tests de controlador (\texttt{PublicationControllerTest}) que verifican el listado, creación, edición y borrado de publicaciones, así como el control de autorización (403 al intentar borrar una publicación ajena). Por lo mismo que en iteraciones anteriores, no se detallan aquí.
+
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
 % ─────────────────────────────────────────────────────────────────────────────

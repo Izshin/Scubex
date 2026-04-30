@@ -55,7 +55,7 @@ El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha
 \begin{itemize}
     \item \textbf{Control de versiones}: Git + GitHub (commits atómicos por característica).
     \item \textbf{Gestión de dependencias}: Maven (backend), npm (frontend).
-    \item \textbf{Testing}: JUnit 5 + Mockito (backend), Vitest (frontend).
+    \item \textbf{Testing}: JUnit 5 + Mockito (backend), Jacoco para generar los reportes de cobertura.
     \item \textbf{Documentación de API}: Swagger/OpenAPI 3.0 (generación automática de contratos REST).
     \item \textbf{Compilación}: Vite (desarrollo frontend con HMR), Spring Boot Maven Plugin (empaquetado JAR).
     \item \textbf{Despliegue}: Vercel (frontend, despliegue automático por rama con previews) + Railway (backend Spring Boot y PostgreSQL, entornos de preproducción y producción independientes).
@@ -66,7 +66,6 @@ El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha
 El progreso del proyecto se ha monitorizado mediante:
 
 \begin{itemize}
-    \item \textbf{Archivo TODO}: Lista priorizada de tareas pendientes con urgencias marcadas (!).
     \item \textbf{Commits semánticos}: Mensajes (casi siempre) estructurados (feat, fix, docs, refactor) para trazabilidad histórica.
     \item \textbf{Reuniones de seguimiento}: Sesiones cada tres semanas con el tutor para validar decisiones arquitectónicas y resolver bloqueos técnicos.
     \item \textbf{Documentación incremental}: Redacción de capítulos inmediatamente tras completar cada característica dentro de la aplicación.

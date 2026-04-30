@@ -183,7 +183,7 @@ Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{Inte
 
     \item \textbf{Quitar like} (\texttt{toggleLike\_existing\_unlikesAndDoesNotNotify}): si el like ya existe, se elimina y \texttt{notifyLike()} no es invocado.
 
-    \item \textbf{Contador de likes} (\texttt{getLikeCount\_returnsRepositoryValue}): el servicio delega directamente en el repositorio y devuelve el valor sin transformación.
+    \item \textbf{Borrar comentario por el propietario} (\texttt{deleteComment\_owner\_deletesAndReturnsTrue}): el autor del comentario puede borrarlo correctamente; se verifica que el resultado es \texttt{true} y que \texttt{commentRepository.delete()} fue invocado exactamente una vez.
 
     \item \textbf{Primer guardado y quitar guardado} (\texttt{toggleSave\_noExisting\_saves} y \texttt{toggleSave\_existing\_unsaves}): el mismo patrón que los likes, verificando que el registro se crea o se elimina según corresponda.
 
@@ -198,6 +198,8 @@ Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{Inte
 
 \begin{itemize}
     \item \textbf{Notificación de follow} (\texttt{notifyFollow\_differentUsers\_savesNotification}): seguir a otro usuario persiste una notificación de tipo \texttt{FOLLOW} con el email del seguidor.
+
+    \item \textbf{Auto-follow sin notificación} (\texttt{notifyFollow\_sameUser\_doesNotSave}): seguirse a uno mismo no persiste ninguna notificación; \texttt{notificationRepository.save()} no es invocado.
 
     \item \textbf{Follow ya existente} (\texttt{notifyFollow\_alreadyNotified\_doesNotDuplicate}): si ya existe una notificación de tipo \texttt{FOLLOW} del mismo actor para el mismo destinatario, \texttt{existsByRecipientIdAndTypeAndActorEmail()} devuelve \texttt{true} y no se persiste ninguna notificación adicional.
 
@@ -218,7 +220,11 @@ Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{Inte
     \item \textbf{Marcar todas como leídas} (\texttt{markAllRead\_setsAllReadAndSaves}): todas las notificaciones no leídas del usuario quedan marcadas y se persisten en lote.
 
     \item \textbf{Eliminar notificación propia} (\texttt{deleteNotification\_ownNotification\_deletes}): el destinatario puede eliminar su notificación correctamente.
+
+    \item \textbf{Eliminar notificación ajena} (\texttt{deleteNotification\_otherUserNotification\_doesNotDelete}): si el usuario no es el destinatario, \texttt{notificationRepository.delete()} no es invocado, impidiendo que un usuario elimine notificaciones de otro.
 \end{itemize}
+
+Dada la densidad de esta iteración, no se han documentado todos los tests existentes. Adicionalmente se han implementado tests de controlador (\texttt{InteractionControllerTest} y \texttt{NotificationControllerTest}) que verifican los endpoints de likes, guardados, comentarios y notificaciones. Por su volumen y simplicidad, no se detallan aquí para no comprometer la legibilidad de la documentación.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}

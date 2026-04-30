@@ -44,7 +44,7 @@ Con las características identificadas, el sistema requiere una arquitectura cap
     \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil. Gestión de estado reactiva mediante MobX \texttt{makeAutoObservable}, con stores separadas por dominio (especies, clima, publicaciones, usuario, mapa).
     \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
     \item \textbf{Base de Datos}: H2 en memoria para el entorno de desarrollo y tests unitarios. PostgreSQL 16 para preproducción y producción, gestionado como servicio en Railway.
-    \item \textbf{Testing}: JUnit 5 + Mockito para pruebas unitarias del backend. H2 en memoria como base de datos de test.
+    \item \textbf{Testing}: JUnit 5 + Mockito para pruebas unitarias del backend. Jacoco para generar reportes. H2 en memoria como base de datos de test.
     \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
     \item \textbf{Documentación de API}: OpenAPI 3.0 (Swagger UI) con anotaciones automáticas.
     \item \textbf{Despliegue}: Railway (backend + PostgreSQL) y Vercel (frontend).
@@ -106,7 +106,8 @@ Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa 
 \textbf{Estrategia de consumo}:
 \begin{itemize}
     \item \textbf{OBIS + iNaturalist}: Consultas de especies marinas mediante el botón de escaneo.
-        \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa. 
+    \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa.
+    \item \textbf{Nominatim}: Consulta bajo demanda al interactuar con el mapa. Se usa en el buscador de lugares (\texttt{/search}) y al crear una publicación para obtener el nombre humano de las coordenadas seleccionadas (\texttt{/reverse}).
 \end{itemize}
 
 \textbf{Decisiones pendientes que quedaron en esta fase}: Quedó pendiente el determinar la estrategia de caching para OBIS que se resolvió en la Iteración~1; Y tambien el caching de condiciones climáticas que se resolvió en la Iteración~2. 

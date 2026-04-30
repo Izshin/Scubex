@@ -22,7 +22,7 @@ Esta iteración añade la segunda parte del MVP de Scubex: El panel de condicion
 \textbf{Valor}&Un buceador no puede planificar una inmersión sin saber si el mar está en calma. El panel proporciona en un único vistazo los datos que determinan la viabilidad de la salida olas, corriente, visibilidad y tiempo sin que el usuario tenga que consultar varias fuentes ni interpretar valores crudos.\\
 \textbf{Coste}&Integración con dos endpoints de Open-Meteo (atmospheric forecast y marine API), ambos gratuitos y sin clave. El único esfuerzo no trivial es definir los criterios de evaluación: qué umbrales y pesos determinan si una condición es buena, tolerable o adversa desde el punto de vista del buceo.\\
 \textbf{Opciones}&\textbf{Windy}: mapas muy visuales de viento y oleaje, pero no tiene API pública gratuita para datos en crudo. \textbf{Evaluación manual}: mostrar solo los valores numéricos y dejar que el usuario decida; eliminaba la lógica del servidor pero obligaba al usuario a conocer los umbrales de seguridad.\\
-\textbf{Riesgos}&Open-Meteo no ofrece SLA; una caída devuelve error sin datos de clima. Los datos marinos no existen en zonas continentales o bahías cerradas, por lo que esos campos pueden llegar vacíos. La evaluación automática no distingue condiciones locales como resacas puntuales o fondos con corrientes de fondo intensas.\\
+\textbf{Riesgos}&Open-Meteo no ofrece SLA; una caída devuelve error sin datos de clima. Los datos marinos no existen en zonas continentales o bahías cerradas, por lo que esos campos pueden llegar vacíos.\\
 \textbf{Deuda técnica}&Solo se muestran condiciones en el instante actual; no hay previsión por horas ni por días. Los umbrales de evaluación son globales e iguales para todos los usuarios, sin distinción entre perfiles (principiante vs. avanzado).\\
 	\end{coolTable}
 	\caption{Análisis de valor aportado: Panel de Clima\label{tab:valorAportadoClima}}
@@ -93,7 +93,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \textbf{Factores causantes}&El mapa es interactivo y el usuario puede mover el punto libremente. Sin caché, cada pequeño desplazamiento generaría dos peticiones HTTP hacia Open-Meteo, con la latencia acumulada correspondiente.\\
 \textbf{Solución}&Se aplica el mismo esquema de redondeo de coordenadas descrito en el Memorando~\ref{tab:memo003}: las coordenadas se redondean antes de usarlas como clave de búsqueda, agrupando puntos cercanos bajo la misma entrada. Si existe un registro de menos de 30 minutos para esas coordenadas en la tabla \texttt{cached\_weather}, se devuelve directamente sin tocar Open-Meteo. El TTL de 30 minutos equilibra frescura de los datos climáticos con eficiencia: el tiempo meteorológico no cambia de forma significativa en ventanas menores.\\
 \textbf{Motivación}&Los datos de clima son mucho más volátiles que los de biodiversidad, por lo que el TTL es 30 minutos frente a las 48 horas del caché de escaneos (Memorando~\ref{tab:memo003}). Reutilizar el mismo mecanismo de caché en base de datos evita añadir nuevos servicios: la tabla \texttt{cached\_weather} sigue exactamente el mismo patrón que \texttt{CachedScan}.\\
-\textbf{Cuestiones abiertas}&El caso límite del redondeo (dos puntos muy próximos que caen en celdas distintas) es el mismo ya reconocido en el Memorando~\ref{tab:memo003} para el caché de escaneos, y se acepta por la misma razón: baja frecuencia e impacto despreciable.\\
+\textbf{Cuestiones abiertas}&El caso límite del redondeo (dos puntos muy próximos que caen en celdas distintas) es el mismo ya reconocido en el Memorando~\ref{tab:memo003} para el caché de escaneos, y se acepta por la misma razón: alta complejidad de resolución, para un bajo impacto.\\
 \textbf{Alternativas}&\textbf{TTL más corto (5--10 min)}: más fresco, pero aumenta significativamente las llamadas a Open-Meteo. \textbf{Sin caché}: máxima frescura, pero penaliza la experiencia en sesiones de exploración del mapa.\\
 	\end{coolTable}
 	\caption{Memorando técnico 008: Caché de Clima\label{tab:memo008}}
@@ -135,6 +135,8 @@ Las pruebas unitarias de \texttt{WeatherService} se han implementado en \texttt{
 
     \item \textbf{Tolerancia a fallo de API} (\texttt{forecastApiFailure\_returnsNullAtmosphericFieldsWithoutThrowing}): \texttt{restTemplate.getForEntity} lanza \texttt{RestClientException} para la URL atmosférica. Se verifica que el servicio no propaga la excepción, que los campos atmosféricos son nulos y que los datos marinos siguen presentes en la respuesta.
 \end{itemize}
+
+Adicionalmente, se han implementado tests de controlador (\texttt{WeatherControllerTest}) que verifican la validación de parámetros de entrada (coordenadas fuera de rango) y la respuesta correcta ante peticiones válidas. Por su simplicidad y para no añadir ruido a la documentación, no se detallan aquí.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}

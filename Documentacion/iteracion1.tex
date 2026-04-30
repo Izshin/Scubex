@@ -114,7 +114,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Solución}&Cada especie devuelta por OBIS se busca en iNaturalist. Si no aparece, se descarta: sin nombre común ni foto no aporta valor. Si aparece, se incluye siempre: si tiene foto se usa; si no, el frontend muestra un emoji según el phylum como fallback visual.\\
 \textbf{Motivación}&Un buceador busca animales que pueda ver en el agua. Incluir microorganismos sería ruido.\\
 \textbf{Cuestiones abiertas}&La latencia de N llamadas HTTP a iNaturalist (una por especie única) en el primer escaneo de una zona puede superar los 20 segundos. Resuelta en Memorando~004 mediante caché de enriquecimiento por especie.\\
-\textbf{Alternativas}&\textbf{Filtrado por phylum}: descartar directamente los phyla microscópicos (bacterias, algas) sin consultar iNaturalist. Es más rápido, pero una especie macroscópica rara de un phylum ``grande'' pasaría el filtro aunque no tenga foto ni nombre común. \textbf{Placeholder genérico}: asignar siempre un emoji o imagen por grupo taxonómico sin consultar iNaturalist. Elimina las llamadas externas pero pierde la foto real y el nombre común cuando sí existen.\\
+\textbf{Alternativas}&\textbf{Placeholder genérico}: asignar siempre un emoji o imagen por grupo taxonómico sin consultar iNaturalist. Elimina las llamadas externas pero pierde la foto real y el nombre común cuando sí existen.\\
 	\end{coolTable}
 	\caption{Memorando técnico 002: Filtrado de Calidad Visual\label{tab:memo002}}
 \end{table*}
@@ -130,7 +130,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Factores causantes}&Un escaneo completo puede tardar entre 10 y 20 segundos. Repetir ese proceso cada vez que alguien consulta la misma zona es un desperdicio innecesario, tanto en tiempo de respuesta como en llamadas a APIs externas.\\
 \textbf{Solución}&El resultado de cada escaneo se persiste en base de datos bajo una clave compuesta por coordenadas redondeadas y radio. El redondeo agrupa clicks cercanos en la misma clave, evitando duplicados por diferencias de centímetros. Si existe un escaneo de menos de 48\,h para esa zona, se devuelve directamente sin tocar ninguna API externa.\\
 \textbf{Motivación}&Capacidad de dar una respuesta instantanea a un escaneo, sin pasar por APIs. Plugins ya preconfigurados en base de datos, lo que hace la implementación mas simple\\
-\textbf{Cuestiones abiertas}&Clicks en el umbral de redondeo (ej. \texttt{0.049}° vs \texttt{0.051}°) pueden generar un falso miss aunque las zonas sean prácticamente idénticas. Comportamiento aceptado por su baja frecuencia.\\
+\textbf{Cuestiones abiertas}&Clicks en el umbral de redondeo (ej. \texttt{0.049}° vs \texttt{0.051}°) pueden generar un falso miss aunque las zonas sean prácticamente idénticas. Comportamiento aceptado por la alta complejidad frente al bajo impacto que la resolución de este llevaba.\\
 \textbf{Alternativas}&\textbf{Redis}: más rápido, pero añade servicio externo y coste. \textbf{Spring Cache en memoria}: no persiste entre reinicios del servidor (Railway reinicia en cada despliegue).\\
 	\end{coolTable}
 	\caption{Memorando técnico 003: Caché L1 --- \texttt{CachedScan}\label{tab:memo003}}
@@ -187,7 +187,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Solución}&El usuario hace click en ``Continuar con Google''; Google devuelve un token que el backend valida directamente contra su API. Si es válido y el campo \texttt{aud} corresponde a la app (evitando suplantación), se crea o recupera el usuario y se emite un JWT propio firmado con HMAC-SHA256 que el cliente usará en todas sus peticiones autenticadas.\\
 \textbf{Motivación}&Sin sesiones de servidor: compatible con despliegue stateless en Railway. Sin contraseñas: menor superficie de ataque. Google verifica la identidad: Scubex no almacena credenciales sensibles.\\
 \textbf{Cuestiones abiertas}&Sin \emph{refresh tokens}: tras 7 días el usuario debe volver a autenticarse. Sin revocación de tokens individuales (logout invalida solo la copia en \texttt{localStorage}).\\
-\textbf{Alternativas}&\textbf{Auth0 / Firebase Authentication}: delega toda la lógica de autenticación a un servicio externo, simplificando la implementación, pero introduce dependencia y coste si el uso escala. \textbf{Session cookies HttpOnly}: Requieren que el servidor mantenga estado de sesión, incompatible con el despliegue stateless en Railway.\\
+\textbf{Alternativas}&\textbf{Auth0 / Firebase Authentication}: delega toda la lógica de autenticación a un servicio externo, simplificando la implementación, pero introduce dependencia y coste si el uso escala.\\
 	\end{coolTable}
 	\caption{Memorando técnico 005: Autenticación OAuth2 + JWT\label{tab:memo005}}
 \end{table*}
@@ -216,36 +216,50 @@ Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para ais
 \subsection{\texttt{SpeciesServiceTest}}
 
 \begin{itemize}
-    \item Generación de polígono WKT válido (\texttt{shouldGenerateValidWKTPolygon}): dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
+    \item \textbf{Generación de polígono WKT válido (\texttt{shouldGenerateValidWKTPolygon})}: dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
 
-    \item Filtrado de microorganismos sin resultados (\texttt{shouldFilterMicroorganismsWithZeroResults}): OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
+    \item \textbf{Filtrado de microorganismos sin resultados (\texttt{shouldFilterMicroorganismsWithZeroResults})}: OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
 
-    \item Enriquecimiento de especie con foto (\texttt{shouldEnrichSpeciesWithPhoto}): OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
+    \item \textbf{Enriquecimiento de especie con foto (\texttt{shouldEnrichSpeciesWithPhoto})}: OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
 
-    \item Tolerancia a timeout de iNaturalist (\texttt{shouldHandleINaturalistTimeout}): OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
+    \item \textbf{Tolerancia a timeout de iNaturalist (\texttt{shouldHandleINaturalistTimeout})}: OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
 
-    \item Estadísticas ecológicas: profundidad, temperatura e IUCN (\texttt{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn}): OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
+    \item \textbf{Estadísticas ecológicas: profundidad, temperatura e IUCN (\texttt{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn})}: OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
 \end{itemize}
 
 \subsection{\texttt{JwtServiceTest}}
 
 \begin{itemize}
-    \item Generación de token con claims correctos (\texttt{generateToken\_containsExpectedClaims}): dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
+    \item \textbf{Generación de token con claims correctos (\texttt{generateToken\_containsExpectedClaims})}: dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
 
-    \item Validación de token: devuelve subject (\texttt{validateToken\_returnsSubject}): token válido devuelve \texttt{googleId} como subject.
+    \item \textbf{Validación de token: devuelve subject (\texttt{validateToken\_returnsSubject})}: token válido devuelve \texttt{googleId} como subject.
 
-    \item Validación de token manipulado: lanza excepción (\texttt{validateToken\_tamperedToken\_throwsException}): token con firma modificada lanza excepción al validar.
+    \item \textbf{Validación de token manipulado: lanza excepción (\texttt{validateToken\_tamperedToken\_throwsException})}: token con firma modificada lanza excepción al validar.
 \end{itemize}
 
 \subsection{\texttt{AuthControllerTest}}
 
 \begin{itemize}
-    \item Login sin credencial: devuelve 400 (\texttt{login\_missingCredential\_returns400}): petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
+    \item \textbf{Login sin credencial: devuelve 400 (\texttt{login\_missingCredential\_returns400})}: petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
 
-    \item Login con token rechazado por Google: devuelve 401 (\texttt{login\_googleRejectsToken\_returns401}): \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
+    \item \textbf{Login con token rechazado por Google: devuelve 401 (\texttt{login\_googleRejectsToken\_returns401})}: \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
 
-    \item Login válido: devuelve 200 con token JWT (\texttt{login\_validCredential\_returns200WithToken}): \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
+    \item \textbf{Login válido: devuelve 200 con token JWT (\texttt{login\_validCredential\_returns200WithToken})}: \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
 \end{itemize}
+
+\subsection{\texttt{AuthHelperTest}}
+
+\texttt{AuthHelper} es el componente transversal que todos los controladores autenticados utilizan para resolver el usuario a partir del \texttt{Authentication} de Spring Security. Sus tres casos de prueba son:
+
+\begin{itemize}
+    \item \textbf{Auth nula: lanza 401} (\texttt{getUser\_nullAuth\_throws401}): se invoca \texttt{authHelper.getUser(null)} y se verifica que se lanza \texttt{ResponseStatusException} con código \texttt{401 Unauthorized}.
+
+    \item \textbf{Usuario no encontrado: lanza 404} (\texttt{getUser\_userNotFound\_throws404}): se pasa un \texttt{Authentication} con \texttt{googleId} desconocido; \texttt{userService.findByGoogleId} devuelve \texttt{null}. Se verifica que se lanza \texttt{ResponseStatusException} con código \texttt{404 Not Found}.
+
+    \item \textbf{Auth válida: devuelve usuario} (\texttt{getUser\_validAuth\_returnsUser}): se pasa un \texttt{Authentication} con \texttt{googleId} existente; \texttt{userService.findByGoogleId} devuelve el usuario esperado. Se verifica que el resultado es la misma instancia.
+\end{itemize}
+
+Adicionalmente, se han implementado tests de controlador (\texttt{SpeciesControllerTest}) que verifican la validación de parámetros de entrada (coordenadas y radio fuera de rango) y la respuesta correcta ante peticiones válidas. Igual que en iteraciones anteriores, no se detallan.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
