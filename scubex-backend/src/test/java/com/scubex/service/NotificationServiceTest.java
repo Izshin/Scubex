@@ -64,6 +64,18 @@ class NotificationServiceTest {
         verify(notificationRepository, never()).save(any());
     }
 
+    @Test
+    void notifyFollow_alreadyNotified_doesNotDuplicate() {
+        User follower = user(1L, "follower@test.com");
+        User followed = user(2L, "followed@test.com");
+        when(notificationRepository.existsByRecipientIdAndTypeAndActorEmail(
+                2L, Notification.Type.FOLLOW, "follower@test.com")).thenReturn(true);
+
+        notificationService.notifyFollow(follower, followed);
+
+        verify(notificationRepository, never()).save(any());
+    }
+
     // ── notifyLike ────────────────────────────────────────────────────
 
     @Test
@@ -88,6 +100,19 @@ class NotificationServiceTest {
         Publication p = pub(10L, u);
 
         notificationService.notifyLike(u, p);
+
+        verify(notificationRepository, never()).save(any());
+    }
+
+    @Test
+    void notifyLike_alreadyNotified_doesNotDuplicate() {
+        User actor = user(1L, "actor@test.com");
+        User owner = user(2L, "owner@test.com");
+        Publication p = pub(10L, owner);
+        when(notificationRepository.existsByRecipientIdAndTypeAndActorEmailAndPublicationId(
+                2L, Notification.Type.LIKE, "actor@test.com", 10L)).thenReturn(true);
+
+        notificationService.notifyLike(actor, p);
 
         verify(notificationRepository, never()).save(any());
     }

@@ -34,6 +34,8 @@ public class NotificationService {
 
     public void notifyFollow(User follower, User followed) {
         if (follower.getId().equals(followed.getId())) return;
+        if (notificationRepository.existsByRecipientIdAndTypeAndActorEmail(
+                followed.getId(), Notification.Type.FOLLOW, follower.getEmail())) return;
         notificationRepository.save(Notification.builder()
                 .recipient(followed)
                 .type(Notification.Type.FOLLOW)
@@ -45,6 +47,8 @@ public class NotificationService {
 
     public void notifyLike(User actor, Publication pub) {
         if (actor.getId().equals(pub.getUser().getId())) return;
+        if (notificationRepository.existsByRecipientIdAndTypeAndActorEmailAndPublicationId(
+                pub.getUser().getId(), Notification.Type.LIKE, actor.getEmail(), pub.getId())) return;
         notificationRepository.save(Notification.builder()
                 .recipient(pub.getUser())
                 .type(Notification.Type.LIKE)
