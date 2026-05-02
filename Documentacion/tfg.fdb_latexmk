@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex tfg"] 1777571600.82159 "tfg.aux" "tfg.bbl" "tfg" 1777571610.10158 0
+["bibtex tfg"] 1777571600.82159 "tfg.aux" "tfg.bbl" "tfg" 1777753754.24391 0
   "./referencias.bib" 1769708603 95171 52f722aa7733abb8b9ef8002fd1218e5 ""
   "C:/Users/ivanf/AppData/Local/Programs/MiKTeX/bibtex/bst/natbib/abbrvnat.bst" 1284455456 26532 66bed5cc59495faaa3f9ae9af9fa5e42 ""
-  "tfg.aux" 1777571608 45495 1f08318ae1c249db62be83b1b6b77fe6 "pdflatex"
+  "tfg.aux" 1777753752 45495 1f08318ae1c249db62be83b1b6b77fe6 "pdflatex"
   (generated)
   "tfg.bbl"
   "tfg.blg"
   (rewritten before read)
-["pdflatex"] 1777571601.2514 "c:/Users/ivanf/Desktop/TFG/Scubex/Documentacion/tfg.tex" "tfg.pdf" "tfg" 1777571610.10286 0
+["pdflatex"] 1777753739.71943 "c:/Users/ivanf/Desktop/TFG/Scubex/Documentacion/tfg.tex" "tfg.pdf" "tfg" 1777753754.24578 0
   "Arranque.tex" 1777568093 10675 61dd5082d7b4f6ae857d988f0910038f ""
   "C:/Users/ivanf/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1776882944 97403 380695d574896bebfe3d62ef452e9c1c ""
   "C:/Users/ivanf/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1769617510 13333487 eabba1f897fce7e859eb0327defa8790 ""
@@ -311,23 +311,23 @@
   "figures/umlit1.pdf" 1777318012 121690 b29c8b24ec1c00ba857102b18606e812 ""
   "figures/universidad.pdf" 1769708603 743412 87892833148383387b9c570c30f67d51 ""
   "floatflt.sty" 1769708603 11060 3ca6099db339c6b0e41b960a230d4bcb ""
-  "iteracion1.tex" 1777570464 30667 a61e51243fc2c0af334c3276ea8f5450 ""
+  "iteracion1.tex" 1777753735 30666 59ffad7ff3857878663aa17218014211 ""
   "iteracion2.tex" 1777569370 17576 04df1299470dc3fa6247e456d27d0e21 ""
   "iteracion3.tex" 1777569743 18856 d58cacb4556729636e9116eaf90994e3 ""
   "iteracion4.tex" 1777571580 26850 f6af27de19ea55c9f127045ba1073576 ""
   "resumen.tex" 1776544504 449 adf86a27fe25720e38702bee2546d291 ""
   "tfg.acr" 0 -1 0 ""
-  "tfg.aux" 1777571608 45495 1f08318ae1c249db62be83b1b6b77fe6 "pdflatex"
+  "tfg.aux" 1777753752 45495 1f08318ae1c249db62be83b1b6b77fe6 "pdflatex"
   "tfg.bbl" 1777571601 649 75731bbd4d4aeaccee20f050039a7b47 "bibtex tfg"
-  "tfg.brf" 1777571608 183 7927c769bf7de685fc91e24b5189956e "pdflatex"
+  "tfg.brf" 1777753752 183 7927c769bf7de685fc91e24b5189956e "pdflatex"
   "tfg.gls" 0 -1 0 ""
-  "tfg.glsdefs" 1777571608 11347 7ca934f8844122c6adb0d0daa039451f "pdflatex"
-  "tfg.lof" 1777571608 1344 2d743812a617682183780225ca996ae0 "pdflatex"
-  "tfg.lot" 1777571608 4009 f110414f867ed43fcc077759f9fe5a1d "pdflatex"
-  "tfg.out" 1777571608 14521 c52497c12d8c8812a5732aa510a040be "pdflatex"
-  "tfg.tdo" 1777571608 290 ede2a9954680a5b33910db2c5d2ebc56 "pdflatex"
+  "tfg.glsdefs" 1777753752 11347 7ca934f8844122c6adb0d0daa039451f "pdflatex"
+  "tfg.lof" 1777753752 1344 2d743812a617682183780225ca996ae0 "pdflatex"
+  "tfg.lot" 1777753752 4009 f110414f867ed43fcc077759f9fe5a1d "pdflatex"
+  "tfg.out" 1777753752 14521 c52497c12d8c8812a5732aa510a040be "pdflatex"
+  "tfg.tdo" 1777753752 290 ede2a9954680a5b33910db2c5d2ebc56 "pdflatex"
   "tfg.tex" 1777564900 2332 c935974d7add81a3f83091877b11e104 ""
-  "tfg.toc" 1777571608 7782 4ce8518f5aa95d2a78cdf3e804f23e71 "pdflatex"
+  "tfg.toc" 1777753752 7782 4ce8518f5aa95d2a78cdf3e804f23e71 "pdflatex"
   "trinidad-TfG.sty" 1776970603 26269 6b9fecf6cea46483878923f703fb8cfc ""
   (generated)
   "tfg.acn"
