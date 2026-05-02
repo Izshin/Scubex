@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "app.seed-demo-data", havingValue = "true", matchIfMissing = false)
 @RequiredArgsConstructor
 public class DataSeeder implements ApplicationRunner {
 
@@ -85,7 +87,7 @@ public class DataSeeder implements ApplicationRunner {
                 "Cap de Creus al amanecer",
                 "Salida nocturna hasta el faro y primera luz del día bajo el agua. El paisaje volcánico del fondo " +
                 "es único en el Mediterráneo. Corriente fuerte pero manejable. Profundidad máxima 28 m.",
-                "https://images.unsplash.com/photo-1682687220198-88e9bdea9931?w=800",
+                "https://images.unsplash.com/photo-1682686581660-3693f0c588d2?w=800",
                 42.3192, 3.3108, daysAgo(30));
 
         // Ana – Murcia y Almería
@@ -100,7 +102,7 @@ public class DataSeeder implements ApplicationRunner {
                 "Cabo de Gata: Arrecife de las Sirenas",
                 "El fondo volcánico de Cabo de Gata es diferente a todo lo demás de España. Estrellas de mar " +
                 "por todas partes, morenas, y una luz espectacular que entra desde la superficie. Ideal para fotografía.",
-                "https://images.unsplash.com/photo-1561144257-e32e8506dd4e?w=800",
+                "https://images.unsplash.com/photo-1682687982360-3fbab65f9d50?w=800",
                 36.7167, -2.1833, daysAgo(15));
 
         // Pedro – Canarias
@@ -108,21 +110,21 @@ public class DataSeeder implements ApplicationRunner {
                 "Lanzarote: Jameos del Agua bajo el mar",
                 "Exploración del tubo volcánico que se adentra en el mar. Buceo de caverna en las galerías " +
                 "exteriores. Vimos cangrejos ciegos endémicos y formaciones de lava alucinantes. 18 m máx.",
-                "https://images.unsplash.com/photo-1602699831543-e31e02bcbdfd?w=800",
+                "https://images.unsplash.com/photo-1682686581484-a220483e6291?w=800",
                 29.0167, -13.5833, daysAgo(60));
 
         Publication p6 = pub(pedro,
                 "Tenerife: El Bajón de la Rajita",
                 "Uno de los mejores puntos de buceo del sur de Tenerife. Bancos de bogas, peces loro y angel sharks " +
                 "descansando en el fondo de arena. El volcán submarino crea una topografía increíble.",
-                "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=800",
+                "https://images.unsplash.com/photo-1570367364062-4ab01ebf0954?w=800",
                 28.0833, -16.7333, daysAgo(50));
 
         Publication p7 = pub(pedro,
                 "Fuerteventura: Bajo de Corredera",
                 "Punto técnico con corriente. Mantas, tortugas y en temporada, tiburones ballena. El coral negro " +
                 "a 40 metros es impresionante. Solo recomendado para buceadores con experiencia en corrientes.",
-                "https://images.unsplash.com/photo-1508360228785-f8f649fdbdbe?w=800",
+                "https://images.unsplash.com/photo-1593221985357-c83622aa15ed?w=800",
                 28.3587, -14.0533, daysAgo(40));
 
         // María – Baleares
@@ -130,21 +132,21 @@ public class DataSeeder implements ApplicationRunner {
                 "Mallorca: Cueva de Sa Dona",
                 "Cueva semisumergida en la costa este de Mallorca. Stalactitas bajo el agua que se formaron " +
                 "hace miles de años cuando el nivel del mar era más bajo. Experiencia mística. Máx. 12 m.",
-                "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800",
+                "https://images.unsplash.com/photo-1682686581295-7364cabf5511?w=800",
                 39.3333, 3.1833, daysAgo(25));
 
         Publication p9 = pub(maria,
                 "Menorca: Cala Pregonda",
                 "Costa norte virgen de Menorca. Praderas de posidonia perfectamente conservadas, caballitos de mar " +
                 "entre las algas y una colonia de estrellas frágiles a 15 metros. Agua como una piscina.",
-                "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800",
+                "https://images.unsplash.com/photo-1682686581413-0a0ec9bb35bb?w=800",
                 40.0500, 3.8500, daysAgo(10));
 
         Publication p10 = pub(maria,
                 "Ibiza: Reserva Marina de Ses Salines",
                 "El mar de Ibiza tiene una de las aguas más limpias del Mediterráneo gracias a la Posidonia oceánica. " +
                 "Hippocampus guttulatus a 8 metros, pulpos gigantes y la visibilidad fue de 25 metros este día.",
-                "https://images.unsplash.com/photo-1566241880756-31de96a1e5da?w=800",
+                "https://images.unsplash.com/photo-1510074232337-05d50fa189ba?w=800",
                 38.9100, 1.4300, daysAgo(5));
 
         // Javier – Valencia y Alicante
@@ -152,14 +154,14 @@ public class DataSeeder implements ApplicationRunner {
                 "Jávea: El Portitxol",
                 "Pequeña cala protegida por el cabo de la Nao. Fondo rocoso con abanicos de Gorgonia polyps y " +
                 "múltiples nudibraquios de colores. Una barracuda solitaria nos sorprendió en la bajada.",
-                "https://images.unsplash.com/photo-1563999-6-9a6d4d87e8?w=800",
+                "https://images.unsplash.com/photo-1586508577428-120d6b072945?w=800",
                 38.8000, 0.1667, daysAgo(35));
 
         Publication p12 = pub(javier,
                 "Denia: La Tramuntana",
                 "Pared vertical que cae de 5 a 40 metros con gorgonias, esponjas rojas y numerosos lábridos. " +
                 "Encontramos un cañón de la guerra civil español en el fondo. Historia e historia natural juntas.",
-                "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=800",
+                "https://images.unsplash.com/photo-1758968417917-720636688370?w=800",
                 38.8400, 0.1050, daysAgo(18));
 
         // Laura – Norte de España
@@ -167,21 +169,21 @@ public class DataSeeder implements ApplicationRunner {
                 "Asturias: Luarca y los pulpos gigantes",
                 "El Cantábrico tiene una biodiversidad completamente diferente al Mediterráneo. Temperatura de " +
                 "14 °C pero vale la pena. Pulpos de más de 2 metros, centollos y estrellas de mar gigantes.",
-                "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=800",
+                "https://images.unsplash.com/photo-1559600837-d0ced1da77d1?w=800",
                 43.5456, -6.5356, daysAgo(55));
 
         Publication p14 = pub(laura,
                 "Cedeira, Galicia: Las Cíes del norte",
                 "Ría de Cedeira, aguas frías pero extraordinariamente claras. Fondos de granito cubiertos de " +
                 "algas pardas, espuertas de mar y erizos por doquier. Un rape perfectamente camuflado nos vigilaba.",
-                "https://images.unsplash.com/photo-1625189659340-9255f30929e7?w=800",
+                "https://images.unsplash.com/photo-1742504871581-3a46d843a0bd?w=800",
                 43.6667, -8.0500, daysAgo(70));
 
         Publication p15 = pub(laura,
                 "Nerja: Cueva del Mar",
                 "Buceo nocturno en la zona de Maro-Cerro Gordo, el Parque Natural más al este de Málaga. " +
                 "Langostas saliendo a cazar, pulpos activos y bioluminiscencia al mover las manos. Mágico.",
-                "https://images.unsplash.com/photo-1602462977716-f46b65ce4b4a?w=800",
+                "https://images.unsplash.com/photo-1682687982360-3fbab65f9d50?w=800",
                 36.7333, -3.8667, daysAgo(8));
 
         List<Publication> pubs = publicationRepository.saveAll(
@@ -249,61 +251,61 @@ public class DataSeeder implements ApplicationRunner {
         commentRepository.saveAll(List.of(
                 comment(p1, ana,    "¡Sitio increíble! Las Medes son lo más del Mediterráneo, estuve el verano pasado y también flipé con los meros.", daysAgo(44)),
                 comment(p1, pedro,  "¿Con qué escuela fuiste? Tengo ganas de ir desde hace tiempo.", daysAgo(43)),
-                comment(p1, carlos, "Fui autónomo con un zodiac de alquiler. El acceso es libre desde Estartit.", daysAgo(43)),
+                comment(p1, carlos, "Fui autónomo con un zodiac de alquiler, @[Pedro Ruiz](pedro.ruiz.mar@gmail.com). El acceso es libre desde Estartit.", daysAgo(43)),
                 comment(p1, laura,  "La reserva es lo que hace que haya tantos peces grandes. Ojalá hubiera más así.", daysAgo(42)),
 
                 comment(p2, maria,  "El volcánico del Cap de Creus es único, en ningún otro sitio del Mediterráneo se ve eso.", daysAgo(29)),
                 comment(p2, javier, "¿Cuánta corriente había? Ese punto me da respeto.", daysAgo(29)),
-                comment(p2, carlos, "Javier, ese día tuvimos suerte, estaba a 1-2 nudos. Hay días que es imposible entrar.", daysAgo(28)),
+                comment(p2, carlos, "@[Javier Sánchez](javier.sanchez.submarinismo@gmail.com), ese día tuvimos suerte, estaba a 1-2 nudos. Hay días que es imposible entrar.", daysAgo(28)),
 
-                comment(p3, carlos, "Ana, ¿a qué profundidad encontraste las gorgonias? El verano pasado estuve y no bajé de 25.", daysAgo(19)),
-                comment(p3, ana,    "Carlos, a 35-38 metros. Hay que ir con nitrox o ser muy eficiente con el aire.", daysAgo(19)),
+                comment(p3, carlos, "@[Ana López · Instructora](ana.lopez.dive@gmail.com), ¿a qué profundidad encontraste las gorgonias? El verano pasado estuve y no bajé de 25.", daysAgo(19)),
+                comment(p3, ana,    "@[Carlos M.](carlos.martinez.buceo@gmail.com), a 35-38 metros. Hay que ir con nitrox o ser muy eficiente con el aire.", daysAgo(19)),
                 comment(p3, laura,  "Las tortugas en Cabo de Palos son habituales, se ha notado mucho la mejora de la reserva.", daysAgo(18)),
 
                 comment(p4, pedro,  "Cabo de Gata es tremendo para foto. ¿Qué cámara llevas?", daysAgo(14)),
-                comment(p4, ana,    "Pedro, una Sony RX100 VII en carcasa. No necesitas más para ese fondo tan iluminado.", daysAgo(14)),
+                comment(p4, ana,    "@[Pedro Ruiz](pedro.ruiz.mar@gmail.com), una Sony RX100 VII en carcasa. No necesitas más para ese fondo tan iluminado.", daysAgo(14)),
 
                 comment(p5, carlos, "El tubo volcánico de Lanzarote es de otro mundo. ¿Hiciste la versión larga o la corta?", daysAgo(59)),
-                comment(p5, pedro,  "Carlos, la larga con guía. La corta también vale pero la larga merece más la pena.", daysAgo(59)),
+                comment(p5, pedro,  "@[Carlos M.](carlos.martinez.buceo@gmail.com), la larga con guía. La corta también vale pero la larga merece más la pena.", daysAgo(59)),
                 comment(p5, ana,    "Los cangrejos ciegos son endémicos de las cuevas volcánicas, fascinante evolución.", daysAgo(58)),
 
                 comment(p6, javier, "Las angel sharks de Tenerife son top. ¿Época del año? Tengo entendido que están más activas en invierno.", daysAgo(49)),
-                comment(p6, pedro,  "Javier, exacto. Invierno y primavera son las mejores épocas. En verano se esconden más.", daysAgo(49)),
+                comment(p6, pedro,  "@[Javier Sánchez](javier.sanchez.submarinismo@gmail.com), exacto. Invierno y primavera son las mejores épocas. En verano se esconden más.", daysAgo(49)),
 
                 comment(p7, carlos, "Eso de las mantas en Fuerteventura no lo sabía. ¿En qué mes?", daysAgo(39)),
-                comment(p7, pedro,  "Carlos, finales de otoño e invierno. Cuando hay plancton abundante.", daysAgo(39)),
+                comment(p7, pedro,  "@[Carlos M.](carlos.martinez.buceo@gmail.com), finales de otoño e invierno. Cuando hay plancton abundante.", daysAgo(39)),
 
                 comment(p8, pedro,  "Las cuevas con estalagmitas sumergidas son de lo más especial. ¿La cueva tiene mucha profundidad?", daysAgo(24)),
-                comment(p8, maria,  "Pedro, máximo 12 metros en el interior. Ideal incluso para buceadores con poca experiencia.", daysAgo(24)),
-                comment(p8, javier, "Menuda foto, María. El efecto de la luz entrando en la cueva es espectacular.", daysAgo(23)),
+                comment(p8, maria,  "@[Pedro Ruiz](pedro.ruiz.mar@gmail.com), máximo 12 metros en el interior. Ideal incluso para buceadores con poca experiencia.", daysAgo(24)),
+                comment(p8, javier, "Menuda foto, @[María G.](maria.garcia.buceo@gmail.com). El efecto de la luz entrando en la cueva es espectacular.", daysAgo(23)),
 
                 comment(p9, ana,    "La Posidonia de Menorca está en un estado de conservación excepcional. Qué suerte haberla visto.", daysAgo(9)),
-                comment(p9, carlos, "Los caballitos de mar son muy difíciles de ver, enhorabuena. ¿Cuánto tiempo tardaste en encontrarlos?", daysAgo(9)),
-                comment(p9, maria,  "Carlos, unos 20 minutos buscando entre las algas. Hay que tener paciencia.", daysAgo(9)),
+                comment(p9, carlos, "@[María G.](maria.garcia.buceo@gmail.com) los caballitos de mar son muy difíciles de ver, enhorabuena. ¿Cuánto tiempo tardaste en encontrarlos?", daysAgo(9)),
+                comment(p9, maria,  "@[Carlos M.](carlos.martinez.buceo@gmail.com), unos 20 minutos buscando entre las algas. Hay que tener paciencia.", daysAgo(9)),
 
                 comment(p10, pedro, "Ibiza tiene fama de fiesta pero el fondo marino es una maravilla olvidada. Gran post.", daysAgo(4)),
                 comment(p10, javier,"¿Cuántos metros de visibilidad? Lo has puesto en el texto pero no me creo 25 metros en agosto.", daysAgo(4)),
-                comment(p10, maria, "Javier, fue en mayo, no en agosto. En verano baja bastante por el turismo. 😄", daysAgo(3)),
+                comment(p10, maria, "@[Javier Sánchez](javier.sanchez.submarinismo@gmail.com), fue en mayo, no en agosto. En verano baja bastante por el turismo. 😄", daysAgo(3)),
 
                 comment(p11, ana,   "El Portitxol es de los mejores puntos del norte de Alicante. ¿Entraste desde tierra o en barco?", daysAgo(34)),
-                comment(p11, javier,"Ana, desde tierra, hay un pequeño embarcadero de piedra. En calma absoluta se puede entrar muy bien.", daysAgo(34)),
+                comment(p11, javier,"@[Ana López · Instructora](ana.lopez.dive@gmail.com), desde tierra, hay un pequeño embarcadero de piedra. En calma absoluta se puede entrar muy bien.", daysAgo(34)),
 
                 comment(p12, maria, "¿El cañón está a cuántos metros de profundidad? Me gustaría investigar más sobre él.", daysAgo(17)),
-                comment(p12, javier,"María, está a unos 35 metros. Hay registros históricos en la web de patrimonio subacuático de la Comunitat Valenciana.", daysAgo(17)),
+                comment(p12, javier,"@[María G.](maria.garcia.buceo@gmail.com), está a unos 35 metros. Hay registros históricos en la web de patrimonio subacuático de la Comunitat Valenciana.", daysAgo(17)),
 
                 comment(p13, carlos,"El Cantábrico me tiene pendiente. ¿Cuántos grados tenía el agua?", daysAgo(54)),
-                comment(p13, laura, "Carlos, 14 grados ese día. Traje seco o mínimo 7mm. Pero merece la pena.", daysAgo(54)),
+                comment(p13, laura, "@[Carlos M.](carlos.martinez.buceo@gmail.com), 14 grados ese día. Traje seco o mínimo 7mm. Pero merece la pena.", daysAgo(54)),
                 comment(p13, ana,   "Los pulpos del Cantábrico son enormes comparado con los del Mediterráneo. Flora y fauna muy distintas.", daysAgo(53)),
 
                 comment(p14, pedro, "Galicia es otra dimensión para el buceo. Las aguas frías conservan mucho mejor el fondo.", daysAgo(69)),
                 comment(p14, javier,"Un rape camuflado debe dar un susto de muerte si te lo encuentras de repente. 😂", daysAgo(69)),
-                comment(p14, laura, "Javier, literalmente di un salto hacia atrás cuando lo vi moverse. Alucinante camuflaje.", daysAgo(68)),
+                comment(p14, laura, "@[Javier Sánchez](javier.sanchez.submarinismo@gmail.com), literalmente di un salto hacia atrás cuando lo vi moverse. Alucinante camuflaje.", daysAgo(68)),
 
                 comment(p15, carlos,"El buceo nocturno en Nerja es una experiencia que todo buceador debería hacer al menos una vez.", daysAgo(7)),
                 comment(p15, ana,   "La bioluminiscencia es magia pura. ¿Tuviste linterna con filtro rojo para no asustar a los animales?", daysAgo(7)),
-                comment(p15, laura, "Ana, exacto, linterna roja. Los invertebrados nocturnos no reaccionan igual que con luz blanca.", daysAgo(6)),
+                comment(p15, laura, "@[Ana López · Instructora](ana.lopez.dive@gmail.com), exacto, linterna roja. Los invertebrados nocturnos no reaccionan igual que con luz blanca.", daysAgo(6)),
                 comment(p15, pedro, "Nerja es Plan A para mi próxima escapada al sur. ¿Con qué centro de buceo?", daysAgo(6)),
-                comment(p15, laura, "Pedro, con Dive Nerja, muy profesionales y conocen todos los puntos nocturnos de la zona.", daysAgo(5))
+                comment(p15, laura, "@[Pedro Ruiz](pedro.ruiz.mar@gmail.com), con Dive Nerja, muy profesionales y conocen todos los puntos nocturnos de la zona.", daysAgo(5))
         ));
 
         // ── Saves ─────────────────────────────────────────────────────────────────
