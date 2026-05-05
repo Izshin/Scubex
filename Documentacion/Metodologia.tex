@@ -11,7 +11,7 @@ Este capítulo describe el marco metodológico adoptado para el desarrollo de Sc
 
 \section{Estructura organizacional del proyecto}
 
-Scubex se ha desarrollado como Trabajo Fin de Grado de forma individual, asumiendo las siguientes responsabilidades:
+Scubex se desarrolla como Trabajo Fin de Grado de forma individual, asumiendo las siguientes responsabilidades:
 
 \begin{itemize}
     \item \textbf{Arquitecto de Software}: Diseño de la arquitectura cliente-servidor y selección del stack tecnológico.
@@ -19,13 +19,13 @@ Scubex se ha desarrollado como Trabajo Fin de Grado de forma individual, asumien
     \item \textbf{Documentador Técnico}: Redacción de la memoria académica y especificación de APIs mediante OpenAPI (Swagger).
 \end{itemize}
 
-El tutor del proyecto ha proporcionado la supervisión técnica y académica, validando decisiones arquitectónicas y avances iterativos.
+El tutor del proyecto proporciona la supervisión técnica y académica, validando decisiones arquitectónicas y avances iterativos.
 
 \section{Metodología de desarrollo}
 
 \subsection{Justificación de Feature-Driven Development (FDD)}
 
-Se ha adoptado \textbf{Feature-Driven Development} como metodología central debido a sus características idóneas para proyectos de alcance medio con requisitos funcionales bien definidos:
+Se adopta \textbf{Feature-Driven Development} como metodología central por sus características idóneas para proyectos de alcance medio con requisitos funcionales bien definidos:
 
 \begin{itemize}
     \item \textbf{Orientación a características}: Cada funcionalidad (escáner de especies, integración climática, red social) se desarrolla como una única unidad. Lo que significa que se realizará el código y hasta que no esté documentada y acabada, no se pasará a la siguiente.
@@ -36,7 +36,7 @@ Se ha adoptado \textbf{Feature-Driven Development} como metodología central deb
 En resumen, esta metodología permite estructurar el desarrollo con una lista de características claras y priorizadas. Lo que ayuda a mantener una organización coherente y simple en un equipo pequeño o individual.
 \subsection{Adaptación del ciclo FDD para Scubex}
 
-El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha adaptado la secuencia, unificando la fase de diseño y añadiendo una fase de documentación:
+El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se adapta la secuencia, unificando la fase de diseño y añadiendo dos fases específicas: una de documentación y una de seguimiento:
 
 \begin{enumerate}
     \item \textbf{Desarrollar la lista de características}: Identificación y priorización de funcionalidades nucleares (Gestión de usuarios OAuth2, Escáner de especies, Exploración climática, Red social).
@@ -48,6 +48,8 @@ El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha
     \item \textbf{Construir por característica}: Implementación incremental con validación mediante pruebas constantes.
     
     \item \textbf{Documentar la característica}: Redacción académica de cada característica en LaTeX, incluyendo justificación de decisiones técnicas y lecciones aprendidas.
+
+    \item \textbf{Seguimiento y control}: Al término de cada iteración se compara el resultado con lo planificado: fechas de inicio y fin, horas dedicadas y características completadas. Las desviaciones quedan registradas en la sección de seguimiento de cada capítulo de iteración.
 \end{enumerate}
 
 \subsection{Herramientas de desarrollo}
@@ -63,7 +65,7 @@ El modelo clásico de FDD consta de 5 fases. Para este proyecto académico se ha
 
 \section{Seguimiento y control}
 
-El progreso del proyecto se ha monitorizado mediante:
+El progreso del proyecto se monitoriza mediante:
 
 \begin{itemize}
     \item \textbf{Commits semánticos}: Mensajes (casi siempre) estructurados (feat, fix, docs, refactor) para trazabilidad histórica.

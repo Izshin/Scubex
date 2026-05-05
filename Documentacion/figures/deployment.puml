@@ -1,0 +1,122 @@
+@startuml
+' --- Configuración Visual ---
+top to bottom direction
+skinparam shadowing true
+skinparam roundcorner 10
+skinparam linetype ortho
+skinparam nodesep 150
+skinparam ranksep 180
+
+skinparam legend {
+    BackgroundColor #FFFFFF
+    BorderColor #DDDDDD
+    BorderThickness 1
+}
+
+!define CLIENT_COLOR   #D5E8D4
+!define VERCEL_COLOR   #DAE8FC
+!define RAILWAY_COLOR  #FFF2CC
+!define EXTERNAL_COLOR #F8CECC
+!define DB_COLOR       #E1D5E7
+
+skinparam node {
+    BackgroundColor White
+    BorderColor #666666
+    ArrowColor #333333
+}
+skinparam node<<Client>> {
+    BackgroundColor CLIENT_COLOR
+    BorderColor #82B366
+}
+skinparam node<<Vercel>> {
+    BackgroundColor VERCEL_COLOR
+    BorderColor #6C8EBF
+}
+skinparam node<<Railway>> {
+    BackgroundColor RAILWAY_COLOR
+    BorderColor #D6B656
+}
+skinparam node<<External>> {
+    BackgroundColor EXTERNAL_COLOR
+    BorderColor #B85450
+}
+skinparam database {
+    BackgroundColor DB_COLOR
+    BorderColor #9673A6
+}
+
+' ── Nodos principales ────────────────────────────────────────────────────────
+node "Dispositivo del Usuario" <<Client>> as client {
+    artifact "Navegador Web" as browser
+}
+
+node "Vercel (CDN)" <<Vercel>> as vercel {
+    artifact "React SPA\n(Vite build)" as spa
+}
+
+node "Railway — Backend" <<Railway>> as railway {
+    artifact "scubex-backend.jar\n(Spring Boot 3 · Puerto 8080)" as jar
+}
+
+database "Railway — PostgreSQL\n(Puerto 5432)" as db
+
+' ── APIs externas ────────────────────────────────────────────────────────────
+cloud "Consumos Externos (Frontend)" {
+    node "MapTiler Cloud\napi.maptiler.com" <<External>> as maptiler
+    node "Nominatim\nnominatim.openstreetmap.org" <<External>> as nominatim
+    maptiler -[hidden]right- nominatim
+}
+
+cloud "Consumos Externos (Backend)" {
+    node "OBIS API\napi.obis.org" <<External>> as obis
+    node "iNaturalist API\napi.inaturalist.org" <<External>> as inat
+    node "Google OAuth2\naccounts.google.com" <<External>> as google
+    obis -[hidden]right- inat
+    inat -[hidden]right- google
+}
+
+' ── Layout: tres filas, dos columnas ─────────────────────────────────────────
+' Fila 1: client | APIs frontend
+' Fila 2: vercel + railway | APIs backend
+' Fila 3: db
+
+' Columna izquierda (eje vertical)
+client  -[hidden]down-> railway
+railway -[hidden]down-> db
+
+' Vercel a la izquierda de railway en la misma fila
+vercel  -[hidden]right-> railway
+
+' APIs frontend a la derecha de client (misma fila)
+client  -[hidden]right-> maptiler
+
+' APIs backend a la derecha de railway (misma fila)
+railway -[hidden]right-> obis
+
+' APIs frontend encima de APIs backend
+maptiler -[hidden]down-> obis
+
+' ── Comunicaciones ───────────────────────────────────────────────────────────
+client  ->  vercel   : HTTPS — carga inicial\n↩ HTML / JS / CSS
+client  ->  railway  : HTTPS — REST + JWT\n(VITE_API_BASE_URL)
+
+note on link
+  CORS habilitado mediante\nCORS_ALLOWED_ORIGINS
+end note
+client  ->  maptiler : HTTPS — XYZ tiles\n(VITE_MAPTILER_KEY)
+client  ->  nominatim: HTTPS — REST\n(búsqueda de lugares)
+
+railway ->  db       : JDBC / TCP 5432\n(DATABASE_URL)
+railway ->  obis     : HTTPS — REST\n(ocurrencias y eco-stats)
+railway ->  inat     : HTTPS — REST\n(fotos y nombres comunes)
+railway ->  google   : HTTPS — tokeninfo\n(validación OAuth2)
+
+legend bottom
+  |= Color |= Nodo |
+  | <back:CLIENT_COLOR>      </back> | **Cliente**: Dispositivo del usuario |
+  | <back:VERCEL_COLOR>      </back> | **Vercel**: Hosting del frontend estático |
+  | <back:RAILWAY_COLOR>      </back> | **Railway**: Backend Spring Boot |
+  | <back:DB_COLOR>      </back> | **PostgreSQL**: Base de datos persistente |
+  | <back:EXTERNAL_COLOR>      </back> | **APIs externas**: Servicios de terceros |
+endlegend
+@enduml

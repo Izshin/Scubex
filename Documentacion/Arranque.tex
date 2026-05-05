@@ -111,3 +111,18 @@ Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa 
 \end{itemize}
 
 \textbf{Decisiones pendientes que quedaron en esta fase}: Quedó pendiente el determinar la estrategia de caching para OBIS que se resolvió en la Iteración~1; Y tambien el caching de condiciones climáticas que se resolvió en la Iteración~2. 
+
+\subsection{Diagrama de despliegue}
+
+La Fig.~\ref{fig:umlDespliegue} muestra la topología de despliegue de Scubex: los nodos físicos o lógicos que ejecutan cada componente y los canales de comunicación entre ellos.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/umlDespliegue.pdf}
+\caption{Diagrama UML de despliegue de Scubex\label{fig:umlDespliegue}}
+\end{center}
+\end{figure}
+
+El navegador del usuario se comunica con dos nodos de producción: Vercel, que sirve la aplicación React compilada como artefacto estático mediante HTTPS, y el backend en Railway, al que envía las peticiones REST autenticadas con JWT. Las llamadas al backend deben pasar el filtro CORS configurado mediante \texttt{CORS\_ALLOWED\_ORIGINS}.
+
+Los consumos externos se reparten en dos grupos según quién los origina. El frontend llama directamente a MapTiler Cloud para obtener los tiles y el estilo del mapa, y a Nominatim para la búsqueda y geocodificación inversa de lugares. El backend es el que se comunica con las APIs científicas y de datos: OBIS e iNaturalist para el escáner de biodiversidad, Open-Meteo para los datos climáticos y oceanográficos, y Google OAuth2 para validar los tokens de autenticación. El backend accede a PostgreSQL en Railway mediante JDBC.

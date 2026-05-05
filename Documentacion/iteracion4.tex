@@ -13,7 +13,7 @@ Esta iteración convierte Scubex en una red social de buceo. Se añaden likes, g
 \item Seguimiento de usuarios y perfiles públicos: seguir a otros buceadores y consultar su perfil con contadores de seguidores y seguidos. Ver Tabla~\ref{tab:valorAportadoFollows}.
 \item Centro de notificaciones: campana con contador de no leídas que agrupa likes, comentarios, menciones y nuevos seguidores. Ver Tabla~\ref{tab:valorAportadoNotificaciones}.
 \end{enumerate}
-
+Con las publicaciones en el mapa, el siguiente paso natural es que los usuarios puedan reaccionar al contenido de los demás. Las interacciones dan retroalimentación al autor; los follows construyen la red entre buceadores; y las notificaciones cierran el ciclo informando al usuario de todo lo que ocurre con su contenido, sin que tenga que ir a buscarlo.
 % ── Tabla 1: Interacciones con publicaciones ──────────────────────────────────
 \begin{table*}[htb]
 	\centering
@@ -75,16 +75,21 @@ El diagrama UML de la Fig.~\ref{fig:diseno04} muestra los componentes de la capa
 \caption{Diagrama UML de diseño para la iteración 4\label{fig:diseno04}}
 \end{center}
 \end{figure}
-\footnotesize\textit{Nota: \texttt{NotificationRepository} expone además los métodos \texttt{existsByRecipientIdAndTypeAnd\allowbreak ActorEmail()}, \texttt{existsByRecipientIdAndTypeAndActorEmailAndPublicationId()} y \texttt{deleteAllByRecipientId()}, omitidos del diagrama para no comprometer la legibilidad.}\normalsize
-
+El diseño concentra toda la lógica social en dos servicios independientes: uno gestiona las acciones directas sobre publicaciones (likes, guardados, comentarios) y el otro centraliza la generación de notificaciones. Esta separación permite evolucionar la lógica de notificaciones sin tocar la capa de interacciones.
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Implementación}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Se presentan primero los memorandos técnicos con las decisiones de diseño; a continuación, los pseudocódigos que las materializan.
+La capa social introduce tres desafíos que no existían en iteraciones anteriores: gestionar acciones reversibles sin duplicar datos, enviar notificaciones precisas sin repetirlas, y mantener el contador de notificaciones actualizado sin conexiones permanentes al servidor. Los tres desafíos técnicos y las decisiones adoptadas para resolverlos están recogidos en las tablas siguientes:
+
+\begin{itemize}
+    \item \textbf{Interacciones con toggle} (Tabla~\ref{tab:memo012}): dar like varias veces crearía registros duplicados y notificaciones repetidas. El servidor comprueba si ya existe el registro antes de actuar: si existe lo borra, si no lo crea.
+    \item \textbf{Menciones y deduplicación de notificaciones} (Tabla~\ref{tab:memo013}): los nombres de usuario no son únicos, y el propietario de una publicación podría recibir dos notificaciones del mismo comentario si también aparece mencionado. Las menciones se codifican con el email y un conjunto de ya-notificados evita los duplicados.
+    \item \textbf{Centro de notificaciones con polling} (Tabla~\ref{tab:memo014}): el cliente no sabe cuándo llega una notificación nueva. La campana consulta periódicamente al servidor el número de no leídas y actualiza el contador sin necesidad de conexión permanente.
+\end{itemize}
 
 % ── Memorando 012: Interacciones ────────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 012: Implementación de Likes, Guardados y Comentarios}
@@ -100,25 +105,10 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 	\caption{Memorando técnico 012: Likes, Guardados y Comentarios\label{tab:memo012}}
 \end{table*}
 
-\clearpage
-% ── asigResponsabilidad 006: InteractionService.toggleLike() ─────────────────
-\begin{asigResponsabilidad}{006}{InteractionService}
-{boolean toggleLike(publication:Publication, user:User)}
-\pasoPseudo{1. Se busca en base de datos si el usuario ya ha dado like a esta publicación con \texttt{likeRepository.findByPublicationIdAndUserId()}.}
-\pasoPseudo{2. Si el like ya existe, se elimina con \texttt{likeRepository.delete()} y se devuelve \texttt{false} (el usuario ha quitado el like), fin.}
-\pasoPseudo{3. Si no existe, se crea el registro de like y se persiste con \texttt{likeRepository.save()}.}
-\pasoPseudo{4. Se notifica al autor de la publicación con \texttt{notificationService.notifyLike()}. Si el usuario está dando like a su propia publicación, esta llamada no genera ninguna notificación.}
-\pasoPseudo{5. Se devuelve \texttt{true} (el usuario ha dado like).}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{1}{LikeRepo.}{Optional<PublicationLike> findByPublicationIdAndUserId(pubId, userId)}{012}{NO}
-\pasoCodigo{2}{LikeRepo.}{void delete(like)}{012}{NO}
-\pasoCodigo{3}{LikeRepo.}{PublicationLike save(like)}{012}{NO}
-\pasoCodigo{4}{NotifSvc.}{void notifyLike(actor, pub)}{012, 013}{NO}
-\end{asigResponsabilidad}
-{\footnotesize\textit{Nota: Los métodos restantes de \texttt{InteractionService} son suficientemente simples como para no requerir pseudocódigo propio. \texttt{toggleSave()} sigue el mismo patrón que \texttt{toggleLike()} sin el paso de notificación. \texttt{addComment()} persiste el comentario y delega en \texttt{notifyComment()} (ver asigResp.\ 007). \texttt{deleteComment()} comprueba autoría y borra, devolviendo \texttt{false} si el usuario no es el autor.}}
+
 
 % ── Memorando 013: Notificaciones y menciones ─────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 013: Notificaciones con Menciones en Comentarios}
@@ -135,7 +125,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \end{table*}
 
 % ── Memorando 014: Centro de notificaciones (frontend) ───────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 014: Centro de Notificaciones con Polling desde el Frontend}
@@ -150,84 +140,95 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 	\end{coolTable}
 	\caption{Memorando técnico 014: Centro de Notificaciones\label{tab:memo014}}
 \end{table*}
-
 \clearpage
-% ── asigResponsabilidad 007: NotificationService.notifyComment() ──────────────
-\begin{asigResponsabilidad}{007}{NotificationService}
-{void notifyComment(actor:User, pub:Publication, text:String)}
-\pasoPseudo{1. Se prepara el fragmento del texto para la notificación, recortado a 150 caracteres si el comentario es más largo.}
-\pasoPseudo{2. Se inicializa un conjunto de ya-notificados con el ID del comentarista, para que nunca reciba él mismo una notificación de tipo \texttt{COMMENT} ni de tipo \texttt{MENTION}.}
-\pasoPseudo{3. Si el comentarista no es el propietario, se persiste una notificación de tipo \texttt{COMMENT} para el propietario con \texttt{notificationRepository.save()} y se añade su ID al conjunto, evitando que reciba también una \texttt{MENTION} si aparece mencionado en el texto.}
-\pasoPseudo{4. Se extraen todos los emails mencionados del texto con \texttt{MENTION\_PATTERN}.}
-\pasoPseudo{5. Los usuarios mencionados se cargan en una sola consulta con \texttt{userRepository.findByEmailIn()}, evitando una consulta separada por cada mención.}
-\pasoPseudo{6. Por cada mencionado cuyo ID no figure en el conjunto de ya-notificados, se persiste una notificación de tipo \texttt{MENTION} con \texttt{notificationRepository.save()}.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{3}{NotifRepo.}{Notification save(notification)}{012, 013}{NO}
-\pasoCodigo{5}{UserRepo.}{List<User> findByEmailIn(emails)}{013}{NO}
-\pasoCodigo{6}{NotifRepo.}{Notification save(notification)}{013}{NO}
-\end{asigResponsabilidad}
-{\footnotesize\textit{Nota: Por la misma razón de la anterior nota, \texttt{notifyLike()} y \texttt{notifyFollow()} no tienen pseudocódigo propio. \texttt{notifyLike()} descarta la notificación si el actor es el autor de la publicación o ya existe una igual, y en caso contrario persiste una de tipo \texttt{LIKE}. \texttt{notifyFollow()} sigue el mismo patrón sin el filtro de autoría.}}
 
 
+\subsection*{Flujo de una interacción (like)}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Pruebas}
-% ─────────────────────────────────────────────────────────────────────────────
+Cuando un usuario pulsa el botón de like en una publicación:
 
-Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{InteractionServiceTest} y \texttt{NotificationServiceTest}, siguiendo el mismo patrón basado en Mockito que el resto del proyecto.
+\begin{enumerate}
+    \item El usuario pulsa el botón. La interfaz actualiza el contador y el estado visual del botón de forma inmediata sin esperar respuesta del servidor (actualización optimista). 
+    
+    Al mismo tiempo, se envía la petición y el servidor comprueba si ya existe un like de ese usuario para esa publicación en base de datos.
+    \item Si ya existe, lo borra y devuelve al cliente el nuevo estado (sin like). No se genera ninguna notificación.
+    \item Si no existe, crea el registro y notifica al autor de la publicación. Si el usuario está dando like a su propia publicación, o ya había recibido una notificación de like del mismo actor, no se genera ninguna notificación adicional.
+    \item Si la respuesta del servidor no coincide con el estado optimista, la interfaz lo corrige para reflejar la realidad.
+\end{enumerate}
 
-\textbf{\texttt{InteractionServiceTest}} cubre los siguientes casos:
+\smallskip
+\noindent\textit{Nota — El flujo de guardados y el de follows siguen exactamente el mismo patrón de toggle. Las diferencias son dos: los guardados no generan ninguna notificación (es una acción privada del usuario), y el follow añade una comprobación extra que impide que un usuario se siga a sí mismo antes de llegar a la base de datos.}
 
-\begin{itemize}
-    \item \textbf{Primer like} (\texttt{toggleLike\_noExisting\_likesAndNotifies}): si no existe like previo, se persiste el registro y se llama a \texttt{notificationService.notifyLike()}.
+\subsection*{Flujo de un comentario con mención}
 
-    \item \textbf{Quitar like} (\texttt{toggleLike\_existing\_unlikesAndDoesNotNotify}): si el like ya existe, se elimina y \texttt{notifyLike()} no es invocado.
+Cuando un usuario publica un comentario que menciona a otro usuario:
 
-    \item \textbf{Borrar comentario por el propietario} (\texttt{deleteComment\_owner\_deletesAndReturnsTrue}): el autor del comentario puede borrarlo correctamente; se verifica que el resultado es \texttt{true} y que \texttt{commentRepository.delete()} fue invocado exactamente una vez.
+\begin{enumerate}
+    \item El usuario envía el formulario. El frontend añade de inmediato un comentario temporal a la lista de comentarios del panel de detalle de publicación, incrementa el contador de comentarios visible en ese mismo panel y actualiza el badge del marcador en el mapa, todo sin esperar respuesta del servidor (actualización optimista). 
+    
+    La caja de texto se vacía para que el usuario pueda escribir otro comentario.
+    \item La petición llega al servidor y el comentario se persiste en base de datos con el texto tal como el usuario lo escribió. Las menciones viajan codificadas como \texttt{@[Nombre](email)}.
+    \item El servidor extrae los emails mencionados del texto y los resuelve a usuarios en una sola consulta a base de datos.
+    \item Si el comentarista no es el propietario de la publicación, se genera una notificación de tipo comentario para el propietario y se lo marca como ya notificado.
+    \item Por cada usuario mencionado que no haya sido ya notificado en el paso anterior, se genera una notificación de tipo mención. Esto evita que el propietario reciba dos notificaciones si también aparece mencionado.
+    \item El servidor devuelve el comentario real con el identificador asignado por la base de datos. El frontend sustituye el comentario temporal por el definitivo. Si la petición falló, deshace todos los cambios optimistas: elimina el comentario temporal, restaura el contador y devuelve el texto al campo de entrada.
+\end{enumerate}
 
-    \item \textbf{Primer guardado y quitar guardado} (\texttt{toggleSave\_noExisting\_saves} y \texttt{toggleSave\_existing\_unsaves}): el mismo patrón que los likes, verificando que el registro se crea o se elimina según corresponda.
+\smallskip
+\noindent\textit{Nota — Un comentario sin mención sigue exactamente el mismo camino en el frontend  y en el servidor. La única diferencia es que la lista de emails mencionados queda vacía, por lo que el bucle de menciones no genera ninguna notificación adicional y el conjunto de ya-notificados no entra en juego.}
 
-    \item \textbf{Añadir comentario} (\texttt{addComment\_savesCommentAndNotifies}): se persiste el comentario y se llama a \texttt{notificationService.notifyComment()}.
 
-    \item \textbf{Borrar comentario por propietario ajeno} (\texttt{deleteComment\_notOwner\_returnsFalse}): si el usuario que intenta borrar no es el autor del comentario, devuelve \texttt{false} sin llamar a \texttt{delete()}.
-
-    \item \textbf{Borrar comentario inexistente} (\texttt{deleteComment\_notFound\_returnsFalse}): si el comentario no existe en base de datos, devuelve \texttt{false} sin intentar borrarlo.
-\end{itemize}
-
-\textbf{\texttt{NotificationServiceTest}} cubre los siguientes casos:
-
-\begin{itemize}
-    \item \textbf{Notificación de follow} (\texttt{notifyFollow\_differentUsers\_savesNotification}): seguir a otro usuario persiste una notificación de tipo \texttt{FOLLOW} con el email del seguidor.
-
-    \item \textbf{Auto-follow sin notificación} (\texttt{notifyFollow\_sameUser\_doesNotSave}): seguirse a uno mismo no persiste ninguna notificación; \texttt{notificationRepository.save()} no es invocado.
-
-    \item \textbf{Follow ya existente} (\texttt{notifyFollow\_alreadyNotified\_doesNotDuplicate}): si ya existe una notificación de tipo \texttt{FOLLOW} del mismo actor para el mismo destinatario, \texttt{existsByRecipientIdAndTypeAndActorEmail()} devuelve \texttt{true} y no se persiste ninguna notificación adicional.
-
-    \item \textbf{Like ya notificado} (\texttt{notifyLike\_alreadyNotified\_doesNotDuplicate}): si ya existe una notificación de tipo \texttt{LIKE} del mismo actor para la misma publicación, \texttt{existsByRecipientIdAndTypeAndActorEmailAndPublicationId()} devuelve \texttt{true} y no se persiste ninguna notificación adicional.
-
-    \item \textbf{Like propio} (\texttt{notifyLike\_selfLike\_doesNotSave}): dar like a la propia publicación no genera notificación.
-
-    \item \textbf{Comentario con mención} (\texttt{notifyComment\_withMention\_savesMentionNotification}): un comentario que menciona a un usuario produce dos saves: uno de tipo \texttt{COMMENT} para el propietario y otro de tipo \texttt{MENTION} para el mencionado.
-
-    \item \textbf{Mención al propietario sin duplicar} (\texttt{notifyComment\_mentionAlreadyNotified\_doesNotDuplicate}): si el propietario de la publicación también es el mencionado, solo se genera un \texttt{save}, no dos.
-
-    \item \textbf{Texto largo truncado} (\texttt{notifyComment\_longText\_snippetTruncatedAt150}): un comentario de más de 150 caracteres produce un fragmento de exactamente 151 (150 + ``\ldots'').
-
-    \item \textbf{Marcar notificación propia como leída} (\texttt{markRead\_ownNotification\_setsReadAndSaves}): la notificación queda marcada como leída y se persiste el cambio.
-
-    \item \textbf{Marcar notificación ajena} (\texttt{markRead\_otherUserNotification\_doesNotSave}): solo el destinatario puede marcar su notificación; si el usuario no es el destinatario, no se persiste ningún cambio.
-
-    \item \textbf{Marcar todas como leídas} (\texttt{markAllRead\_setsAllReadAndSaves}): todas las notificaciones no leídas del usuario quedan marcadas y se persisten en lote.
-
-    \item \textbf{Eliminar notificación propia} (\texttt{deleteNotification\_ownNotification\_deletes}): el destinatario puede eliminar su notificación correctamente.
-
-    \item \textbf{Eliminar notificación ajena} (\texttt{deleteNotification\_otherUserNotification\_doesNotDelete}): si el usuario no es el destinatario, \texttt{notificationRepository.delete()} no es invocado, impidiendo que un usuario elimine notificaciones de otro.
-\end{itemize}
-
-Dada la densidad de esta iteración, no se han documentado todos los tests existentes. Adicionalmente se han implementado tests de controlador (\texttt{InteractionControllerTest} y \texttt{NotificationControllerTest}) que verifican los endpoints de likes, guardados, comentarios y notificaciones. Por su volumen y simplicidad, no se detallan aquí para no comprometer la legibilidad de la documentación.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Esta iteración añadió cinco nuevas tablas a la base de datos: \texttt{publication\_likes}, \texttt{publication\_saves}, \texttt{comments}, \texttt{user\_follows} y \texttt{notifications}, todas creadas automáticamente por Hibernate al arrancar el servicio en Railway con \texttt{ddl-auto=update}. No fue necesario añadir nuevas variables de entorno ni credenciales externas, ya que todas las funcionalidades de esta iteración utilizan exclusivamente la base de datos PostgreSQL existente.
+Esta iteración añadió cinco nuevas tablas a la base de datos: \texttt{publication\_likes}, \texttt{publication\_saves}, \texttt{comments}, \texttt{user\_follows} y \texttt{notifications}, todas creadas automáticamente por Hibernate al arrancar el servicio en Railway. No fue necesario añadir nuevas variables de entorno ni credenciales externas, ya que todas las funcionalidades de esta iteración utilizan exclusivamente la base de datos PostgreSQL existente.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Las pruebas cubren los tres desafíos técnicos documentados y verifican los pasos clave de los dos flujos.
+
+\subsection*{Interacciones}
+
+\begin{itemize}
+    \item \textbf{Primer like} (Tabla~\ref{tab:memo012}, paso~3 del flujo de like): sin like previo, se persiste el registro y se notifica al autor.
+
+    \item \textbf{Quitar like} (Tabla~\ref{tab:memo012}, paso~2 del flujo de like): si el like ya existe, se elimina y no se genera ninguna notificación.
+
+    \item \textbf{Primer guardado y quitar guardado} (Tabla~\ref{tab:memo012}): mismo patrón que los likes, verificando que el registro se crea o se elimina según corresponda.
+
+    \item \textbf{Añadir comentario} (Tabla~\ref{tab:memo012}, paso~1 del flujo de comentario): el comentario se persiste y se delega la notificación.
+
+    \item \textbf{Borrar comentario por el autor} (Tabla~\ref{tab:memo012}): el autor borra su comentario; resultado verdadero y borrado ejecutado.
+
+    \item \textbf{Borrar comentario por usuario ajeno} (Tabla~\ref{tab:memo012}): un usuario distinto al autor obtiene falso y no se ejecuta ningún borrado.
+
+    \item \textbf{Borrar comentario inexistente} (Tabla~\ref{tab:memo012}): identificador no encontrado devuelve falso sin intentar borrar.
+\end{itemize}
+
+\subsection*{Notificaciones y menciones}
+
+\begin{itemize}
+    \item \textbf{Notificación de follow} (Tabla~\ref{tab:memo013}): seguir a otro usuario persiste una notificación de tipo seguimiento con el email del seguidor.
+
+    \item \textbf{Auto-follow sin notificación} (Tabla~\ref{tab:memo013}): seguirse a uno mismo no genera ninguna notificación.
+
+    \item \textbf{Deduplicación de follow y like} (Tabla~\ref{tab:memo013}): si ya existe una notificación del mismo actor para el mismo destinatario y tipo, no se persiste ninguna adicional.
+
+    \item \textbf{Like propio} (Tabla~\ref{tab:memo013}): dar like a la propia publicación no genera notificación.
+
+    \item \textbf{Comentario con mención} (Tabla~\ref{tab:memo013}, pasos~3--4 del flujo de comentario): un comentario con mención produce una notificación de comentario para el propietario y una de mención para el mencionado.
+
+    \item \textbf{Mención al propietario sin duplicar} (Tabla~\ref{tab:memo013}, paso~4 del flujo de comentario): si el propietario es también el mencionado, solo se genera una notificación, no dos.
+
+    \item \textbf{Texto largo truncado} (Tabla~\ref{tab:memo013}, paso~5 del flujo de comentario): un comentario de más de 150 caracteres produce un fragmento de exactamente 151 (150~+~«\ldots»).
+
+    \item \textbf{Marcar como leída y eliminar: solo el destinatario} (Tabla~\ref{tab:memo014}): marcar como leída o eliminar una notificación ajena no persiste ningún cambio; las mismas operaciones sobre la propia notificación sí funcionan.
+\end{itemize}
+
+\begin{quote}
+\small\textit{El proyecto cuenta con más pruebas unitarias (controladores de interacciones y notificaciones, endpoints de likes, guardados y comentarios) que no se detallan aquí por no estar directamente vinculadas a los desafíos técnicos documentados en esta sección.}
+\end{quote}

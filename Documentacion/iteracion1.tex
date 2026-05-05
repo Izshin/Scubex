@@ -15,6 +15,8 @@ con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 \item Autenticación con Google OAuth2 y emisión de JWT. Ver Tabla~\ref{tab:valorAportadoAuth}.
 \end{enumerate}
 
+Esta iteración construye el núcleo de Scubex. El punto de partida es el mapa: sin una superficie interactiva donde el usuario pueda moverse y fijar zonas, ninguna otra funcionalidad tiene sentido. Sobre ese mapa se monta el escáner de biodiversidad, que es parte de la propuesta de valor diferencial de la aplicación. Y para que el usuario pueda guardar y compartir lo que encuentra, se añade la autenticación. Las tres características se analizan a continuación.
+
 % ── Tabla 1: Mapa interactivo ────────────────────────────────────────────────
 \begin{table*}[htb]
 	\centering
@@ -31,6 +33,8 @@ con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 	\caption{Análisis de valor aportado: Mapa Interactivo\label{tab:valorAportadoMapa}}
 \end{table*}
 
+Con el mapa como superficie, lo siguiente es el escáner de biodiversidad: la funcionalidad que permite al buceador descubrir qué fauna marina habita la zona que está mirando (Tabla~\ref{tab:valorAportadoScan}).
+
 % ── Tabla 2: Escáner de biodiversidad ────────────────────────────────────────
 \begin{table*}[htb]
 	\centering
@@ -46,6 +50,8 @@ con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 	\end{coolTable}
 	\caption{Análisis de valor aportado: Escáner\label{tab:valorAportadoScan}}
 \end{table*}
+
+Por último, para que el usuario pueda identificarse y, en iteraciones futuras, publicar y guardar contenido, se necesita un sistema de autenticación. Se opta por delegar la identidad en Google para evitar gestionar contraseñas propias (Tabla~\ref{tab:valorAportadoAuth}).
 
 % ── Tabla 3: Autenticación ──────────────────────────────────────────────────
 \begin{table*}[htb]
@@ -68,9 +74,7 @@ con escáner de biodiversidad marina y autenticación con Google.\end{abstract}
 \section{Diseño}
 % ─────────────────────────────────────────────────────────────────────────────
 
-El diagrama UML de la Fig.~\ref{fig:diseno01} muestra las relaciones entre los componentes principales del sistema: controladores, servicios, repositorios y entidades de caché. La leyenda del propio diagrama recoge la notación de visibilidad y el código de colores por capa arquitectónica.
-
-Cabe señalar que el método \texttt{findBestMatch()} empleado en los pseudocódigos es un alias semántico: el nombre real, generado automáticamente por Spring Data JPA a partir de los criterios de consulta, es \texttt{findFirstByRoundedLatAndRoundedLngAndRadius\-GreaterThanEqualAndCreatedAtAfterOrderByRadiusDesc}. Se ha mantenido la denominación simplificada en los pseudocódigos para no reproducir la cadena completa en cada referencia.
+El diagrama de la Fig.~\ref{fig:diseno01} muestra cómo se organiza el código internamente. Los controladores reciben las peticiones del usuario y las delegan en los servicios, que contienen toda la lógica. Los repositorios son la capa que habla con la base de datos. Lo más destacable del diagrama es la presencia de dos entidades de caché: \texttt{CachedScan} y \texttt{SpeciesEnrichmentCache}. Que son el resultado directo de las decisiones de rendimiento que se explican en la sección de implementación.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -79,14 +83,24 @@ Cabe señalar que el método \texttt{findBestMatch()} empleado en los pseudocód
 \end{center}
 \end{figure}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Implementación}
-% ─────────────────────────────────────────────────────────────────────────────
+La separación en dos niveles de caché uno por zona escaneada y principalmente por especie individual es la decisión que más impacto tiene sobre la experiencia de uso: sin ella, cada consulta al escáner tardaría entre 10 y 20 segundos. Con ella, las zonas responden de forma razonable y en algunos casos casi instantánea.
 
-Se presentan primero los memorandos técnicos con las decisiones de diseño e implementación; a continuación, los pseudocódigos que las materializan.
+% ───────────────────────────────────────────────────────────────────────────────
+\section{Implementación}
+% ───────────────────────────────────────────────────────────────────────────────
+
+Para implementar el escáner se consultaron dos APIs externas (OBIS e iNaturalist) y se diseñó una caché de dos niveles para mantener los tiempos de respuesta aceptables. La autenticación se delegó en Google para evitar gestionar credenciales propias. Los cinco desafíos técnicos y las decisiones adoptadas para resolverlos están recogidos en las tablas siguientes:
+
+\begin{itemize}
+    \item \textbf{Geometría de búsqueda} (Tabla~\ref{tab:memo001}): OBIS exige un polígono WKT, no un radio. Se genera uno de 12 vértices a partir del punto y radio elegidos por el usuario.
+    \item \textbf{Filtrado de calidad} (Tabla~\ref{tab:memo002}): OBIS devuelve microorganismos sin valor visual. Se descartan las especies sin entrada en iNaturalist.
+    \item \textbf{Caché de zona} (Tabla~\ref{tab:memo003}): un escaneo puede tardar 10--20\,s. Se persiste el resultado por zona durante 48\,h para evitar repetir las llamadas.
+    \item \textbf{Caché de enriquecimiento} (Tabla~\ref{tab:memo004}): la misma especie en otra zona volvería a llamar a iNaturalist. Se guarda por nombre científico durante 30 días.
+    \item \textbf{Autenticación OAuth2 + JWT} (Tabla~\ref{tab:memo005}): sin servidor de sesiones, la identidad viaja en cada petición. Se valida el token de Google y se emite un JWT propio de 7 días.
+\end{itemize}
 
 % ── Memorando 001: Geometría WKT ─────────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 001: Geometría de Búsqueda WKT}
@@ -103,7 +117,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \end{table*}
 
 % ── Memorando 002: Filtrado de calidad ───────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 002: Filtrado de Calidad Visual}
@@ -120,7 +134,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \end{table*}
 
 % ── Memorando 003: CachedScan L1 ─────────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 003: Caché L1 de Escaneos (\texttt{CachedScan})}
@@ -133,14 +147,14 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Cuestiones abiertas}&Clicks en el umbral de redondeo (ej. \texttt{0.049}° vs \texttt{0.051}°) pueden generar un falso miss aunque las zonas sean prácticamente idénticas. Comportamiento aceptado por la alta complejidad frente al bajo impacto que la resolución de este llevaba.\\
 \textbf{Alternativas}&\textbf{Redis}: más rápido, pero añade servicio externo y coste. \textbf{Spring Cache en memoria}: no persiste entre reinicios del servidor (Railway reinicia en cada despliegue).\\
 	\end{coolTable}
-	\caption{Memorando técnico 003: Caché L1 --- \texttt{CachedScan}\label{tab:memo003}}
+	\caption{Memorando técnico 003: Caché L1  \texttt{CachedScan}\label{tab:memo003}}
 \end{table*}
 
 % ── Memorando 004: SpeciesEnrichmentCache L2 ─────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 004: Caché L2 de Enriquecimiento (\texttt{SpeciesEnrichmentCache})}
+{Memorando técnico 004: Caché L2 de Enriquecimiento: (\texttt{SpeciesEnrichmentCache})}
 \textbf{Asunto}&Aun con el caché L1, los escaneos seguian siendo lentos debido a los ratelimit de iNaturalist.\\
 \textbf{Resumen}& Se implementó un caché persistente por especie (con \texttt{scientificName} como clave única), que guarda los datos extra de iNaturalist y básicos de OBIS durante 30 días para ahorrar llamadas. Tambien se implementó un semáforo de concurrencia, para limitar las llamadas en paralelo a iNaturalist.\\
 \midrule
@@ -150,33 +164,11 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 \textbf{Cuestiones abiertas}&Si el estado IUCN de una especie cambia dentro del período de TTL de 30 días, la caché servirá el dato desactualizado. Aceptado dado que dichos cambios son poco frecuentes.\\
 \textbf{Alternativas}&\textbf{Caché solo en L1}: resuelve repeticiones en la misma zona, pero si la misma especie aparece en el Mediterráneo y en el Atlántico Norte, se vuelven a hacer todas las llamadas. \textbf{Precarga batch}: mantener un catálogo de especies actualizado es inviable dado que las zonas de buceo son heterogéneas y las especies que aparecen varían enormemente.\\
 	\end{coolTable}
-	\caption{Memorando técnico 004: Caché L2 --- \texttt{SpeciesEnrichmentCache}\label{tab:memo004}}
+	\caption{Memorando técnico 004: Caché L2: \texttt{SpeciesEnrichmentCache}\label{tab:memo004}}
 \end{table*}
 
-\clearpage
-% ── asigResponsabilidad 001: SpeciesService ───────────────────────────────────
-\begin{asigResponsabilidad}{001}{SpeciesService}
-{List<SpeciesResponse> getSpeciesInSelectedArea(lat:double, lng:double, radius:double)}
-\pasoPseudo{1. Se redondean las coordenadas recibidas según el radio con \texttt{roundCoord()}, para agrupar zonas cercanas en una misma clave de caché. A mayor radio, mayor es el redondeo}
-\pasoPseudo{2. Se consulta la base de datos buscando un escaneo previo de la misma zona (menos de 48h) con \texttt{findBestMatch()}. Si existe, se devuelve directamente sin llamar a ninguna API externa fin.}
-\pasoPseudo{3. Si no hay caché, se construye un polígono WKT de 12 vértices alrededor del punto central con \texttt{createPolygonFromRadius()} y se consultan los registros de OBIS con \texttt{callObisApi()}.}
-\pasoPseudo{4. Para cada especie única devuelta por OBIS, en paralelo:}
-\pasoPseudo{4.1. Se busca en la caché de enriquecimiento con \texttt{findByNameAndCachedAtAfter()}. Si ya existe y no tiene datos de iNaturalist, se descarta la especie.}
-\pasoPseudo{4.2. Si no está en caché, se consulta iNaturalist (máximo 3 llamadas simultáneas). Si no tiene foto o no aparece, se guarda como descartada para no volver a consultarla en 30 días.}
-\pasoPseudo{4.3. Si iNaturalist devuelve foto y nombre común, se obtienen datos ecológicos de OBIS (profundidad, temperatura, registros históricos, categoría IUCN) con \texttt{callObisEcoStats()} y se guarda todo en caché.}
-\pasoPseudo{5. Se persiste el resultado completo del escaneo con \texttt{saveToCache()} y se devuelve la lista de especies enriquecidas.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{1}{SpeciesSvc.}{double roundCoord(value, radius)}{003}{NO}
-\pasoCodigo{3}{ScanRepo.}{Optional<CachedScan> findBestMatch(lat, lng, radius, cutoff)}{003}{NO}
-\pasoCodigo{5}{SpeciesSvc.}{String createPolygonFromRadius(lat, lng, radius)}{001}{NO}
-\pasoCodigo{6}{SpeciesSvc.}{List<ObisOccurrence> callObisApi(polygon)}{001\newline 002}{NO}
-\pasoCodigo{8.1}{EnrichRepo.}{Optional<SpeciesEnrichmentCache> findByNameAndCachedAtAfter(name, after)}{002\newline 004}{NO}
-\pasoCodigo{8.4-8.6}{SpeciesSvc.}{ObisEcoData callObisEcoStats(name, executor)}{004}{NO}
-\pasoCodigo{9}{SpeciesSvc.}{void saveToCache(rLat, rLng, radius, species)}{003\newline 004}{NO}
-\end{asigResponsabilidad}
-
 % ── Memorando 005: OAuth2 + JWT ───────────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 005: Autenticación OAuth2 + JWT}
@@ -191,75 +183,31 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño e im
 	\end{coolTable}
 	\caption{Memorando técnico 005: Autenticación OAuth2 + JWT\label{tab:memo005}}
 \end{table*}
-
 \clearpage
-% ── asigResponsabilidad 002: AuthController (Memo 005) ───────────────────────
-\begin{asigResponsabilidad}{002}{AuthController}
-{ResponseEntity<?> loginWithGoogle(body:Map<String,String>)}
-\pasoPseudo{1. Se extrae el token de Google del cuerpo de la petición. Si está vacío o no se ha enviado, se rechaza con \texttt{400 Bad Request}.}
-\pasoPseudo{2. Se valida el token contactando a Google con \texttt{getForObject(tokeninfo?id\_token=...)}. Si Google no responde o el token es inválido, se rechaza con \texttt{401 Unauthorized}.}
-\pasoPseudo{3. Se verifica que el campo \texttt{aud} de la respuesta coincide con el \texttt{GOOGLE\_CLIENT\_ID} de la aplicación, para evitar que tokens emitidos para otras apps sean aceptados.}
-\pasoPseudo{4. Con los datos de identidad confirmados (sub, email, nombre, foto), se busca o crea el usuario en la base de datos con \texttt{findOrCreate()}. Si el usuario ya existe, se recupera; si es nuevo, se registra.}
-\pasoPseudo{5. Se genera un JWT firmado con HMAC-SHA256 mediante \texttt{generateToken()} y se devuelve al cliente junto con los datos básicos del perfil. A partir de aquí el cliente usa este JWT en todas sus peticiones autenticadas.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{3}{RestTemplate}{Map<String,String> getForObject(url, Map.class)}{005}{NO}
-\pasoCodigo{6}{UserSvc.}{User findOrCreate(sub, email, name, picture)}{005}{SI}
-\pasoCodigo{7}{JwtSvc.}{String generateToken(user)}{005}{NO}
-\end{asigResponsabilidad}
+\subsection*{Flujo del escáner de biodiversidad}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Pruebas}
-% ─────────────────────────────────────────────────────────────────────────────
+Con las cuatro decisiones en su lugar, el flujo completo al pulsar el botón de escaneo es el siguiente:
 
-Se han implementado las siguientes pruebas empleando JUnit\,5 y Mockito para aislar las dependencias externas (OBIS, iNaturalist, Google).
+\begin{enumerate}
+    \item El servidor redondea las coordenadas del punto elegido y comprueba si existe un escaneo reciente de esa zona en base de datos. Si lo hay, devuelve el resultado directamente sin llamar a ninguna API.
+    \item Si no hay caché, construye el polígono WKT y consulta OBIS para obtener las especies registradas en esa zona.
+    \item Para cada especie, comprueba la caché de enriquecimiento: si ya existe, se recupera al instante.
+    \item Las especies nuevas se consultan en iNaturalist con un máximo de tres llamadas en paralelo para no saturar el servicio. Las que iNaturalist no reconoce se descartan y se guarda ese descarte durante 30 días para no volver a consultarlas.
+    \item Las especies reconocidas, con foto y nombre común, reciben además los datos ecológicos de OBIS (profundidad, temperatura, categoría de conservación) y se guardan en la caché de enriquecimiento.
+    \item El resultado completo del escaneo se persiste en base de datos para que la próxima consulta sobre esa zona sea inmediata.
+\end{enumerate}
 
-\subsection{\texttt{SpeciesServiceTest}}
+\subsection*{Flujo de autenticación}
 
-\begin{itemize}
-    \item \textbf{Generación de polígono WKT válido (\texttt{shouldGenerateValidWKTPolygon})}: dado el punto \texttt{(36.5, -4.0)} y radio 5000\,m, verifica que la URI generada contiene \texttt{geometry=POLYGON((\ldots))} geométricamente cerrado (primer y último punto idénticos) con al menos 4 vértices.
+El flujo de autenticación con Google es el siguiente:
 
-    \item \textbf{Filtrado de microorganismos sin resultados (\texttt{shouldFilterMicroorganismsWithZeroResults})}: OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que \texttt{getSpeciesInSelectedArea} devuelve lista vacía y que se han invocado ambas APIs.
-
-    \item \textbf{Enriquecimiento de especie con foto (\texttt{shouldEnrichSpeciesWithPhoto})}: OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve \texttt{preferred\_common\_name = "Rabbit Fish"} y \texttt{photoUrl} de S3. Verifica que \texttt{SpeciesResponse.commonName == "Rabbit Fish"} y \texttt{photoUrl != null}.
-
-    \item \textbf{Tolerancia a timeout de iNaturalist (\texttt{shouldHandleINaturalistTimeout})}: OBIS devuelve dos especies; la primera llamada a iNaturalist lanza \texttt{RestClientException}; la segunda funciona. Verifica que el resultado contiene exactamente una especie y que sus campos son no nulos (resiliencia ante fallos parciales).
-
-    \item \textbf{Estadísticas ecológicas: profundidad, temperatura e IUCN (\texttt{shouldFetchEcoStatsAndPopulateDepthTemperatureAndIucn})}: OBIS devuelve \textit{Octopus vulgaris} con entrada válida en iNaturalist. Los tres endpoints de eco-estadísticas de OBIS (\texttt{/statistics}, \texttt{/statistics/env} y \texttt{/checklist/redlist}) se mockean con datos reales: 1500 registros globales, rango de años 1980--2024, profundidad 5--40\,m, temperatura 18--26\,°C y categoría IUCN \texttt{LC}. Verifica que todos esos campos llegan correctamente en el \texttt{SpeciesResponse} final, cubriendo los tres lambdas de \texttt{callObisEcoStats()} que los tests anteriores no alcanzaban.
-\end{itemize}
-
-\subsection{\texttt{JwtServiceTest}}
-
-\begin{itemize}
-    \item \textbf{Generación de token con claims correctos (\texttt{generateToken\_containsExpectedClaims})}: dado un \texttt{User} con \texttt{googleId="google-123"}, verifica que el token generado contiene \texttt{subject=googleId}, \texttt{email}, \texttt{name} y \texttt{picture} correctos.
-
-    \item \textbf{Validación de token: devuelve subject (\texttt{validateToken\_returnsSubject})}: token válido devuelve \texttt{googleId} como subject.
-
-    \item \textbf{Validación de token manipulado: lanza excepción (\texttt{validateToken\_tamperedToken\_throwsException})}: token con firma modificada lanza excepción al validar.
-\end{itemize}
-
-\subsection{\texttt{AuthControllerTest}}
-
-\begin{itemize}
-    \item \textbf{Login sin credencial: devuelve 400 (\texttt{login\_missingCredential\_returns400})}: petición \texttt{POST /api/auth/google} sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
-
-    \item \textbf{Login con token rechazado por Google: devuelve 401 (\texttt{login\_googleRejectsToken\_returns401})}: \texttt{restTemplate.getForObject} lanza \texttt{RuntimeException}. Verifica que el controlador devuelve \texttt{401 Unauthorized}.
-
-    \item \textbf{Login válido: devuelve 200 con token JWT (\texttt{login\_validCredential\_returns200WithToken})}: \texttt{googleInfo} mockado con \texttt{aud=CLIENT\_ID}; \texttt{userService.findOrCreate} devuelve usuario; \texttt{jwtService.generateToken} devuelve \texttt{"mocked.jwt.token"}. Verifica respuesta \texttt{200 OK} con \texttt{token} y \texttt{user.email} correctos.
-\end{itemize}
-
-\subsection{\texttt{AuthHelperTest}}
-
-\texttt{AuthHelper} es el componente transversal que todos los controladores autenticados utilizan para resolver el usuario a partir del \texttt{Authentication} de Spring Security. Sus tres casos de prueba son:
-
-\begin{itemize}
-    \item \textbf{Auth nula: lanza 401} (\texttt{getUser\_nullAuth\_throws401}): se invoca \texttt{authHelper.getUser(null)} y se verifica que se lanza \texttt{ResponseStatusException} con código \texttt{401 Unauthorized}.
-
-    \item \textbf{Usuario no encontrado: lanza 404} (\texttt{getUser\_userNotFound\_throws404}): se pasa un \texttt{Authentication} con \texttt{googleId} desconocido; \texttt{userService.findByGoogleId} devuelve \texttt{null}. Se verifica que se lanza \texttt{ResponseStatusException} con código \texttt{404 Not Found}.
-
-    \item \textbf{Auth válida: devuelve usuario} (\texttt{getUser\_validAuth\_returnsUser}): se pasa un \texttt{Authentication} con \texttt{googleId} existente; \texttt{userService.findByGoogleId} devuelve el usuario esperado. Se verifica que el resultado es la misma instancia.
-\end{itemize}
-
-Adicionalmente se han implementado tests de controlador (\texttt{SpeciesControllerTest}) que verifican la validación de parámetros de entrada (coordenadas y radio fuera de rango) y la respuesta correcta ante peticiones válidas. Igual que en iteraciones anteriores, no se detallan.
+\begin{enumerate}
+    \item El usuario hace clic en ``Continuar con Google'' y autoriza el acceso. Google devuelve un token de identidad al frontend.
+    \item El frontend envía ese token al backend. El servidor lo valida directamente contra la API de Google para confirmar que es auténtico y fue emitido para esta aplicación concretamente, no para otra.
+    \item Si la validación falla, se rechaza la petición con error de autenticación.
+    \item Si es correcta, el servidor busca al usuario en base de datos por su identificador de Google: si ya existe lo recupera; si es la primera vez, lo registra automáticamente.
+    \item Se emite un token propio firmado con validez de 7 días. El cliente lo guarda y lo incluye en todas sus peticiones posteriores como credencial.
+\end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
@@ -274,3 +222,41 @@ Al cierre de esta iteración la aplicación quedó desplegada en la infraestruct
 \end{itemize}
 
 La aplicación es accesible públicamente en \texttt{https://scubex.vercel.app} desde la finalización de esta iteración.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Tras realizar el código, se han creado tests unitarios que cubren los cinco problemas descritos en la sección de implementación y verifican los pasos clave de los flujos de escáner y autenticación. 
+
+Se han implementado más pruebas unitarias (validación de parámetros de entrada, casos
+límite de caché, controladores) que no se detallan aquí por no añadir ruido visual y técnico en la memoria.
+
+\subsection*{Escáner de biodiversidad}
+
+\begin{itemize}
+    \item \textbf{Geometría WKT} (Tabla~\ref{tab:memo001}, paso~2 del flujo): dado el punto \texttt{(36.5,\,-4.0)} y radio 5000\,m, verifica que la URI generada contiene un \texttt{POLYGON} cerrado con al menos 4 vértices.
+
+    \item \textbf{Filtrado de microorganismos} (Tabla~\ref{tab:memo002}, paso~4 del flujo): OBIS devuelve \textit{Pycnococcaceae}; iNaturalist responde \texttt{total\_results=0}. Verifica que el resultado es una lista vacía.
+
+    \item \textbf{Enriquecimiento con foto} (Tabla~\ref{tab:memo002}, paso~4 del flujo): OBIS devuelve \textit{Chimaera monstrosa}; iNaturalist devuelve nombre común y foto. Verifica que \texttt{commonName} y \texttt{photoUrl} están presentes en la respuesta.
+
+    \item \textbf{Datos ecológicos OBIS} (Tabla~\ref{tab:memo004}, paso~5 del flujo): \textit{Octopus vulgaris} con entrada válida en iNaturalist. Verifica que profundidad, temperatura y categoría IUCN llegan correctamente en el \texttt{SpeciesResponse}.
+
+    \item \textbf{Resiliencia ante fallo parcial de iNaturalist} (paso~4 del flujo): OBIS devuelve \textit{Octopus vulgaris} y \textit{Sepia officinalis}; la primera llamada a iNaturalist lanza \texttt{RestClientException} y la segunda funciona. Verifica que el resultado contiene exactamente una especie con todos sus campos.
+\end{itemize}
+
+\subsection*{Autenticación OAuth2 + JWT}
+
+\begin{itemize}
+    \item \textbf{Token sin credencial} (Tabla~\ref{tab:memo005}, paso~3 del flujo): petición sin campo \texttt{credential} devuelve \texttt{400 Bad Request}.
+
+    \item \textbf{Token rechazado por Google} (Tabla~\ref{tab:memo005}, paso~3 del flujo): Google no reconoce el token. Verifica que el servidor devuelve \texttt{401 Unauthorized}.
+
+    \item \textbf{Login válido completo} (Tabla~\ref{tab:memo005}, pasos~4--5 del flujo): token válido con \texttt{aud} correcto. Verifica que la respuesta es \texttt{200 OK} con JWT y datos del usuario.
+
+    \item \textbf{JWT: claims correctos y validación} (\texttt{JwtServiceTest}): verifica que el token generado contiene \texttt{googleId}, \texttt{email}, \texttt{name} y \texttt{picture}, y que un token manipulado lanza excepción.
+\end{itemize}
+
+\begin{quote}
+\end{quote}

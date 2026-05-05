@@ -12,6 +12,8 @@ Esta iteración añade el final del MVP de Scubex: Un sistema de publicaciones. 
 \item Publicaciones geolocalizadas: crear, editar y eliminar entradas con título, descripción e imagen, ancladas a un punto del mapa. Ver Tabla~\ref{tab:valorAportadoPub}.
 \end{enumerate}
 
+Con el mapa operativo y la autenticación en su lugar, la última pieza del MVP es el contenido generado por los propios usuarios. Sin publicaciones, Scubex es una herramienta de consulta; con ellas, se convierte en un diario comunitario de inmersiones donde los usuarios pueden ver que han encontrado otros buceadores en un punto específico del mapa.
+
 % ── Tabla 1: Publicaciones geolocalizadas ────────────────────────────────────
 \begin{table*}[htb]
 	\centering
@@ -42,14 +44,22 @@ El diagrama UML de la Fig.~\ref{fig:diseno03} muestra los componentes del sistem
 \end{center}
 \end{figure}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Implementación}
-% ─────────────────────────────────────────────────────────────────────────────
+El diagrama muestra la separación entre el controlador, que valida la autoría antes de delegar en el servicio, y el servicio, que centraliza el filtrado por coordenadas y la gestión de imagen. La lógica de geocoding inverso reside íntegramente en el frontend: convertir coordenadas a nombre legible no requiere persistencia en el servidor y no tiene sentido moverla al backend.
 
-Se presentan primero los memorandos técnicos con las decisiones de diseño; a continuación, los pseudocódigos que las materializan.
+% ───────────────────────────────────────────────────────────────────────────────
+\section{Implementación}
+% ───────────────────────────────────────────────────────────────────────────────
+
+El sistema de publicaciones necesita escalar con el volumen de contenido sin degradar el rendimiento, ofrecer contexto geográfico legible al usuario y almacenar imágenes de forma persistente sin servicios adicionales. Los tres desafíos técnicos y las decisiones adoptadas para resolverlos están recogidos en las tablas siguientes:
+
+\begin{itemize}
+    \item \textbf{Filtrado por área visible} (Tabla~\ref{tab:memo009}): descargar todas las publicaciones en cada consulta del mapa haría la aplicación más lenta conforme crece el contenido. El servidor devuelve solo las publicaciones dentro del área visible, apoyado en un índice de coordenadas.
+    \item \textbf{Geocoding inverso} (Tabla~\ref{tab:memo010}): las coordenadas crudas no aportan contexto al usuario. El frontend traduce cada punto a un nombre de lugar mediante Nominatim y guarda el resultado en memoria de sesión para no repetir la consulta.
+    \item \textbf{Almacenamiento de imágenes como BLOB} (Tabla~\ref{tab:memo011}): los contenedores de Railway no tienen disco persistente. Las imágenes se guardan directamente en PostgreSQL y se sirven con caché de un año en el navegador.
+\end{itemize}
 
 % ── Memorando 009: Filtrado por viewport ─────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 009: Filtrado de Publicaciones por Viewport del Mapa}
@@ -66,7 +76,7 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 \end{table*}
 
 % ── Memorando 010: Geocoding inverso ─────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 010: Geocoding Inverso con Nominatim}
@@ -81,26 +91,8 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 	\end{coolTable}
 	\caption{Memorando técnico 010: Geocoding Inverso con Nominatim\label{tab:memo010}}
 \end{table*}
-{\footnotesize\textit{Nota: El memorando 10 no tiene pseudocódigo de backend propio ya que la lógica es íntegramente del frontend; da soporte al flujo de creación de publicaciones, donde el nombre del lugar se muestra al usuario antes de confirmar.}}
-
-\clearpage
-
-% ── asigResponsabilidad 004: PublicationController.create() ──────────────────
-\begin{asigResponsabilidad}{004}{PublicationController}
-{ResponseEntity<?> create(body:Map<String,Object>, auth:Authentication)}
-\pasoPseudo{1. Se comprueba que el usuario tiene sesión activa con \texttt{authHelper.getUser()}. Si no la tiene, se devuelve \texttt{401 Unauthorized}.}
-\pasoPseudo{2. Se comprueba que el cuerpo de la petición incluye un título y unas coordenadas. Si alguno falta o el título está vacío, se devuelve \texttt{400 Bad Request}.}
-\pasoPseudo{3. Se construye la publicación con el título, la descripción, la URL de imagen, las coordenadas y el usuario autenticado como autor.}
-\pasoPseudo{4. Se guarda la publicación en base de datos con \texttt{publicationService.create()}, que delega en \texttt{publicationRepository.save()}. La fecha de creación se asigna automáticamente en el momento de la inserción.}
-\pasoPseudo{5. Se convierte la publicación guardada a un objeto de respuesta con \texttt{toDto()}, incluyendo los datos del autor y los contadores de interacciones, y se devuelve al cliente.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{1}{AuthHelper}{User getUser(auth)}{005}{NO}
-\pasoCodigo{4}{PubRepo.}{Publication save(publication)}{009}{NO}
-\pasoCodigo{5}{PubController}{Map<String,Object> toDto(p)}{009}{SI}
-\end{asigResponsabilidad}
-
 % ── Memorando 011: Imágenes como BLOB ────────────────────────────────────────
-\begin{table*}[!ht]
+\begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
 {Memorando técnico 011: Almacenamiento de Imágenes como BLOB}
@@ -115,61 +107,68 @@ Se presentan primero los memorandos técnicos con las decisiones de diseño; a c
 	\end{coolTable}
 	\caption{Memorando técnico 011: Almacenamiento de Imágenes como BLOB\label{tab:memo011}}
 \end{table*}
-
 \clearpage
-% ── asigResponsabilidad 005: ImageController.upload() ────────────────────────
-\begin{asigResponsabilidad}{005}{ImageController}
-{ResponseEntity<?> upload(file:MultipartFile, auth:Authentication)}
-\pasoPseudo{1. Se comprueba que el usuario tiene sesión activa. Si no la tiene, se devuelve \texttt{401 Unauthorized}.}
-\pasoPseudo{2. Se valida el archivo: no puede estar vacío, no puede superar los 5\,MB y el formato debe ser JPEG, PNG, GIF o WebP. Si no cumple alguna de estas condiciones, se devuelve \texttt{400 Bad Request}.}
-\pasoPseudo{3. Se leen los datos del archivo con \texttt{file.getBytes()} y se prepara la entidad de imagen con el contenido binario y el tipo de formato.}
-\pasoPseudo{4. Se guarda la imagen en base de datos con \texttt{imageRepository.save()}. La fecha de subida se asigna automáticamente en el momento de la inserción.}
-\pasoPseudo{5. Se devuelve al cliente la URL que identifica la imagen subida, lista para usarse como referencia al crear o editar la publicación.}
-\cabeceraMetodosBajoNivel
-\pasoCodigo{3}{MultipartFile}{byte[] getBytes()}{011}{NO}
-\pasoCodigo{4}{ImageRepo.}{UploadedImage save(image)}{011}{NO}
-\end{asigResponsabilidad}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Pruebas}
-% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Flujo de creación de una publicación}
 
-Las pruebas unitarias de esta iteración se reparten en dos suites: \texttt{PublicationServiceTest} e \texttt{ImageControllerTest}, siguiendo el mismo patrón basado en Mockito y MockMvc que el resto del proyecto.
+Cuando un usuario autenticado hace clic en el mapa y envía el formulario de nueva publicación, el flujo es el siguiente:
 
-\textbf{\texttt{PublicationServiceTest}} cubre tres casos:
+\begin{enumerate}
+    \item El usuario selecciona el punto en el mapa. El frontend resuelve automáticamente las coordenadas a un nombre de lugar legible mediante Nominatim y lo muestra en el formulario. Si el nombre ya fue consultado en esta sesión, se recupera de la memoria local sin llamar a Nominatim.
+    \item Si la publicación incluye una imagen, el frontend la envía primero al servidor. El servidor comprueba que el formato sea aceptado (JPEG, PNG, GIF o WebP) y que no supere los 5\,MB, guarda los bytes en PostgreSQL y devuelve la URL que identifica la imagen.
+    \item El usuario confirma el formulario con título, descripción y, si se subió, la URL de la imagen. El servidor verifica que la sesión sigue activa y que los campos obligatorios están presentes.
+    \item La publicación se persiste con las coordenadas del punto, el autor y la fecha de creación.
+    \item La publicación aparece inmediatamente como marcador en el mapa para cualquier usuario que explore esa zona.
+\end{enumerate}
 
-\begin{itemize}
-    \item \textbf{Filtrado por área} (\texttt{getInArea\_returnsOnlyPublicationsInsideBoundingBox}): el repositorio se configura para devolver dos publicaciones concretas al recibir un bounding box; se verifica que el servicio retorna exactamente esas dos y que el repositorio fue invocado con los límites correctos.
+\subsection*{Flujo de consulta de publicaciones}
 
-    \item \textbf{Edición por propietario ajeno} (\texttt{update\_byNonOwner\_returnsNull}): se intenta editar una publicación con un usuario distinto al propietario; se verifica que el resultado es nulo y que \texttt{publicationRepository.save()} no fue llamado.
+Cuando el mapa se mueve o se carga por primera vez, las publicaciones visibles se obtienen así:
 
-    \item \textbf{Eliminación por propietario ajeno} (\texttt{delete\_byNonOwner\_returnsFalse}): se intenta borrar una publicación con un usuario distinto al propietario; se verifica que el resultado es \texttt{false} y que \texttt{publicationRepository.delete()} no fue invocado.
-\end{itemize}
-
-\textbf{\texttt{ImageControllerTest}} cubre ocho casos:
-
-\begin{itemize}
-    \item \textbf{Subida sin autenticación} (\texttt{upload\_unauthenticated\_returns401}): llamar al endpoint sin sesión activa devuelve \texttt{401} sin persistir nada.
-
-    \item \textbf{Archivo vacío} (\texttt{upload\_emptyFile\_returns400}): un archivo de cero bytes devuelve \texttt{400} sin persistir nada.
-
-    \item \textbf{Archivo demasiado grande} (\texttt{upload\_fileTooLarge\_returns400}): un archivo superior a 5\,MB devuelve \texttt{400} sin persistir nada.
-
-    \item \textbf{Content-Type nulo} (\texttt{upload\_nullContentType\_returns400}): un archivo sin tipo de contenido declarado devuelve \texttt{400} sin persistir nada.
-
-    \item \textbf{Formato no permitido} (\texttt{upload\_invalidMimeType\_returns400}): un archivo con \texttt{Content-Type} distinto de JPEG, PNG, GIF o WebP devuelve \texttt{400} sin persistir nada.
-
-    \item \textbf{Subida válida} (\texttt{upload\_validFile\_returns200WithImageUrl}): un JPEG válido con usuario autenticado devuelve \texttt{200} con la \texttt{imageUrl} correcta, y se verifica que \texttt{imageRepository.save()} fue invocado exactamente una vez.
-
-    \item \textbf{Descarga de imagen existente} (\texttt{get\_existingImage\_returns200WithBytes}): solicitar una imagen existente devuelve \texttt{200}, el \texttt{Content-Type} correcto y los bytes de la imagen.
-
-    \item \textbf{Descarga de imagen inexistente} (\texttt{get\_nonExistingImage\_returns404}): solicitar un identificador que no existe en base de datos devuelve \texttt{404}.
-\end{itemize}
-
-Adicionalmente, se han implementado tests de controlador (\texttt{PublicationControllerTest}) que verifican el listado, creación, edición y borrado de publicaciones, así como el control de autorización (403 al intentar borrar una publicación ajena). Por lo mismo que en iteraciones anteriores, no se detallan aquí.
+\begin{enumerate}
+    \item El frontend envía al servidor los límites del área visible del mapa (latitud y longitud mínima y máxima).
+    \item El servidor consulta la base de datos filtrando por esas coordenadas usando el índice. Solo se devuelven las publicaciones que caen dentro del rectángulo visible.
+    \item Cada publicación se devuelve con los datos del autor, las coordenadas y la URL de imagen si la tiene.
+    \item El frontend coloca un marcador en el mapa por cada publicación. Al hacer clic en uno, se carga el detalle completo de la publicación.
+    \item Si la publicación tiene imagen, el navegador la solicita por su URL. El servidor la sirve con una cabecera de caché de un año: después de la primera descarga, el navegador no vuelve a pedirla.
+\end{enumerate}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Esta iteración añadió dos nuevas tablas a la base de datos: \texttt{publications} y \texttt{uploaded\_images}, ambas creadas automáticamente por Hibernate al arrancar el servicio en Railway con \texttt{ddl-auto=update}. No fue necesario añadir nuevas variables de entorno ni credenciales, ya que el almacenamiento de imágenes se realiza en la misma base de datos PostgreSQL existente.
+Esta iteración añadió dos nuevas tablas a la base de datos: \texttt{publications} y \texttt{uploaded\_images}, ambas creadas automáticamente por Hibernate al arrancar el servicio en Railway. No fue necesario añadir nuevas variables de entorno ni credenciales, ya que el almacenamiento de imágenes se realiza en la misma base de datos PostgreSQL existente.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pruebas}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Las pruebas cubren los tres desafíos técnicos documentados y verifican los pasos clave de los dos flujos.
+
+\subsection*{Publicaciones}
+
+\begin{itemize}
+    \item \textbf{Filtrado por área} (Tabla~\ref{tab:memo009}, paso~2 del flujo de consulta): el repositorio recibe un bounding box concreto y devuelve dos publicaciones. Verifica que el servicio retorna exactamente esas dos y que la consulta se ejecuta con los límites correctos.
+
+    \item \textbf{Edición por propietario ajeno} (Tabla~\ref{tab:memo009}, paso~3 del flujo de creación): un usuario distinto al autor intenta editar la publicación. Verifica que el resultado es nulo y que no se persiste ningún cambio.
+
+    \item \textbf{Eliminación por propietario ajeno} (Tabla~\ref{tab:memo009}): un usuario distinto al autor intenta borrar la publicación. Verifica que el resultado es falso y que no se ejecuta el borrado.
+\end{itemize}
+
+\subsection*{Imágenes}
+
+\begin{itemize}
+    \item \textbf{Subida sin autenticación} (Tabla~\ref{tab:memo011}, paso~2 del flujo de creación): sin sesión activa, devuelve \texttt{401} sin persistir nada.
+
+    \item \textbf{Validaciones de archivo} (Tabla~\ref{tab:memo011}, paso~2 del flujo de creación): cuatro casos independientes verifican que un archivo vacío, uno superior a 5\,MB, uno sin tipo declarado y uno con formato no permitido (PDF) devuelven \texttt{400} sin persistir nada.
+
+    \item \textbf{Subida válida} (Tabla~\ref{tab:memo011}, paso~2 del flujo de creación): un JPEG válido con usuario autenticado devuelve \texttt{200} con la URL de la imagen y persiste exactamente una imagen en base de datos.
+
+    \item \textbf{Descarga de imagen existente} (Tabla~\ref{tab:memo011}, paso~5 del flujo de consulta): una imagen existente devuelve \texttt{200}, el \texttt{Content-Type} correcto y los bytes originales.
+
+    \item \textbf{Descarga de imagen inexistente} (Tabla~\ref{tab:memo011}, paso~5 del flujo de consulta): un identificador que no existe en base de datos devuelve \texttt{404}.
+\end{itemize}
+
+\begin{quote}
+\small\textit{El proyecto cuenta con más pruebas unitarias (controlador de publicaciones, listado, edición, control de autorización) que no se detallan aquí para no añadir exceso de información. Al no estos estar directamente vinculadas a los desafíos técnicos documentados en esta sección.}
+\end{quote}
