@@ -58,57 +58,6 @@ El sistema de publicaciones necesita escalar con el volumen de contenido sin deg
     \item \textbf{Almacenamiento de imágenes como BLOB} (Tabla~\ref{tab:memo011}): los contenedores de Railway no tienen disco persistente. Las imágenes se guardan directamente en PostgreSQL y se sirven con caché de un año en el navegador.
 \end{itemize}
 
-% ── Memorando 009: Filtrado por viewport ─────────────────────────────────────
-\begin{table*}[tbp]
-	\centering
-	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 009: Filtrado de Publicaciones por Viewport del Mapa}
-\textbf{Asunto}&Descargar todas las publicaciones existentes en cada consulta del mapa haría la aplicación cada vez más lenta conforme crece el contenido.\\
-\textbf{Resumen}&El servidor devuelve únicamente las publicaciones que caen dentro del área visible del mapa en cada momento, apoyándose en un índice de coordenadas para que la consulta sea eficiente.\\
-\midrule
-\textbf{Factores causantes}&Si cada vez que se abre el mapa o se mueve se descargaran todas las publicaciones de la base de datos, la respuesta crecería indefinidamente con el tiempo. En zonas con mucho contenido, esto haría la experiencia lenta incluso para usuarios con buena conexión.\\
-\textbf{Solución}&El frontend envía al servidor los límites del área visible (latitud y longitud mínima y máxima) con cada consulta. El servidor filtra y devuelve únicamente las publicaciones que caen dentro de ese rectángulo. Para que esta búsqueda sea eficiente sin importar cuántas publicaciones haya, las coordenadas de cada publicación tienen un índice en base de datos, de modo que la consulta no tiene que recorrer la tabla entera.\\
-\textbf{Motivación}&Es la forma natural de escalar un sistema con contenido georreferenciado: el usuario no necesita lo que no puede ver en pantalla. El índice en coordenadas garantiza que añadir publicaciones no penalice el rendimiento de la consulta.\\
-\textbf{Cuestiones abiertas}&Si el usuario hace zoom muy hacia fuera, los límites del mapa abarcan un área enorme y la respuesta podría incluir un número muy alto de publicaciones de golpe.\\
-\textbf{Alternativas}&\textbf{Agrupación geográfica}: reduce la carga visual de marcadores en el mapa, pero no reduce la cantidad de datos transferidos.\\
-	\end{coolTable}
-	\caption{Memorando técnico 009: Filtrado por Viewport del Mapa\label{tab:memo009}}
-\end{table*}
-
-% ── Memorando 010: Geocoding inverso ─────────────────────────────────────────
-\begin{table*}[tbp]
-	\centering
-	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 010: Geocoding Inverso con Nominatim}
-\textbf{Asunto}&Las publicaciones se anclan a coordenadas, pero mostrar latitud y longitud crudas no aporta contexto al usuario.\\
-\textbf{Resumen}&El frontend traduce las coordenadas de cada publicación a un nombre de lugar legible consultando Nominatim, y guarda los resultados en memoria para no repetir la consulta durante la misma sesión.\\
-\midrule
-\textbf{Factores causantes}&Tanto el formulario de creación como la vista de detalle muestran dónde está el punto marcado. Para un usuario es mucho más informativo leer ``Punta de la Mona, Granada'' que ver un par de números decimales.\\
-\textbf{Solución}&Cuando se necesita el nombre de un punto, se consulta Nominatim probando primero el nivel de detalle más alto (playas, puntos de interés), luego el intermedio (ciudad o municipio) y finalmente el regional. Si ningún nivel devuelve resultado, se muestra ``Mar abierto'' como alternativa. Para no repetir la misma consulta si el usuario vuelve al mismo punto, los resultados se guardan en memoria durante toda la sesión.\\
-\textbf{Motivación}&Nominatim es gratuito y no requiere ninguna clave de API, lo que lo convierte en la opción más directa. Probar niveles de detalle de mayor a menor garantiza el nombre más concreto posible sin lanzar varias peticiones en paralelo. Guardar los resultados en memoria es suficiente: si el usuario cierra la pestaña, la caché se limpia sola y en la siguiente sesión los datos de Nominatim seguirán siendo los mismos.\\
-\textbf{Cuestiones abiertas}&Nominatim limita las peticiones a una por segundo para uso no comercial. En sesiones de exploración rápida del mapa, las peticiones de puntos que el usuario abandona antes de que se resuelvan se cancelan automáticamente, lo que ayuda a no saturar el servicio; pero sin una cola controlada podría alcanzarse el límite en casos extremos.\\
-\textbf{Alternativas}&\textbf{Google Maps Geocoding API}: mayor precisión, pero de pago.\\
-	\end{coolTable}
-	\caption{Memorando técnico 010: Geocoding Inverso con Nominatim\label{tab:memo010}}
-\end{table*}
-% ── Memorando 011: Imágenes como BLOB ────────────────────────────────────────
-\begin{table*}[tbp]
-	\centering
-	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 011: Almacenamiento de Imágenes como BLOB}
-\textbf{Asunto}&Las publicaciones incluyen una fotografía adjunta que debe conservarse de forma permanente.\\
-\textbf{Resumen}&Las imágenes se guardan como BLOB directamente en PostgreSQL. El servidor las sirve al navegador con una cabecera de caché de un año, de modo que una vez descargadas no se vuelven a pedir.\\
-\midrule
-\textbf{Factores causantes}&Los contenedores de Railway no tienen almacenamiento en disco persistente: cualquier fichero guardado localmente desaparece al reiniciar el servidor. Guardar las imágenes en la propia base de datos resuelve el problema sin añadir ningún servicio externo.\\
-\textbf{Solución}&Al subir una fotografía, el servidor comprueba que el formato sea aceptado (JPEG, PNG, GIF o WebP) y que no supere los 5\,MB. Si pasa esa validación, los datos del fichero se guardan en la base de datos junto al tipo de formato. Para recuperarla, el servidor la lee de la base de datos y la envía al navegador indicándole que la almacene en caché durante un año, ya que una imagen identificada por su identificador nunca cambia.\\
-\textbf{Motivación}&PostgreSQL ya forma parte del proyecto, así que no se necesita ningún servicio adicional ni credenciales extra. Para el volumen de imágenes esperado en Scubex la solución es perfectamente suficiente y evita introducir dependencias externas que habría que mantener.\\
-\textbf{Cuestiones abiertas}&Las imágenes se sirven siempre al tamaño original, sin reducción ni compresión. No existe un límite de imágenes por usuario.\\
-\textbf{Alternativas}&\textbf{Amazon S3}: más escalable a largo plazo, pero introduce coste y complejidad innecesarios para el alcance actual.\\
-	\end{coolTable}
-	\caption{Memorando técnico 011: Almacenamiento de Imágenes como BLOB\label{tab:memo011}}
-\end{table*}
-\clearpage
-
 \subsection*{Flujo de creación de una publicación}
 
 Cuando un usuario autenticado hace clic en el mapa y envía el formulario de nueva publicación, el flujo es el siguiente:
@@ -133,6 +82,52 @@ Cuando el mapa se mueve o se carga por primera vez, las publicaciones visibles s
     \item Si la publicación tiene imagen, el navegador la solicita por su URL. El servidor la sirve con una cabecera de caché de un año: después de la primera descarga, el navegador no vuelve a pedirla.
 \end{enumerate}
 
+% ── Memorando 009: Filtrado por viewport ─────────────────────────────────────
+\begin{table*}[tbp]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 009: Filtrado de Publicaciones por Viewport del Mapa}
+\textbf{Asunto}&Sin filtrado, descargar todas las publicaciones en cada consulta haría la aplicación más lenta conforme crece el contenido.\\
+\midrule
+\textbf{Solución}&Ver paso~1 del flujo de consulta. Las coordenadas de cada publicación tienen un índice en base de datos para que el filtro sea eficiente sin recorrer la tabla entera.\\
+\textbf{Motivación}&El usuario no necesita lo que no puede ver en pantalla. El índice garantiza que añadir publicaciones no penalice la consulta.\\
+\textbf{Cuestiones abiertas}&Con zoom muy amplio, el área visible puede abarcar un número muy alto de publicaciones de golpe.\\
+\textbf{Alternativas}&\textbf{Agrupación geográfica}: reduce la carga visual, pero no la cantidad de datos transferidos.\\
+	\end{coolTable}
+	\caption{Memorando técnico 009: Filtrado por Viewport del Mapa\label{tab:memo009}}
+\end{table*}
+
+% ── Memorando 010: Geocoding inverso ─────────────────────────────────────────
+\begin{table*}[tbp]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 010: Geocoding Inverso con Nominatim}
+\textbf{Asunto}&Mostrar coordenadas crudas al usuario no aporta contexto; se necesita un nombre de lugar legible.\\
+\midrule
+\textbf{Solución}&Ver paso~1 del flujo de creación. Se prueban tres niveles de detalle de mayor a menor; si ninguno devuelve resultado, se muestra ``Mar abierto''. Los resultados se guardan en memoria de sesión para no repetir la consulta.\\
+\textbf{Motivación}&Nominatim es gratuito y no requiere clave de API. La caché en memoria es suficiente: al cerrar la pestaña se limpia sola y los datos de Nominatim siguen siendo los mismos en la siguiente sesión.\\
+\textbf{Cuestiones abiertas}&Nominatim limita las peticiones a una por segundo. En sesiones de exploración rápida las peticiones abandonadas se cancelan, pero sin una cola controlada podría alcanzarse el límite.\\
+\textbf{Alternativas}&\textbf{Google Maps Geocoding API}: mayor precisión, pero de pago.\\
+	\end{coolTable}
+	\caption{Memorando técnico 010: Geocoding Inverso con Nominatim\label{tab:memo010}}
+\end{table*}
+
+% ── Memorando 011: Imágenes como BLOB ────────────────────────────────────────
+\begin{table*}[tbp]
+	\centering
+	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
+{Memorando técnico 011: Almacenamiento de Imágenes como BLOB}
+\textbf{Asunto}&Las imágenes deben conservarse de forma permanente en un entorno sin disco persistente.\\
+\midrule
+\textbf{Solución}&Ver pasos~2 del flujo de creación y~5 del flujo de consulta. El servidor valida formato (JPEG, PNG, GIF o WebP) y tamaño máximo (5\,MB) antes de guardar los bytes en PostgreSQL. La descarga incluye una cabecera de caché de un año: una imagen identificada por su id nunca cambia.\\
+\textbf{Motivación}&PostgreSQL ya forma parte del proyecto, así que no hace falta ningún servicio adicional ni credenciales extra.\\
+\textbf{Cuestiones abiertas}&Las imágenes se sirven al tamaño original, sin compresión. No hay límite de imágenes por usuario.\\
+\textbf{Alternativas}&\textbf{Amazon S3}: más escalable, pero introduce coste y complejidad innecesarios para el alcance actual.\\
+	\end{coolTable}
+	\caption{Memorando técnico 011: Almacenamiento de Imágenes como BLOB\label{tab:memo011}}
+\end{table*}
+
+\clearpage
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
 % ─────────────────────────────────────────────────────────────────────────────
@@ -150,7 +145,7 @@ Las pruebas cubren los tres desafíos técnicos documentados y verifican los pas
 \begin{itemize}
     \item \textbf{Filtrado por área} (Tabla~\ref{tab:memo009}, paso~2 del flujo de consulta): el repositorio recibe un bounding box concreto y devuelve dos publicaciones. Verifica que el servicio retorna exactamente esas dos y que la consulta se ejecuta con los límites correctos.
 
-    \item \textbf{Edición por propietario ajeno} (Tabla~\ref{tab:memo009}, paso~3 del flujo de creación): un usuario distinto al autor intenta editar la publicación. Verifica que el resultado es nulo y que no se persiste ningún cambio.
+    \item \textbf{Edición por propietario ajeno} (Tabla~\ref{tab:memo009}): un usuario distinto al autor intenta editar la publicación. Verifica que el resultado es nulo y que no se persiste ningún cambio.
 
     \item \textbf{Eliminación por propietario ajeno} (Tabla~\ref{tab:memo009}): un usuario distinto al autor intenta borrar la publicación. Verifica que el resultado es falso y que no se ejecuta el borrado.
 \end{itemize}
@@ -172,3 +167,43 @@ Las pruebas cubren los tres desafíos técnicos documentados y verifican los pas
 \begin{quote}
 \small\textit{El proyecto cuenta con más pruebas unitarias (controlador de publicaciones, listado, edición, control de autorización) que no se detallan aquí para no añadir exceso de información. Al no estos estar directamente vinculadas a los desafíos técnicos documentados en esta sección.}
 \end{quote}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Seguimiento y Control}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Esta iteración permitió a los usuarios publicar inmersiones geolocalizadas con imagen en el mapa. Con la arquitectura ya asentada, el foco se desplazó hacia la experiencia de uso: cómo se selecciona el punto, cómo aparece el nombre del lugar automáticamente, cómo se sube la foto sin que la interfaz quede bloqueada. El formulario en móvil fue lo que más tiempo demandó: hay particularidades de teclado virtual, desplazamiento y tamaño de pantalla que no se detectan hasta probarlo en un dispositivo real.
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{3.5cm}p{3.2cm}p{3.2cm}p{\textwidth-10.4cm}}{4}
+{Seguimiento temporal: Iteración 3}
+\textbf{Hito}&\textbf{Planificado}&\textbf{Real}&\textbf{Desviación}\\
+\midrule
+Inicio&10/04/2026&13/04/2026&+3 días (arrastre it.~2)\\
+Fin&24/04/2026&26/04/2026&+2 días\\
+	\end{coolTable}
+	\caption{Seguimiento temporal de la Iteración 3}
+\end{table*}
+
+\begin{table*}[tbp]
+	\centering
+	\begin{coolTable}{p{\textwidth-3.5cm}p{3cm}}{2}
+{Desglose de horas: Iteración 3}
+\textbf{Actividad}&\textbf{Horas}\\
+\midrule
+Análisis y diseño del modelo de publicaciones&7\\
+Entidades, repositorios y endpoints de publicaciones (backend)&7\\
+Almacenamiento de imágenes en PostgreSQL (binario)&5\\
+Frontend de publicaciones en el mapa (marcadores, detalle, formulario)&10\\
+Geocodificación inversa y caché de nombres de lugar (frontend)&4\\
+Adaptación a dispositivos móviles y UX del formulario&9\\
+Testing y cobertura&4\\
+Redacción de la memoria: flujos de creación y consulta, revisión del recorrido del usuario&14\\
+\midrule
+\textbf{Total}&\textbf{60}\\
+	\end{coolTable}
+	\caption{Desglose de horas dedicadas en la Iteración 3}
+\end{table*}
+
+Todas las características planificadas se completaron. Los 2~días de desviación corresponden al tiempo adicional invertido en dejar el formulario de publicación completamente operativo en móvil.

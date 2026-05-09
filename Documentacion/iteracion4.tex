@@ -80,46 +80,64 @@ El diseño concentra toda la lógica social en dos servicios independientes: uno
 \section{Implementación}
 % ─────────────────────────────────────────────────────────────────────────────
 
-La capa social introduce tres desafíos que no existían en iteraciones anteriores: gestionar acciones reversibles sin duplicar datos, enviar notificaciones precisas sin repetirlas, y mantener el contador de notificaciones actualizado sin conexiones permanentes al servidor. Los tres desafíos técnicos y las decisiones adoptadas para resolverlos están recogidos en las tablas siguientes:
+La capa social introduce tres desafíos que no existían en iteraciones anteriores: gestionar acciones reversibles sin duplicar datos, enviar notificaciones precisas sin repetirlas, y mantener el contador actualizado sin conexiones permanentes al servidor. Los flujos siguientes describen cómo se resuelven en la práctica; las tablas al final de la sección recogen las decisiones de diseño detrás de cada uno.
 
-\begin{itemize}
-    \item \textbf{Interacciones con toggle} (Tabla~\ref{tab:memo012}): dar like varias veces crearía registros duplicados y notificaciones repetidas. El servidor comprueba si ya existe el registro antes de actuar: si existe lo borra, si no lo crea.
-    \item \textbf{Menciones y deduplicación de notificaciones} (Tabla~\ref{tab:memo013}): los nombres de usuario no son únicos, y el propietario de una publicación podría recibir dos notificaciones del mismo comentario si también aparece mencionado. Las menciones se codifican con el email y un conjunto de ya-notificados evita los duplicados.
-    \item \textbf{Centro de notificaciones con polling} (Tabla~\ref{tab:memo014}): el cliente no sabe cuándo llega una notificación nueva. La campana consulta periódicamente al servidor el número de no leídas y actualiza el contador sin necesidad de conexión permanente.
-\end{itemize}
+\subsection*{Flujo de una interacción (like)}
+
+Cuando un usuario pulsa el botón de like en una publicación:
+
+\begin{enumerate}
+    \item El usuario pulsa el botón. La interfaz actualiza el contador y el estado visual del botón de forma inmediata sin esperar respuesta del servidor (actualización optimista). Al mismo tiempo, se envía la petición y el servidor comprueba si ya existe un like de ese usuario para esa publicación en base de datos.
+    \item Si ya existe, lo borra y devuelve al cliente el nuevo estado (sin like). No se genera ninguna notificación.
+    \item Si no existe, crea el registro y notifica al autor de la publicación. Si el usuario está dando like a su propia publicación, o ya había recibido una notificación de like del mismo actor, no se genera ninguna notificación adicional.
+    \item Si la respuesta del servidor no coincide con el estado optimista, la interfaz lo corrige para reflejar la realidad.
+\end{enumerate}
+
+\smallskip
+\noindent\textit{Nota: el flujo de guardados y el de follows siguen exactamente el mismo patrón de toggle. Las diferencias son dos: los guardados no generan ninguna notificación (es una acción privada del usuario), y el follow añade una comprobación extra que impide que un usuario se siga a sí mismo antes de llegar a la base de datos.}
+
+\subsection*{Flujo de un comentario con mención}
+
+Cuando un usuario publica un comentario que menciona a otro usuario:
+
+\begin{enumerate}
+    \item El usuario envía el formulario. El frontend añade de inmediato un comentario temporal a la lista, incrementa el contador de comentarios y actualiza el badge del marcador en el mapa, todo sin esperar respuesta del servidor (actualización optimista). La caja de texto se vacía para que el usuario pueda escribir otro comentario.
+    \item La petición llega al servidor y el comentario se persiste en base de datos con el texto tal como el usuario lo escribió. Las menciones viajan codificadas como \texttt{@[Nombre](email)}.
+    \item El servidor extrae los emails mencionados del texto y los resuelve a usuarios en una sola consulta a base de datos.
+    \item Si el comentarista no es el propietario de la publicación, se genera una notificación de tipo comentario para el propietario y se lo marca como ya notificado.
+    \item Por cada usuario mencionado que no haya sido ya notificado en el paso anterior, se genera una notificación de tipo mención. Esto evita que el propietario reciba dos notificaciones si también aparece mencionado.
+    \item El servidor devuelve el comentario real con el identificador definitivo. El frontend sustituye el comentario temporal por el definitivo. Si la petición falló, deshace todos los cambios optimistas: elimina el comentario temporal, restaura el contador y devuelve el texto al campo de entrada.
+\end{enumerate}
+
+\smallskip
+\noindent\textit{Nota: un comentario sin mención sigue exactamente el mismo camino. La única diferencia es que la lista de emails mencionados queda vacía, por lo que no se generan notificaciones de mención.}
 
 % ── Memorando 012: Interacciones ────────────────────────────────────────────
 \begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 012: Implementación de Likes, Guardados y Comentarios}
-\textbf{Asunto}&Las publicaciones admiten tres tipos de interacción: like, guardado y comentario, cada uno con su propio botón. Likes y guardados pueden deshacerse; los comentarios se añaden siempre como entrada nueva.\\
-\textbf{Resumen}&Para likes y guardados, el servidor mira si ya existe el registro antes de actuar: si ya está, lo borra; si no, lo crea. Así nunca se acumulan registros incorrectos. Los comentarios siempre generan una entrada nueva y solo el propio autor puede borrarlos.\\
+{Memorando técnico 012: Likes, Guardados y Comentarios}
+\textbf{Asunto}&Tres tipos de interacción sobre publicaciones: like, guardado y comentario. Likes y guardados pueden deshacerse; los comentarios solo pueden borrarse.\\
 \midrule
-\textbf{Factores causantes}&Sin la comprobación previa, dar like varias veces crearía varios registros en base de datos y dispararía una notificación al autor por cada uno, aunque el usuario simplemente hubiera pulsado el botón dos veces.\\
-\textbf{Solución}&Cada publicación expone tres botones independientes: uno para dar o quitar like, uno para guardar o dejar de guardar, y una sección de comentarios con su propio campo de texto. Para likes y guardados, el servidor busca si ya existe un registro para ese usuario y esa publicación: si lo encuentra, lo borra; si no, lo crea. El like además notifica al autor, excepto cuando el autor se da like a sí mismo. Los comentarios siempre generan una entrada nueva; el borrado comprueba que quien borra sea el autor del comentario: si no lo es, el servidor no toca nada.\\
-\textbf{Motivación}&El patrón de botón con toggle es el estándar en redes sociales: Instagram, Twitter y similares usan exactamente este modelo para likes y guardados. Como ventaja adicional, el frontend no necesita conocer el estado actual antes de llamar al servidor: simplemente envía la petición y refleja el resultado que recibe.\\
-\textbf{Cuestiones abiertas}&Los comentarios no tienen paginación: si una publicación acumula muchos, todos se devuelven de golpe. No hay opción de editar un comentario ya publicado.\\
-\textbf{Alternativas}&\textbf{Endpoints separados por acción}: un endpoint para dar like, otro para quitarlo, otro para guardar, otro para borrar guardado, etc. Más explícito, pero multiplica el número de endpoints y obliga al frontend a conocer el estado actual antes de cada llamada para saber cuál invocar.\\
+\textbf{Factores causantes}&Sin esta comprobación, pulsar el botón de like dos veces crearía dos registros en base de datos y enviaría dos notificaciones al autor por el mismo evento.\\
+\textbf{Solución}&El flujo completo se describe en la sección anterior. El punto clave es que el servidor no necesita que el frontend le diga el estado actual: simplemente actúa y devuelve el nuevo estado. El frontend refleja ese resultado y corrige el estado optimista si fuera necesario.\\
+\textbf{Motivación}&Es el mismo patrón que usan Instagram o Twitter para likes y guardados. Tiene la ventaja de que el endpoint es idempotente desde el punto de vista del usuario: pulsar dos veces deja las cosas como estaban.\\
+\textbf{Cuestiones abiertas}&No hay opción de editar un comentario ya publicado. Los comentarios se devuelven todos de golpe sin paginación.\\
+\textbf{Alternativas}&Endpoints separados para dar y quitar like. Más explícito, pero obliga al frontend a saber el estado actual antes de cada llamada para elegir cuál invocar.\\
 	\end{coolTable}
 	\caption{Memorando técnico 012: Likes, Guardados y Comentarios\label{tab:memo012}}
 \end{table*}
-
-
 
 % ── Memorando 013: Notificaciones y menciones ─────────────────────────────────
 \begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 013: Notificaciones con Menciones en Comentarios}
-\textbf{Asunto}&Cada acción social genera una notificación para el destinatario correspondiente. Los comentarios añaden la posibilidad de mencionar a otros usuarios, que también deben ser notificados sin que nadie reciba dos notificaciones por el mismo evento.\\
-\textbf{Resumen}&El servidor identifica al destinatario de cada acción y persiste la notificación. En comentarios, extrae los emails mencionados, carga los usuarios y lleva la cuenta de quién ya fue notificado para no repetir.\\
+{Memorando técnico 013: Notificaciones y Menciones en Comentarios}
+\textbf{Asunto}&Un comentario puede generar varias notificaciones a la vez; hay que evitar que alguien reciba dos por el mismo evento.\\
 \midrule
-\textbf{Factores causantes}&Los nombres de usuario no son únicos, así que las menciones no pueden resolverse por nombre. Además, si el propietario de la publicación también aparece mencionado en el comentario, sin control recibiría dos notificaciones por el mismo evento.\\
-\textbf{Solución}&El frontend codifica las menciones como \texttt{@[Nombre](email)}, usando el correo como identificador. Al publicar un comentario, el servidor extrae los emails mencionados en el texto, carga esos usuarios en una sola consulta y envía a cada uno una notificación, saltándose al propietario de la publicación. Para likes y follows, si el usuario da like, lo quita y lo vuelve a dar, solo la primera vez debe llegar una notificación al autor; las siguientes se descartan comprobando en base de datos si ya existe una notificación igual.\\
-\textbf{Motivación}&Una sola consulta para todos los mencionados evita una consulta por cada mención. El conjunto de ya-notificados garantiza que nadie recibe dos notificaciones por el mismo comentario sin complicar el modelo de datos.\\
-\textbf{Cuestiones abiertas}&Cualquier usuario puede escribir manualmente el patrón \texttt{@[Nombre](email)} en el campo de comentarios con el correo de cualquier persona registrada, y el servidor le enviará una notificación de mención sin que forme parte de la conversación.\\
-\textbf{Alternativas}&\textbf{Sin menciones}: simplifica la implementación pero elimina una forma directa de dirigirse a otro usuario en un comentario. Se descartó porque los usuarios piloto solicitaron explícitamente esta funcionalidad en varias ocasiones durante las pruebas.\\
+\textbf{Solución}&Ver pasos 3--5 del flujo de comentario con mención. El servidor resuelve todos los emails mencionados en una sola consulta.\\
+\textbf{Cuestiones abiertas}&Cualquier usuario puede escribir manualmente el patrón de mención con el email de otra persona y provocar que esta reciba una notificación.\\
+\textbf{Alternativas}&No implementar menciones, descartado por petición explícita de los usuarios piloto.\\
 	\end{coolTable}
 	\caption{Memorando técnico 013: Notificaciones y Menciones\label{tab:memo013}}
 \end{table*}
@@ -128,57 +146,20 @@ La capa social introduce tres desafíos que no existían en iteraciones anterior
 \begin{table*}[tbp]
 	\centering
 	\begin{coolTable}{p{4cm}p{\textwidth-4.5cm}}{2}
-{Memorando técnico 014: Centro de Notificaciones con Polling desde el Frontend}
+{Memorando técnico 014: Centro de Notificaciones}
 \textbf{Asunto}&El usuario debe ver las notificaciones nuevas sin tener que recargar la página.\\
-\textbf{Resumen}&La campana de notificaciones consulta periódicamente al servidor cuántas notificaciones sin leer hay y actualiza el contador (polling). Al abrir el panel, descarga la lista completa y marca todas como leídas.\\
+\textbf{Resumen}&La campana consulta periódicamente al servidor cuántas notificaciones sin leer hay y actualiza el contador. Al abrirla, descarga la lista completa.\\
 \midrule
-\textbf{Factores causantes}&Las notificaciones las generan acciones de otros usuarios, por lo que el cliente no sabe cuándo llega una nueva. Sin consultas periódicas, el contador solo cambiaría al recargar la página.\\
-\textbf{Solución}&La campana pregunta al servidor el número de no leídas cada cierto intervalo y actualiza el badge. Al hacer clic, descarga las notificaciones y las marca como leídas. Cada notificación puede eliminarse individualmente deslizándola. Si la notificación está relacionada con una publicación, al pulsar sobre ella el mapa navega directamente a esa publicación.\\
-\textbf{Motivación}&El polling no requiere conexiones permanentes en el servidor y es suficiente para el volumen de usuarios esperado en Scubex. La latencia introducida por el intervalo de consulta es poco relevante en la práctica.\\
-\textbf{Cuestiones abiertas}&El intervalo de polling fija el retraso máximo con el que el usuario ve una notificación nueva. No hay alertas en el sistema operativo cuando la pestaña está en segundo plano.\\
-\textbf{Alternativas}&\textbf{WebSockets}: tiempo real completo, pero una mayor complejidad de infraestructura, innecesaria para la repercusión que tendría en la aplicación.\\
+\textbf{Factores causantes}&Las notificaciones las generan acciones de otros usuarios, por lo que el cliente no sabe cuándo llega una nueva. Sin consultas periódicas el contador solo cambiaría al recargar.\\
+\textbf{Solución}&La campana pregunta el número de no leídas cada cierto intervalo. Al hacer clic, descarga las notificaciones. Cada una puede eliminarse deslizándola. Si la notificación corresponde a una publicación, al pulsar sobre ella el mapa navega directamente a ella.\\
+\textbf{Motivación}&El polling no requiere infraestructura adicional y es suficiente para el volumen de usuarios esperado. La pequeña latencia que introduce es irrelevante en la práctica.\\
+\textbf{Cuestiones abiertas}&El intervalo de polling fija el retraso máximo con el que el usuario ve una notificación nueva. No hay alertas del sistema operativo cuando la pestaña está en segundo plano.\\
+\textbf{Alternativas}&WebSockets para tiempo real completo, pero añaden complejidad de infraestructura innecesaria para el volumen de Scubex.\\
 	\end{coolTable}
 	\caption{Memorando técnico 014: Centro de Notificaciones\label{tab:memo014}}
 \end{table*}
+
 \clearpage
-
-
-\subsection*{Flujo de una interacción (like)}
-
-Cuando un usuario pulsa el botón de like en una publicación:
-
-\begin{enumerate}
-    \item El usuario pulsa el botón. La interfaz actualiza el contador y el estado visual del botón de forma inmediata sin esperar respuesta del servidor (actualización optimista). 
-    
-    Al mismo tiempo, se envía la petición y el servidor comprueba si ya existe un like de ese usuario para esa publicación en base de datos.
-    \item Si ya existe, lo borra y devuelve al cliente el nuevo estado (sin like). No se genera ninguna notificación.
-    \item Si no existe, crea el registro y notifica al autor de la publicación. Si el usuario está dando like a su propia publicación, o ya había recibido una notificación de like del mismo actor, no se genera ninguna notificación adicional.
-    \item Si la respuesta del servidor no coincide con el estado optimista, la interfaz lo corrige para reflejar la realidad.
-\end{enumerate}
-
-\smallskip
-\noindent\textit{Nota — El flujo de guardados y el de follows siguen exactamente el mismo patrón de toggle. Las diferencias son dos: los guardados no generan ninguna notificación (es una acción privada del usuario), y el follow añade una comprobación extra que impide que un usuario se siga a sí mismo antes de llegar a la base de datos.}
-
-\subsection*{Flujo de un comentario con mención}
-
-Cuando un usuario publica un comentario que menciona a otro usuario:
-
-\begin{enumerate}
-    \item El usuario envía el formulario. El frontend añade de inmediato un comentario temporal a la lista de comentarios del panel de detalle de publicación, incrementa el contador de comentarios visible en ese mismo panel y actualiza el badge del marcador en el mapa, todo sin esperar respuesta del servidor (actualización optimista). 
-    
-    La caja de texto se vacía para que el usuario pueda escribir otro comentario.
-    \item La petición llega al servidor y el comentario se persiste en base de datos con el texto tal como el usuario lo escribió. Las menciones viajan codificadas como \texttt{@[Nombre](email)}.
-    \item El servidor extrae los emails mencionados del texto y los resuelve a usuarios en una sola consulta a base de datos.
-    \item Si el comentarista no es el propietario de la publicación, se genera una notificación de tipo comentario para el propietario y se lo marca como ya notificado.
-    \item Por cada usuario mencionado que no haya sido ya notificado en el paso anterior, se genera una notificación de tipo mención. Esto evita que el propietario reciba dos notificaciones si también aparece mencionado.
-    \item El servidor devuelve el comentario real con el identificador asignado por la base de datos. El frontend sustituye el comentario temporal por el definitivo. Si la petición falló, deshace todos los cambios optimistas: elimina el comentario temporal, restaura el contador y devuelve el texto al campo de entrada.
-\end{enumerate}
-
-\smallskip
-\noindent\textit{Nota — Un comentario sin mención sigue exactamente el mismo camino en el frontend  y en el servidor. La única diferencia es que la lista de emails mencionados queda vacía, por lo que el bucle de menciones no genera ninguna notificación adicional y el conjunto de ya-notificados no entra en juego.}
-
-
-
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Despliegue}
 % ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +181,7 @@ Las pruebas cubren los tres desafíos técnicos documentados y verifican los pas
 
     \item \textbf{Primer guardado y quitar guardado} (Tabla~\ref{tab:memo012}): mismo patrón que los likes, verificando que el registro se crea o se elimina según corresponda.
 
-    \item \textbf{Añadir comentario} (Tabla~\ref{tab:memo012}, paso~1 del flujo de comentario): el comentario se persiste y se delega la notificación.
+    \item \textbf{Añadir comentario} (Tabla~\ref{tab:memo012}, paso~2 del flujo de comentario): el comentario se persiste y se delega la notificación.
 
     \item \textbf{Borrar comentario por el autor} (Tabla~\ref{tab:memo012}): el autor borra su comentario; resultado verdadero y borrado ejecutado.
 
@@ -232,3 +213,45 @@ Las pruebas cubren los tres desafíos técnicos documentados y verifican los pas
 \begin{quote}
 \small\textit{El proyecto cuenta con más pruebas unitarias (controladores de interacciones y notificaciones, endpoints de likes, guardados y comentarios) que no se detallan aquí por no estar directamente vinculadas a los desafíos técnicos documentados en esta sección.}
 \end{quote}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Seguimiento y Control}
+% ─────────────────────────────────────────────────────────────────────────────
+
+La última iteración fue la que más características incorporó: likes, guardados, comentarios con menciones, follows, perfiles públicos y notificaciones. Aun así fue la que mejor se ajustó a la planificación, en gran parte por la experiencia acumulada. Los aspectos más delicados fueron la deduplicación de notificaciones, para que el propietario de una publicación no reciba dos avisos del mismo comentario si también aparece mencionado en él, y la actualización optimista de la interfaz, que debe reflejarse simultáneamente en el panel de detalle, en el contador del marcador y en la campana de notificaciones sin que el usuario perciba ninguna inconsistencia.
+
+\begin{table*}[htb]
+	\centering
+	\begin{coolTable}{p{3.5cm}p{3.2cm}p{3.2cm}p{\textwidth-10.4cm}}{4}
+{Seguimiento temporal: Iteración 4}
+\textbf{Hito}&\textbf{Planificado}&\textbf{Real}&\textbf{Desviación}\\
+\midrule
+Inicio&25/04/2026&27/04/2026&+2 días (arrastre it.~3)\\
+Fin&08/05/2026&05/05/2026&$-$3 días (adelanto)\\
+	\end{coolTable}
+	\caption{Seguimiento temporal de la Iteración 4}
+\end{table*}
+
+\begin{table*}[tbp]
+	\centering
+	\begin{coolTable}{p{\textwidth-3.5cm}p{3cm}}{2}
+{Desglose de horas: Iteración 4}
+\textbf{Actividad}&\textbf{Horas}\\
+\midrule
+Análisis y diseño de la capa social&9\\
+Interacciones toggle: likes, guardados y comentarios (backend)&10\\
+Sistema de menciones y deduplicación de notificaciones&8\\
+Centro de notificaciones y polling (frontend)&11\\
+Red social: follows y perfiles públicos&9\\
+Actualización optimista de la interfaz&5\\
+Testing y cobertura&4\\
+Redacción de la memoria: flujos de interacción, recorrido del usuario y revisión de condiciones de uso&14\\
+\midrule
+\textbf{Total}&\textbf{70}\\
+	\end{coolTable}
+	\caption{Desglose de horas dedicadas en la Iteración 4}
+\end{table*}
+
+Todas las características planificadas se completaron con 3~días de margen, que se dedicaron a ajustes de detalle en el panel de notificaciones y a pruebas del flujo completo con usuarios reales. El total de horas a lo largo de las cuatro iteraciones es de \textbf{289~horas}.
+
+

@@ -43,33 +43,37 @@
 \contentsline {section}{\numberline {7.1}Características desarrolladas esta iteración}{36}{section.7.1}%
 \contentsline {section}{\numberline {7.2}Diseño}{40}{section.7.2}%
 \contentsline {section}{\numberline {7.3}Implementación}{41}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Despliegue}{48}{section.7.4}%
-\contentsline {section}{\numberline {7.5}Pruebas}{48}{section.7.5}%
+\contentsline {section}{\numberline {7.4}Despliegue}{47}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Pruebas}{47}{section.7.5}%
+\contentsline {section}{\numberline {7.6}Seguimiento y Control}{48}{section.7.6}%
 \contentsline {chapter}{\numberline {8}Iteración 2: Sistema Climático}{51}{chapter.8}%
 \contentsline {section}{\numberline {8.1}Características desarrolladas esta iteración}{52}{section.8.1}%
 \contentsline {section}{\numberline {8.2}Diseño}{54}{section.8.2}%
 \contentsline {section}{\numberline {8.3}Implementación}{54}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Despliegue}{59}{section.8.4}%
+\contentsline {section}{\numberline {8.4}Despliegue}{60}{section.8.4}%
 \contentsline {section}{\numberline {8.5}Pruebas}{60}{section.8.5}%
-\contentsline {chapter}{\numberline {9}Iteración 3: Publicaciones}{61}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Características desarrolladas esta iteración}{62}{section.9.1}%
-\contentsline {section}{\numberline {9.2}Diseño}{64}{section.9.2}%
-\contentsline {section}{\numberline {9.3}Implementación}{65}{section.9.3}%
-\contentsline {section}{\numberline {9.4}Despliegue}{70}{section.9.4}%
-\contentsline {section}{\numberline {9.5}Pruebas}{70}{section.9.5}%
-\contentsline {chapter}{\numberline {10}Iteración 4: Interacciones y Red Social}{73}{chapter.10}%
-\contentsline {section}{\numberline {10.1}Características desarrolladas esta iteración}{74}{section.10.1}%
-\contentsline {section}{\numberline {10.2}Diseño}{78}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Implementación}{78}{section.10.3}%
-\contentsline {section}{\numberline {10.4}Despliegue}{84}{section.10.4}%
-\contentsline {section}{\numberline {10.5}Pruebas}{84}{section.10.5}%
-\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{87}{part.4}%
-\contentsline {chapter}{\numberline {11}Manual de usuario}{89}{chapter.11}%
-\contentsline {section}{\numberline {11.1}Sección libre}{90}{section.11.1}%
-\contentsline {chapter}{\numberline {12}Conclusiones}{91}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Informe post-mortem}{92}{section.12.1}%
-\contentsline {subsection}{\numberline {12.1.1}Lo que ha ido bien}{92}{subsection.12.1.1}%
-\contentsline {subsection}{\numberline {12.1.2}Lo que ha ido mal}{92}{subsection.12.1.2}%
-\contentsline {subsection}{\numberline {12.1.3}Discusión}{92}{subsection.12.1.3}%
-\contentsline {section}{\numberline {12.2}Trabajos futuros}{92}{section.12.2}%
-\contentsline {chapter}{Referencias bibliográficas}{93}{section.12.2}%
+\contentsline {section}{\numberline {8.6}Seguimiento y Control}{61}{section.8.6}%
+\contentsline {chapter}{\numberline {9}Iteración 3: Publicaciones}{63}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Características desarrolladas esta iteración}{64}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Diseño}{66}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Implementación}{67}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Despliegue}{71}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Pruebas}{71}{section.9.5}%
+\contentsline {section}{\numberline {9.6}Seguimiento y Control}{72}{section.9.6}%
+\contentsline {chapter}{\numberline {10}Iteración 4: Interacciones y Red Social}{75}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Características desarrolladas esta iteración}{76}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Diseño}{80}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Implementación}{80}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Despliegue}{86}{section.10.4}%
+\contentsline {section}{\numberline {10.5}Pruebas}{86}{section.10.5}%
+\contentsline {section}{\numberline {10.6}Seguimiento y Control}{87}{section.10.6}%
+\contentsline {part}{IV\hspace {1em}Cierre del proyecto}{89}{part.4}%
+\contentsline {chapter}{\numberline {11}Manual de usuario}{91}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Sección libre}{92}{section.11.1}%
+\contentsline {chapter}{\numberline {12}Conclusiones}{93}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Informe post-mortem}{94}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Lo que ha ido bien}{94}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}Lo que ha ido mal}{94}{subsection.12.1.2}%
+\contentsline {subsection}{\numberline {12.1.3}Discusión}{94}{subsection.12.1.3}%
+\contentsline {section}{\numberline {12.2}Trabajos futuros}{95}{section.12.2}%
+\contentsline {chapter}{Referencias bibliográficas}{97}{section.12.2}%
