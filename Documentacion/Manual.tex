@@ -1,14 +1,160 @@
 %!TEX root =  tfg.tex
 \chapter{Manual de usuario}
 
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
+\begin{quotation}[Diseñador e inventor]{Donald A. Norman (1935--)}
+Good design is actually a lot harder to notice than poor design, in part because good designs fit our needs so well that the design is invisible.
 \end{quotation}
 
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Este capítulo describe la interfaz de Scubex desde el punto de vista del usuario. Se presenta primero cada módulo de la aplicación por separado, y al final se ilustra su uso conjunto mediante tres casos de uso que reflejan perfiles de usuario distintos.
 \end{abstract}
 
-\section{Sección libre}
+% ─────────────────────────────────────────────────────────────────────────────
+\section{¿Qué es Scubex?}
+\label{sec:manual-que-es}
+% ─────────────────────────────────────────────────────────────────────────────
 
-Estructurar en función del proyecto.
+Scubex es una aplicación web para buceadores que reúne en un único lugar tres fuentes de información que habitualmente están separadas: la fauna marina de una zona, las condiciones climáticas y oceanográficas del momento, y las experiencias de otros buceadores.
+
+El punto de partida es siempre un mapa interactivo. El usuario selecciona cualquier punto del océano y puede, sin salir de esa pantalla, consultar qué especies han sido registradas científicamente en los alrededores, comprobar si las condiciones del día son aptas para bucear, y ver qué han publicado otros buceadores en esa misma zona. Si quiere dejar constancia de una inmersión propia, puede publicarla directamente sobre el mapa con una foto y una descripción, y el resto de la comunidad podrá verla, comentarla o guardarla.
+
+Scubex no requiere instalar nada: funciona desde cualquier navegador moderno, en ordenador o en móvil.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Autenticación}
+\label{sec:manual-auth}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Al abrir Scubex por primera vez se muestra la pantalla de inicio (Fig.~\ref{fig:landingPage}). El acceso se realiza mediante una cuenta de Google: basta con pulsar el botón \textit{Iniciar sesión con Google} y seleccionar la cuenta en la ventana emergente del navegador.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.75\textwidth]{figures/manual/LandingPage.png}
+\caption{Pantalla de inicio de Scubex\label{fig:landingPage}}
+\end{center}
+\end{figure}
+
+Antes de autenticarse, el usuario puede consultar el aviso de privacidad pulsando el enlace correspondiente. Scubex únicamente solicita el nombre, el correo electrónico y la foto de perfil, que se usan exclusivamente para identificar al autor de publicaciones y comentarios (Fig.~\ref{fig:infoDatos}).
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.55\textwidth]{figures/manual/InfoDeDatos.png}
+\caption{Aviso de privacidad y datos recogidos por Scubex\label{fig:infoDatos}}
+\end{center}
+\end{figure}
+
+Una vez autenticado, el avatar del usuario aparece en la esquina superior derecha de la landing y el botón principal da paso al mapa. La sesión se mantiene activa entre visitas hasta que el usuario la cierra explícitamente desde su perfil.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/Autentificación.png}
+  \caption{Selector de cuenta de Google\label{fig:autentificacion}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/avatar.png}
+  \caption{Avatar del usuario tras autenticarse\label{fig:avatar}}
+\end{minipage}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Exploración del mapa, escaneo, búsqueda y condiciones}
+\label{sec:manual-mapa}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Al entrar al mapa se muestra una vista oceánica a pantalla completa (Fig.~\ref{fig:mapaGeneral}). En la barra superior aparecen el logotipo de la aplicación a la izquierda, y a la derecha la campana de notificaciones y el avatar del usuario. La lupa en el extremo derecho abre un buscador de lugares: al escribir un nombre de ciudad, bahía o punto de interés, el mapa vuela automáticamente a esa ubicación. En la parte inferior se encuentran los controles principales: el selector de modo (\textit{Escanear} o \textit{Publicar}), el radio de escaneo (2, 5 o 10~km) y el botón para lanzar el escaneo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{figures/manual/MapaGeneral.png}
+\caption{Interfaz principal del mapa con los controles de escaneo en la barra inferior\label{fig:mapaGeneral}}
+\end{figure}
+
+Para explorar una zona, basta con hacer clic sobre cualquier punto del océano: aparece un marcador y un círculo que delimita el área de búsqueda según el radio seleccionado. Al pulsar \textit{Escanear}, la aplicación consulta las bases de datos científicas OBIS e iNaturalist y obtiene simultáneamente las condiciones climáticas y oceanográficas del punto. Durante la consulta el botón muestra el estado \textit{Escaneando\ldots} y el círculo anima sobre el mapa (Fig.~\ref{fig:modoEscaneo}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/ModoEscaneo.png}
+\caption{Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible\label{fig:modoEscaneo}}
+\end{figure}
+
+Cuando el escaneo termina, el panel de especies se vuelve desplegable y al abrirse muestra los resultados. El panel del clima tambien lo es, puesto que siempre peude volver a recuperarse el espacio del mapa (Fig.~\ref{fig:escaneoTodoAbierto}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/EscaneoTodoAbierto.png}
+\caption{Vista completa tras el escaneo: condiciones a la izquierda y especies a la derecha\label{fig:escaneoTodoAbierto}}
+\end{figure}
+
+El panel de especies lista todas las que han sido registradas en la zona, ordenadas por número de avistamientos. Cada tarjeta muestra el nombre común, el nombre científico y una fotografía de referencia. Al expandirla se accede al rango de profundidad habitual, la temperatura del agua en que se ha observado la especie, la fecha del primer y último registro, y el total de avistamientos globales en la base de datos (Fig.~\ref{fig:panelEspecies}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/manual/PanelEspecies.png}
+\caption{Panel de especies con una tarjeta expandida mostrando profundidad, temperatura y registros\label{fig:panelEspecies}}
+\end{figure}
+
+El panel climático (Fig.~\ref{fig:panelClima}) muestra un resumen compacto en la esquina superior izquierda con la temperatura del aire, un indicador de estado (\textit{Buenas condiciones}, \textit{Condiciones tolerables} o \textit{Condiciones adversas}) y las métricas más relevantes para el buceo: oleaje, corriente, temperatura del mar, visibilidad, viento, swell y probabilidad de lluvia. Pulsando el icono de información se abre un modal con la descripción detallada de cada parámetro y los umbrales que determinan su color (Fig.~\ref{fig:datosClima}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/PanelClima.png}
+  \caption{Resumen compacto de condiciones climáticas\label{fig:panelClima}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.54\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/DatosClima.png}
+  \caption{Modal de detalle con la descripción de cada métrica\label{fig:datosClima}}
+\end{minipage}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Sistema de publicaciones}
+\label{sec:manual-publicaciones}
+% ─────────────────────────────────────────────────────────────────────────────
+
+% TODO: Crear una publicación: modo Publicación, clic en mapa, formulario (título, descripción, foto), envío.
+% TODO: Ver publicaciones ajenas: marcadores en el mapa, panel de detalle.
+% TODO: Interacciones: like/unlike, comentarios con @menciones, guardado, compartir.
+% TODO: Gestión propia: editar y eliminar publicación.
+% TODO: Notificaciones: tipos (like, comentario, mención, follow), campana, navegación desde notificación al punto del mapa.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Red social}
+\label{sec:manual-social}
+% ─────────────────────────────────────────────────────────────────────────────
+
+% TODO: Perfil propio: editar nombre y foto, pestañas Publicaciones/Guardados, estadísticas de seguidores/seguidos.
+% TODO: Perfil ajeno: follow/unfollow, ver sus publicaciones, compartir perfil.
+% TODO: Listas de seguidores y seguidos: modal, navegar a perfiles desde la lista.
+% TODO: Guardados: cómo guardar una publicación y acceder a la colección desde el perfil.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Casos de uso}
+\label{sec:manual-casos}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Explorador: uso centrado en información de la zona}
+\label{sec:caso-explorador}
+
+% TODO: Usuario que busca un lugar, escanea la fauna, consulta las condiciones climáticas y decide si bucear.
+% TODO: Flujo: PlaceSearch → clic en mapa → ajuste de radio → escaneo → revisión de especies → revisión del panel climático.
+
+\subsection{Social: uso centrado en la comunidad}
+\label{sec:caso-social}
+
+% TODO: Usuario que entra a ver publicaciones recientes, interactúa (likes, comentarios con menciones), sigue a un buceador, revisa notificaciones y guarda publicaciones.
+% TODO: Flujo: mapa con marcadores → detalle → like → comentario con @mención → perfil del autor → follow → campana de notificaciones → guardados en perfil.
+
+\subsection{El usuario avanzado: todos los microsistemas en marcha}
+\label{sec:caso-avanzado}
+
+% TODO: Sesión en la que confluyen varios sistemas simultáneamente.
+% TODO: Ilustrar: caché de especies (segunda consulta en la misma zona es instantánea), actualización optimista de likes (contador sube antes de que el servidor confirme), deduplicación de notificaciones (un comentario con mención no genera dos avisos), polling de notificaciones en segundo plano mientras se navega, geocodificación inversa al publicar.
+% TODO: Objetivo: mostrar que hay más cosas funcionando de las que el usuario percibe.
