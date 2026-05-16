@@ -34,6 +34,14 @@ Al abrir Scubex por primera vez se muestra la pantalla de inicio (Fig.~\ref{fig:
 \end{center}
 \end{figure}
 
+La pantalla no es estática: a medida que el usuario permanece en ella, van apareciendo criaturas marinas que se desplazan a distintas velocidades según la especie, llenando poco a poco la pantalla (Fig.~\ref{fig:landingAnimales}). Cuanto más tiempo se esté en la página, más fauna se acumula.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/PaginaInicialConMuchosAnimales.png}
+\caption{Pantalla de inicio con la fauna animada acumulada tras unos segundos\label{fig:landingAnimales}}
+\end{figure}
+
 Antes de autenticarse, el usuario puede consultar el aviso de privacidad pulsando el enlace correspondiente. Scubex únicamente solicita el nombre, el correo electrónico y la foto de perfil, que se usan exclusivamente para identificar al autor de publicaciones y comentarios (Fig.~\ref{fig:infoDatos}).
 
 \begin{figure}[H]
@@ -81,12 +89,26 @@ Para explorar una zona, basta con hacer clic sobre cualquier punto del océano: 
 \caption{Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible\label{fig:modoEscaneo}}
 \end{figure}
 
-Cuando el escaneo termina, el panel de especies se vuelve desplegable y al abrirse muestra los resultados. El panel del clima tambien lo es, puesto que siempre peude volver a recuperarse el espacio del mapa (Fig.~\ref{fig:escaneoTodoAbierto}).
+Al terminar, aparece un aviso en pantalla con el nombre del lugar escaneado (Fig.~\ref{fig:popupEscaneo}). Pulsarlo hace que el mapa vuele hasta el punto y muestre el círculo de búsqueda, útil si el usuario había navegado a otra zona mientras esperaba los resultados.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/PopupFinalEscaneo.png}
+\caption{Notificación al finalizar el escaneo con el nombre del lugar\label{fig:popupEscaneo}}
+\end{figure}
+
+El panel de especies se vuelve entonces desplegable; al abrirlo, el mapa realiza un zoom suave hasta el área escaneada para situar los resultados en contexto (Fig.~\ref{fig:notifPanel}). El panel es colapsable en cualquier momento para recuperar espacio.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.25\textwidth]{figures/manual/NotificacionAzulPanelEspecies.png}
+\caption{Indicador del panel de especies listo para desplegarse\label{fig:notifPanel}}
+\end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/manual/EscaneoTodoAbierto.png}
-\caption{Vista completa tras el escaneo: condiciones a la izquierda y especies a la derecha\label{fig:escaneoTodoAbierto}}
+\caption{Vista completa con ambos paneles abiertos tras el escaneo\label{fig:escaneoTodoAbierto}}
 \end{figure}
 
 El panel de especies lista todas las que han sido registradas en la zona, ordenadas por número de avistamientos. Cada tarjeta muestra el nombre común, el nombre científico y una fotografía de referencia. Al expandirla se accede al rango de profundidad habitual, la temperatura del agua en que se ha observado la especie, la fecha del primer y último registro, y el total de avistamientos globales en la base de datos (Fig.~\ref{fig:panelEspecies}).
@@ -134,6 +156,21 @@ El panel climático (Fig.~\ref{fig:panelClima}) muestra un resumen compacto en l
 % TODO: Perfil ajeno: follow/unfollow, ver sus publicaciones, compartir perfil.
 % TODO: Listas de seguidores y seguidos: modal, navegar a perfiles desde la lista.
 % TODO: Guardados: cómo guardar una publicación y acceder a la colección desde el perfil.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Consideraciones estéticas y de flujo}
+\label{sec:manual-estetica}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Scubex mantiene un lenguaje visual coherente a lo largo de toda la interfaz. Los elementos interactivos o activos se identifican siempre por el mismo color celeste: el modo seleccionado en la barra inferior, el radio de escaneo activo, los botones de acción principal o cualquier opción marcada en un selector aparecen en ese tono (Fig.~\ref{fig:patronCeleste}). La única excepción deliberada es el like, que sigue el rojo del corazón vacío ya establecido por otras redes sociales, aprovechando un patrón que el usuario reconoce sin necesidad de aprenderlo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/manual/PatronColorCeleste.png}
+\caption{Color celeste como indicador de elemento activo o acción disponible\label{fig:patronCeleste}}
+\end{figure}
+
+Las transiciones entre pantallas se realizan mediante una animación de ola que recorre la pantalla de lado a lado. Su velocidad es configurable desde el perfil del usuario: la opción rápida reduce la duración al mínimo para quienes prefieren una navegación más directa.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Casos de uso}

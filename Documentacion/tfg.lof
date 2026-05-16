@@ -17,13 +17,17 @@
 \contentsline {figure}{\numberline {10.1}{\ignorespaces Diagrama UML de diseño para la iteración 4}}{80}{figure.10.1}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {11.1}{\ignorespaces Pantalla de inicio de Scubex}}{92}{figure.11.1}%
-\contentsline {figure}{\numberline {11.2}{\ignorespaces Aviso de privacidad y datos recogidos por Scubex}}{93}{figure.11.2}%
-\contentsline {figure}{\numberline {11.3}{\ignorespaces Selector de cuenta de Google}}{94}{figure.11.3}%
-\contentsline {figure}{\numberline {11.4}{\ignorespaces Avatar del usuario tras autenticarse}}{94}{figure.11.4}%
-\contentsline {figure}{\numberline {11.5}{\ignorespaces Interfaz principal del mapa con los controles de escaneo en la barra inferior}}{95}{figure.11.5}%
-\contentsline {figure}{\numberline {11.6}{\ignorespaces Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible}}{95}{figure.11.6}%
-\contentsline {figure}{\numberline {11.7}{\ignorespaces Vista completa tras el escaneo: condiciones a la izquierda y especies a la derecha}}{96}{figure.11.7}%
-\contentsline {figure}{\numberline {11.8}{\ignorespaces Panel de especies con una tarjeta expandida mostrando profundidad, temperatura y registros}}{97}{figure.11.8}%
-\contentsline {figure}{\numberline {11.9}{\ignorespaces Resumen compacto de condiciones climáticas}}{98}{figure.11.9}%
-\contentsline {figure}{\numberline {11.10}{\ignorespaces Modal de detalle con la descripción de cada métrica}}{98}{figure.11.10}%
+\contentsline {figure}{\numberline {11.2}{\ignorespaces Pantalla de inicio con la fauna animada acumulada tras unos segundos}}{93}{figure.11.2}%
+\contentsline {figure}{\numberline {11.3}{\ignorespaces Aviso de privacidad y datos recogidos por Scubex}}{94}{figure.11.3}%
+\contentsline {figure}{\numberline {11.4}{\ignorespaces Selector de cuenta de Google}}{95}{figure.11.4}%
+\contentsline {figure}{\numberline {11.5}{\ignorespaces Avatar del usuario tras autenticarse}}{95}{figure.11.5}%
+\contentsline {figure}{\numberline {11.6}{\ignorespaces Interfaz principal del mapa con los controles de escaneo en la barra inferior}}{96}{figure.11.6}%
+\contentsline {figure}{\numberline {11.7}{\ignorespaces Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible}}{96}{figure.11.7}%
+\contentsline {figure}{\numberline {11.8}{\ignorespaces Notificación al finalizar el escaneo con el nombre del lugar}}{97}{figure.11.8}%
+\contentsline {figure}{\numberline {11.9}{\ignorespaces Indicador del panel de especies listo para desplegarse}}{97}{figure.11.9}%
+\contentsline {figure}{\numberline {11.10}{\ignorespaces Vista completa con ambos paneles abiertos tras el escaneo}}{98}{figure.11.10}%
+\contentsline {figure}{\numberline {11.11}{\ignorespaces Patrón de color celeste para elementos activos e interactivos}}{98}{figure.11.11}%
+\contentsline {figure}{\numberline {11.12}{\ignorespaces Panel de especies con una tarjeta expandida mostrando profundidad, temperatura y registros}}{99}{figure.11.12}%
+\contentsline {figure}{\numberline {11.13}{\ignorespaces Resumen compacto de condiciones climáticas}}{100}{figure.11.13}%
+\contentsline {figure}{\numberline {11.14}{\ignorespaces Modal de detalle con la descripción de cada métrica}}{100}{figure.11.14}%
 \addvspace {10\p@ }
