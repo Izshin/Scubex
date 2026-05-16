@@ -74,13 +74,13 @@
 \contentsline {section}{\numberline {11.3}Exploración del mapa, escaneo, búsqueda y condiciones}{95}{section.11.3}%
 \contentsline {section}{\numberline {11.4}Sistema de publicaciones}{100}{section.11.4}%
 \contentsline {section}{\numberline {11.5}Red social}{104}{section.11.5}%
-\contentsline {section}{\numberline {11.6}Consideraciones estéticas y de flujo}{104}{section.11.6}%
-\contentsline {subsection}{\numberline {11.6.1}Estética e interfaz}{104}{subsection.11.6.1}%
-\contentsline {subsection}{\numberline {11.6.2}Flujo y experiencia}{105}{subsection.11.6.2}%
-\contentsline {chapter}{\numberline {12}Conclusiones}{107}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Informe post-mortem}{108}{section.12.1}%
-\contentsline {subsection}{\numberline {12.1.1}Lo que ha ido bien}{108}{subsection.12.1.1}%
-\contentsline {subsection}{\numberline {12.1.2}Lo que ha ido mal}{108}{subsection.12.1.2}%
-\contentsline {subsection}{\numberline {12.1.3}Discusión}{108}{subsection.12.1.3}%
-\contentsline {section}{\numberline {12.2}Trabajos futuros}{109}{section.12.2}%
-\contentsline {chapter}{Referencias bibliográficas}{111}{section.12.2}%
+\contentsline {section}{\numberline {11.6}Consideraciones estéticas y de flujo}{109}{section.11.6}%
+\contentsline {subsection}{\numberline {11.6.1}Estética e interfaz}{109}{subsection.11.6.1}%
+\contentsline {subsection}{\numberline {11.6.2}Flujo y experiencia}{111}{subsection.11.6.2}%
+\contentsline {chapter}{\numberline {12}Conclusiones}{117}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Informe post-mortem}{118}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Lo que ha ido bien}{118}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}Lo que ha ido mal}{118}{subsection.12.1.2}%
+\contentsline {subsection}{\numberline {12.1.3}Discusión}{118}{subsection.12.1.3}%
+\contentsline {section}{\numberline {12.2}Trabajos futuros}{119}{section.12.2}%
+\contentsline {chapter}{Referencias bibliográficas}{121}{section.12.2}%

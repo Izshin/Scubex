@@ -174,7 +174,7 @@ Se abre un formulario con título, descripción opcional, el nombre del lugar de
 \end{minipage}
 \end{figure}
 
-Al publicar, el marcador aparece en el mapa y al pulsarlo se abre una tarjeta con el título, la descripción, la imagen y el enlace \textit{Ver más} para expandir el detalle completo (Fig.~\ref{fig:publicacionCreada}).
+Al publicar, el marcador aparece en el mapa y al pulsarlo se abre una tarjeta con el título, la descripción, la imagen y el enlace \textit{Ver más} para expandir el detalle completo (Fig.~\ref{fig:publicacionCreada}). Cada vez que se abre una publicación el mapa se centra automáticamente en ella, de modo que la referencia geográfica permanece siempre visible al navegar entre varias. Si la publicación lleva foto, el mapa ajusta además su posición para que la imagen quede completamente a la vista sin quedar oculta bajo el borde superior de la aplicación.
 
 \begin{figure}[H]
 \centering
@@ -205,30 +205,190 @@ Todas estas interacciones generan notificaciones para el autor de la publicació
 \label{sec:manual-social}
 % ─────────────────────────────────────────────────────────────────────────────
 
-% TODO: Perfil propio: editar nombre y foto, pestañas Publicaciones/Guardados, estadísticas de seguidores/seguidos.
-% TODO: Perfil ajeno: follow/unfollow, ver sus publicaciones, compartir perfil.
-% TODO: Listas de seguidores y seguidos: modal, navegar a perfiles desde la lista.
-% TODO: Guardados: cómo guardar una publicación y acceder a la colección desde el perfil.
+El perfil de cada usuario recoge su avatar, nombre y tres contadores: publicaciones, seguidores y seguidos. Debajo hay dos pestañas, \textit{Publicaciones} y \textit{Guardadas}, que muestran respectivamente las inmersiones propias y las publicaciones de otros que el usuario ha marcado para recuperar más tarde (Fig.~\ref{fig:perfilPropio}). Pulsar sobre cualquier tarjeta en cualquiera de las dos pestañas abre el panel de detalle completo de esa publicación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/PaginaDePerfil.png}
+\caption{Perfil propio con la pestaña Publicaciones activa\label{fig:perfilPropio}}
+\end{figure}
+
+Desde el propio perfil se puede cambiar el nombre y la foto de perfil en cualquier momento pulsando \textit{Editar perfil} (Fig.~\ref{fig:editarPerfil}). El mismo modal incluye la opción de eliminar la cuenta.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth]{figures/manual/EditarPerfil.png}
+\caption{Modal de edición del perfil\label{fig:editarPerfil}}
+\end{figure}
+
+La pestaña \textit{Guardadas} muestra las publicaciones que el usuario ha ido guardando (Fig.~\ref{fig:guardadas}). Cada tarjeta indica el título, el número de likes y comentarios, y el autor; pulsarla navega directamente a esa publicación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{figures/manual/PublicacionesGuardadas.png}
+\caption{Pestaña Guardadas con una publicación guardada\label{fig:guardadas}}
+\end{figure}
+
+Al visitar el perfil de otro usuario la cabecera muestra sus estadísticas y un botón \textit{Seguir} (Fig.~\ref{fig:perfilAjeno}). Al pulsarlo cambia a \textit{Siguiendo} y el contador se actualiza al instante; volver a pulsarlo deshace el seguimiento. Debajo de la cabecera aparecen sus publicaciones.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/PerfilAjeno.png}
+\caption{Perfil ajeno con el botón Seguir y las publicaciones del usuario\label{fig:perfilAjeno}}
+\end{figure}
+
+Los contadores de seguidores y seguidos son pulsables tanto en el perfil propio como en el ajeno. Al hacerlo se abre un panel con la lista de usuarios, y pulsar sobre cualquiera de ellos navega directamente a su perfil (Fig.~\ref{fig:listaSeguidores}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{figures/manual/ListaSeguidores.png}
+\caption{Panel con la lista de seguidores de un perfil\label{fig:listaSeguidores}}
+\end{figure}
+
+Las interacciones sobre las propias publicaciones likes, comentarios y nuevos seguidores generan notificaciones. Cuando hay notificaciones sin leer, la campana en la barra superior muestra un contador (Fig.~\ref{fig:campanaBadge}). Al pulsarla se despliega el panel con el detalle de cada una: quién ha interactuado, sobre qué publicación y cuándo (Fig.~\ref{fig:notificacionesPanel}). Pulsar sobre una notificación lleva directamente a la publicación correspondiente.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.22\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CampanaNotificacionConNotificacion.png}
+  \caption{Campana con notificaciones pendientes\label{fig:campanaBadge}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.62\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/NotificacionesAbiertasConNotificaciones.png}
+  \caption{Panel de notificaciones con un like y un comentario recibidos\label{fig:notificacionesPanel}}
+\end{minipage}
+\end{figure}
+
+Tanto los perfiles como las publicaciones individuales son compartibles mediante un enlace directo. El botón de compartir está presente en la cabecera del perfil y en el panel de detalle de cada publicación (Fig.~\ref{fig:compartirPerfil} y Fig.~\ref{fig:compartirPublicacion}); al pulsarlo se copia el enlace al portapapeles listo para enviarlo fuera de la aplicación.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CompartirPerfil.png}
+  \caption{Botón de compartir en la cabecera del perfil\label{fig:compartirPerfil}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.38\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CompratirPublicacion.png}
+  \caption{Icono de compartir en el panel de detalle de una publicación\label{fig:compartirPublicacion}}
+\end{minipage}
+\end{figure}
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Consideraciones estéticas y de flujo}
 \label{sec:manual-estetica}
 % ─────────────────────────────────────────────────────────────────────────────
 
+A lo largo del manual se han ido mencionando de forma puntual ciertas decisiones de diseño: el color que marca los elementos activos, las transiciones de pantalla, el comportamiento de los botones antes de que llegue la respuesta del servidor. Estas referencias han sido inevitablemente breves porque el foco de cada sección era otro. Sin embargo, el ámbito de la UI y la UX ha sido uno de los aspectos que más atención ha recibido durante el desarrollo del proyecto, y merece su espacio propio. A continuación se detallan algunas de las decisiones y consideraciones que han guiado la interfaz de Scubex.
+
 \subsection{Estética e interfaz}
 \label{sec:manual-ui}
 
-Scubex mantiene un lenguaje visual coherente a lo largo de toda la interfaz. Los elementos interactivos o activos se identifican siempre por el mismo color celeste: el modo seleccionado en la barra inferior, el radio de escaneo activo, los botones de acción principal o cualquier opción marcada en un selector aparecen en ese tono (Fig.~\ref{fig:patronCeleste}). La única excepción deliberada es el like, que sigue el rojo del corazón ya establecido por otras redes sociales, aprovechando un patrón que el usuario reconoce sin necesidad de aprenderlo.
+El color es el principal hilo conductor de la interfaz. El celeste identifica cualquier elemento activo o acción disponible: modo seleccionado en la barra inferior, radio de escaneo activo, botones de acción principal (Fig.~\ref{fig:patronCeleste}). El usuario no necesita leer etiquetas para entender qué puede pulsar o qué está ya activado; el color lo señala directamente.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.6\textwidth]{figures/manual/PatronColorCeleste.png}
-\caption{Color celeste como indicador de elemento activo o acción disponible\label{fig:patronCeleste}}
+\caption{Color celeste como indicador de elemento activo\label{fig:patronCeleste}}
+\end{figure}
+
+Más allá del color, toda la interfaz se ha cuidado para que refleje una estética marina. La paleta oscila entre el azul cielo de las zonas superficiales y el azul oscuro de las zonas mas profundas. Distincion que se puede observar no solo en la interfaz, sino en el pintado de batimetría en el mapa. Una ola hace de transición animada entre pantallas, y la fuente de trazos suaves refuerza esa sensación de fluidez marina. Este cuidado empieza desde la propia pantalla de inicio, donde la fauna marina aparece animada sobre un fondo oceánico (Fig.~\ref{fig:landingAnimalesEstetica}). La animación de ola se detalla en la sección de flujo (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/PaginaInicialConMuchosAnimales.png}
+\caption{Pantalla de inicio con fauna marina animada\label{fig:landingAnimalesEstetica}}
+\end{figure}
+
+El celeste guia al usuario en casi toda la interfaz salvo cuando existen patrones ya reconocibles de otras aplicaciones. El like sigue el rojo del corazón habitual en redes sociales; el guardado se rellena al pulsarlo; y en el panel de notificaciones, eliminar una notificación sigue el patrón del dispositivo: desliz hacia la izquierda en móvil y botón de cierre al pasar el cursor en escritorio (Fig.~\ref{fig:borrarMovil} y Fig.~\ref{fig:borrarPC}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.46\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/BorrarNotificacionMovil.png}
+  \caption{Desliz hacia la izquierda para eliminar una notificación en móvil\label{fig:borrarMovil}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.46\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/BorrarNotificaciónPC.png}
+  \caption{Botón de cierre visible al pasar el cursor en escritorio\label{fig:borrarPC}}
+\end{minipage}
+\end{figure}
+
+La aplicación incluye también algún detalle lúdico para quien lo descubra: por ejemplo, pulsar la foto de perfil propia hace que gire como una moneda.
+
+Otro detalle estético es el desenfoque aplicado al fondo al abrir un panel de detalle (Fig.~\ref{fig:todoBorroso}): el mapa sigue visible pero queda en segundo plano, dirigiendo la atención al contenido sin eliminar completamente el contexto geográfico.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/TodoBorroso.png}
+\caption{Mapa desenfocado al abrir el panel de detalle de una publicación\label{fig:todoBorroso}}
 \end{figure}
 
 \subsection{Flujo y experiencia}
 \label{sec:manual-ux}
 
-Las transiciones entre pantallas se realizan mediante una animación de ola que recorre la pantalla de lado a lado. Su velocidad es configurable desde el perfil del usuario: la opción rápida reduce la duración al mínimo para quienes prefieren una navegación más directa.
+Las transiciones entre pantallas se realizan mediante una animación de ola que barre la pantalla de un lado al otro. La ola está construida con partículas y capas de movimiento independiente para simular el comportamiento real del agua: la cresta avanza a distinta velocidad que la base, y pequeñas partículas flotan alrededor para reforzar la sensación marina (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}). Su velocidad es configurable desde el perfil: la opción rápida la reduce al mínimo para quienes prefieren una navegación más directa.
 
-Las acciones que dependen del servidor, como el like o el guardado, se reflejan en la interfaz antes de que llegue la confirmación: el contador sube y el icono cambia de estado al instante, sin esperar la respuesta. Si algo falla, la interfaz revierte el cambio de forma silenciosa. El resultado es que la aplicación se siente rápida incluso con conexiones lentas.
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazOla1.png}
+  \caption{Inicio de la animación de ola\label{fig:interfazOla1}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazOla2.png}
+  \caption{La ola cubre la pantalla completa durante la transición\label{fig:interfazOla2}}
+\end{minipage}
+\end{figure}
+
+La ola no es solo estética: tapa la carga inicial del mapa, de los perfiles y del resto de pantallas, de modo que el usuario percibe menos los destellos iniciales de las cargas. 
+
+Todos los tiempos de animación de la aplicación están calibrados para oscilar en torno a los 400 ms. Ese umbral no es arbitrario: el ser humano percibe duraciones por debajo de ese valor como prácticamente instantáneas, de modo que la animación es visible pero no llega a sentirse como una espera. Al pulsar el popup de escaneo completado (Fig.~\ref{fig:popupEscaneo}), por ejemplo, el mapa realiza un vuelo hasta el punto escaneado en 700 ms; el panel de especies se abre a los 500 ms, antes de que el vuelo termine, de modo que el usuario percibe la apertura del panel como casi instantánea, pero le da tiempo a notar que esta siendo reposicionado en el mapa.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/manual/PopupFinalEscaneo.png}
+\caption{Notificación de escaneo completado\label{fig:popupEscaneo}}
+\end{figure}
+
+Las acciones que dependen del servidor, como el like o el guardado, se reflejan en la interfaz antes de que llegue la confirmación. Si algo falla, la interfaz revierte el cambio de forma silenciosa, y el resultado es que la aplicación se siente rápida incluso con conexiones lentas.
+
+El modo Publicar queda bloqueado mientras el usuario está creando una publicación o consultando el detalle de otra: en ambos casos no es posible abrir el formulario hasta que el panel actual se cierra, evitando publicaciones duplicadas accidentales.
+
+Lo que sí se permite es escanear mientras se crea o se consulta una publicación: ambas acciones conviven sin conflicto. El indicador celeste del selector de especies (Fig.~\ref{fig:notificacionAzulEspecies}) despliega el panel de resultados sin cerrar el panel activo, de modo que el usuario puede consultar las especies sin interrumpir lo que estaba haciendo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.35\textwidth]{figures/manual/NotificacionAzulPanelEspecies.png}
+\caption{Indicador celeste de escaneo activo visible desde el selector de especies\label{fig:notificacionAzulEspecies}}
+\end{figure}
+
+Por último, la aplicación funciona en cualquier dispositivo sin necesidad de ninguna versión específica: todo el diseño es responsive desde el principio, de modo que los paneles, formularios y modales se adaptan al tamaño de pantalla disponible y la experiencia en móvil es equivalente a la de escritorio. Esta decisión responde a dos razones concretas: la mayoría de personas consultan redes sociales desde el móvil, y el buceo es una actividad de exterior, donde lo habitual es no tener un ordenador a mano.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.40\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazMovilPantallPrincipal.png}
+  \caption{Pantalla de inicio en dispositivo móvil\label{fig:interfazMovilLanding}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.40\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazMovilMapa.png}
+  \caption{Mapa con publicación abierta en dispositivo móvil\label{fig:interfazMovilMapa}}
+\end{minipage}
+\end{figure}
+
+Como nota personal, estas consideraciones de UI y UX han ocupado tanto tiempo de desarrollo como cualquier decisión arquitectónica, y en cierto modo creo que una buena interfaz es casi más importante que la parte técnica: por muy sólido que esté construido un sistema por dentro, si el usuario no sabe dónde está o qué puede hacer, simplemente deja de usarlo y lo olvida, que es precisamente lo contrario de lo que se busca. Por ello para verificar que estas decisiones eran correctas, se pidió a personas de distintos niveles de familiaridad con la tecnología que probaran el flujo y la legibilidad de la aplicación, desde usuarios habituales de redes sociales como compañeros de la carrera, hasta personas poco acostumbradas a aplicaciones web como familiares mas mayores. La capacidad de navegar sin instrucciones previas fue el criterio principal, y los ajustes derivados de esas pruebas son parte del resultado que se percibe en la aplicación y se describe en este capítulo.
