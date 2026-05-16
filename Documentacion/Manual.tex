@@ -6,7 +6,7 @@ Good design is actually a lot harder to notice than poor design, in part because
 \end{quotation}
 
 \begin{abstract}
-Este capítulo describe la interfaz de Scubex desde el punto de vista del usuario. Se presenta primero cada módulo de la aplicación por separado, y al final se ilustra su uso conjunto mediante tres casos de uso que reflejan perfiles de usuario distintos.
+Este capítulo describe la interfaz de Scubex desde el punto de vista del usuario, presentando cada módulo de la aplicación por separado y detallando al final las consideraciones de diseño y experiencia que guían el conjunto.
 \end{abstract}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ Los contadores de seguidores y seguidos son pulsables tanto en el perfil propio 
 \caption{Panel con la lista de seguidores de un perfil\label{fig:listaSeguidores}}
 \end{figure}
 
-Las interacciones sobre las propias publicaciones likes, comentarios y nuevos seguidores generan notificaciones. Cuando hay notificaciones sin leer, la campana en la barra superior muestra un contador (Fig.~\ref{fig:campanaBadge}). Al pulsarla se despliega el panel con el detalle de cada una: quién ha interactuado, sobre qué publicación y cuándo (Fig.~\ref{fig:notificacionesPanel}). Pulsar sobre una notificación lleva directamente a la publicación correspondiente.
+Las interacciones sobre las propias publicaciones, likes, comentarios y nuevos seguidores, generan notificaciones. Cuando hay notificaciones sin leer, la campana en la barra superior muestra un contador (Fig.~\ref{fig:campanaBadge}). Al pulsarla se despliega el panel con el detalle de cada una: quién ha interactuado, sobre qué publicación y cuándo (Fig.~\ref{fig:notificacionesPanel}). Pulsar sobre una notificación lleva directamente a la publicación correspondiente.
 
 \begin{figure}[H]
 \centering
@@ -297,7 +297,7 @@ El color es el principal hilo conductor de la interfaz. El celeste identifica cu
 \caption{Color celeste como indicador de elemento activo\label{fig:patronCeleste}}
 \end{figure}
 
-Más allá del color, toda la interfaz se ha cuidado para que refleje una estética marina. La paleta oscila entre el azul cielo de las zonas superficiales y el azul oscuro de las zonas mas profundas. Distincion que se puede observar no solo en la interfaz, sino en el pintado de batimetría en el mapa. Una ola hace de transición animada entre pantallas, y la fuente de trazos suaves refuerza esa sensación de fluidez marina. Este cuidado empieza desde la propia pantalla de inicio, donde la fauna marina aparece animada sobre un fondo oceánico (Fig.~\ref{fig:landingAnimalesEstetica}). La animación de ola se detalla en la sección de flujo (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}).
+Más allá del color, toda la interfaz se ha cuidado para que refleje una estética marina. La paleta oscila entre el azul cielo de las zonas superficiales y el azul oscuro de las zonas más profundas, distinción que se puede observar no solo en la interfaz, sino en el pintado de batimetría en el mapa. Una ola hace de transición animada entre pantallas, y la fuente de trazos suaves refuerza esa sensación de fluidez marina. Este cuidado empieza desde la propia pantalla de inicio, donde la fauna marina aparece animada sobre un fondo oceánico (Fig.~\ref{fig:landingAnimalesEstetica}). La animación de ola se detalla en la sección de flujo (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}).
 
 \begin{figure}[H]
 \centering
@@ -305,7 +305,7 @@ Más allá del color, toda la interfaz se ha cuidado para que refleje una estét
 \caption{Pantalla de inicio con fauna marina animada\label{fig:landingAnimalesEstetica}}
 \end{figure}
 
-El celeste guia al usuario en casi toda la interfaz salvo cuando existen patrones ya reconocibles de otras aplicaciones. El like sigue el rojo del corazón habitual en redes sociales; el guardado se rellena al pulsarlo; y en el panel de notificaciones, eliminar una notificación sigue el patrón del dispositivo: desliz hacia la izquierda en móvil y botón de cierre al pasar el cursor en escritorio (Fig.~\ref{fig:borrarMovil} y Fig.~\ref{fig:borrarPC}).
+El celeste guía al usuario en casi toda la interfaz salvo cuando existen patrones ya reconocibles de otras aplicaciones. El like sigue el rojo del corazón habitual en redes sociales; el guardado se rellena al pulsarlo; y en el panel de notificaciones, eliminar una notificación sigue el patrón del dispositivo: desliz hacia la izquierda en móvil y botón de cierre al pasar el cursor en escritorio (Fig.~\ref{fig:borrarMovil} y Fig.~\ref{fig:borrarPC}).
 
 \begin{figure}[H]
 \centering
@@ -354,12 +354,12 @@ Las transiciones entre pantallas se realizan mediante una animación de ola que 
 
 La ola no es solo estética: tapa la carga inicial del mapa, de los perfiles y del resto de pantallas, de modo que el usuario percibe menos los destellos iniciales de las cargas. 
 
-Todos los tiempos de animación de la aplicación están calibrados para oscilar en torno a los 400 ms. Ese umbral no es arbitrario: el ser humano percibe duraciones por debajo de ese valor como prácticamente instantáneas, de modo que la animación es visible pero no llega a sentirse como una espera. Al pulsar el popup de escaneo completado (Fig.~\ref{fig:popupEscaneo}), por ejemplo, el mapa realiza un vuelo hasta el punto escaneado en 700 ms; el panel de especies se abre a los 500 ms, antes de que el vuelo termine, de modo que el usuario percibe la apertura del panel como casi instantánea, pero le da tiempo a notar que esta siendo reposicionado en el mapa.
+Todos los tiempos de animación de la aplicación están calibrados para oscilar en torno a los 400 ms. Ese umbral no es arbitrario: el ser humano percibe duraciones por debajo de ese valor como prácticamente instantáneas~\cite{lawsofux}, de modo que la animación es visible pero no llega a sentirse como una espera. Al pulsar el popup de escaneo completado (Fig.~\ref{fig:popupEscaneoUX}), por ejemplo, el mapa realiza un vuelo hasta el punto escaneado en 700 ms; el panel de especies se abre a los 500 ms, antes de que el vuelo termine, de modo que el usuario percibe la apertura del panel como casi instantánea, pero le da tiempo a notar que está siendo reposicionado en el mapa.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.5\textwidth]{figures/manual/PopupFinalEscaneo.png}
-\caption{Notificación de escaneo completado\label{fig:popupEscaneo}}
+\caption{Notificación de escaneo completado\label{fig:popupEscaneoUX}}
 \end{figure}
 
 Las acciones que dependen del servidor, como el like o el guardado, se reflejan en la interfaz antes de que llegue la confirmación. Si algo falla, la interfaz revierte el cambio de forma silenciosa, y el resultado es que la aplicación se siente rápida incluso con conexiones lentas.
