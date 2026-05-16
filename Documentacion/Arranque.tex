@@ -44,7 +44,7 @@ Con las características identificadas, el sistema requiere una arquitectura cap
     \item \textbf{Frontend}: React 18 + Vite. Con Hot Module Replacement (HMR) para desarrollo ágil. Gestión de estado reactiva mediante MobX \texttt{makeAutoObservable}, con stores separadas por dominio (especies, clima, publicaciones, usuario, mapa).
     \item \textbf{Cartografía}: MapLibre GL JS. Motor de renderizado vectorial para animaciones fluidas y bajo consumo de datos.
     \item \textbf{Base de Datos}: H2 en memoria para el entorno de desarrollo y tests unitarios. PostgreSQL 16 para preproducción y producción, gestionado como servicio en Railway.
-    \item \textbf{Testing}: JUnit 5 + Mockito para pruebas unitarias del backend. H2 en memoria como base de datos de test.
+    \item \textbf{Testing}: JUnit 5 + Mockito para pruebas unitarias del backend. Jacoco para generar reportes. H2 en memoria como base de datos de test.
     \item \textbf{Seguridad}: Spring Security con OAuth2 Client para Google Login.
     \item \textbf{Documentación de API}: OpenAPI 3.0 (Swagger UI) con anotaciones automáticas.
     \item \textbf{Despliegue}: Railway (backend + PostgreSQL) y Vercel (frontend).
@@ -95,9 +95,9 @@ La separación entre motor de renderizado (MapLibre) y proveedor de tiles (MapTi
 {APIs externas integradas en Scubex}
 \textbf{API}&\textbf{Proveedor}&\textbf{Datos proporcionados}\\
 \midrule
-OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento.\\
-iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (\texttt{preferred\_common\_name}).\\
-Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de clave y con plan gratuito generoso.\\
+OBIS&Ocean Biodiversity Information System& Ocurrencias biológicas: nombre científico, coordenadas, taxonomía (phylum), fecha de avistamiento~\cite{obisglobal}.\\
+iNaturalist&iNaturalist.org& Metadatos multimedia: fotos de especies, nombres comunes (\texttt{preferred\_common\_name})~\cite{inaturalist}.\\
+Open-Meteo&Open-Meteo.com& Datos climáticos y oceanográficos: viento, temperatura del agua/aire, altura de olas, corrientes marinas, precipitaciones. API gratuita sin necesidad de clave y con plan gratuito generoso~\cite{openmeteo}.\\
 Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa (\texttt{/search}): buscador de lugares del mapa. Inversa (\texttt{/reverse}): obtención del nombre humano de unas coordenadas (playa, municipio, estado) al crear publicaciones y al visualizar su detalle.\\
 	\end{coolTable}
 	\caption{Resumen de APIs externas}
@@ -106,7 +106,23 @@ Nominatim&OpenStreetMap Foundation& Geocodificación directa e inversa. Directa 
 \textbf{Estrategia de consumo}:
 \begin{itemize}
     \item \textbf{OBIS + iNaturalist}: Consultas de especies marinas mediante el botón de escaneo.
-        \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa. 
+    \item \textbf{Open-Meteo}: Consulta bajo demanda al interactuar con el mapa.
+    \item \textbf{Nominatim}: Consulta bajo demanda al interactuar con el mapa. Se usa en el buscador de lugares (\texttt{/search}) y al crear una publicación para obtener el nombre humano de las coordenadas seleccionadas (\texttt{/reverse}).
 \end{itemize}
 
-\textbf{Decisiones pendientes que quedaron en esta fase}: Quedó pendiente el determinar la estrategia de caching para OBIS que se resolvió en la Iteración~1; Y tambien el caching de condiciones climáticas que se resolvió en la Iteración~2. 
+\textbf{Decisiones pendientes que quedaron en esta fase}: Quedó pendiente el determinar la estrategia de caching para OBIS que se resolvió en la Iteración~1; Y también el caching de condiciones climáticas que se resolvió en la Iteración~2. 
+
+\subsection{Diagrama de despliegue}
+
+La Fig.~\ref{fig:umlDespliegue} muestra la topología de despliegue de Scubex: los nodos físicos o lógicos que ejecutan cada componente y los canales de comunicación entre ellos.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/umlDespliegue.pdf}
+\caption{Diagrama UML de despliegue de Scubex\label{fig:umlDespliegue}}
+\end{center}
+\end{figure}
+
+El navegador del usuario se comunica con dos nodos de producción: Vercel, que sirve la aplicación React compilada como artefacto estático mediante HTTPS, y el backend en Railway, al que envía las peticiones REST autenticadas con JWT. Las llamadas al backend deben pasar el filtro CORS configurado mediante \texttt{CORS\_ALLOWED\_ORIGINS}.
+
+Los consumos externos se reparten en dos grupos según quién los origina. El frontend llama directamente a MapTiler Cloud para obtener los tiles y el estilo del mapa, y a Nominatim para la búsqueda y geocodificación inversa de lugares. El backend es el que se comunica con las APIs científicas y de datos: OBIS e iNaturalist para el escáner de biodiversidad, Open-Meteo para los datos climáticos y oceanográficos, y Google OAuth2 para validar los tokens de autenticación. El backend accede a PostgreSQL en Railway mediante JDBC.

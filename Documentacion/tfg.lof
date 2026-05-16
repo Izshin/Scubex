@@ -6,16 +6,54 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Diagrama UML de despliegue de Scubex}}{33}{figure.6.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {7.1}{\ignorespaces Diagrama UML de diseño para la iteración 1}}{41}{figure.7.1}%
+\contentsline {figure}{\numberline {7.1}{\ignorespaces Diagrama UML de diseño para la iteración 1}}{40}{figure.7.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {8.1}{\ignorespaces Diagrama UML de diseño para la iteración 2}}{57}{figure.8.1}%
+\contentsline {figure}{\numberline {8.1}{\ignorespaces Diagrama UML de diseño para la iteración 2}}{55}{figure.8.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {9.1}{\ignorespaces Diagrama UML de diseño para la iteración 3}}{67}{figure.9.1}%
+\contentsline {figure}{\numberline {9.1}{\ignorespaces Diagrama UML de diseño para la iteración 3}}{66}{figure.9.1}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {10.1}{\ignorespaces Diagrama UML de diseño para la iteración 4}}{80}{figure.10.1}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {11.1}{\ignorespaces Pantalla de inicio de Scubex}}{92}{figure.11.1}%
+\contentsline {figure}{\numberline {11.2}{\ignorespaces Pantalla de inicio con la fauna animada acumulada tras unos segundos}}{93}{figure.11.2}%
+\contentsline {figure}{\numberline {11.3}{\ignorespaces Aviso de privacidad y datos recogidos por Scubex}}{94}{figure.11.3}%
+\contentsline {figure}{\numberline {11.4}{\ignorespaces Selector de cuenta de Google}}{95}{figure.11.4}%
+\contentsline {figure}{\numberline {11.5}{\ignorespaces Avatar del usuario tras autenticarse}}{95}{figure.11.5}%
+\contentsline {figure}{\numberline {11.6}{\ignorespaces Interfaz principal del mapa con los controles de escaneo en la barra inferior}}{96}{figure.11.6}%
+\contentsline {figure}{\numberline {11.7}{\ignorespaces Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible}}{96}{figure.11.7}%
+\contentsline {figure}{\numberline {11.8}{\ignorespaces Notificación al finalizar el escaneo con el nombre del lugar}}{97}{figure.11.8}%
+\contentsline {figure}{\numberline {11.9}{\ignorespaces Indicador del panel de especies listo para desplegarse}}{97}{figure.11.9}%
+\contentsline {figure}{\numberline {11.10}{\ignorespaces Vista completa con ambos paneles abiertos tras el escaneo}}{98}{figure.11.10}%
+\contentsline {figure}{\numberline {11.11}{\ignorespaces Panel de especies con una tarjeta expandida mostrando profundidad, temperatura y registros}}{99}{figure.11.11}%
+\contentsline {figure}{\numberline {11.12}{\ignorespaces Resumen compacto de condiciones climáticas}}{100}{figure.11.12}%
+\contentsline {figure}{\numberline {11.13}{\ignorespaces Modal de detalle con la descripción de cada métrica}}{100}{figure.11.13}%
+\contentsline {figure}{\numberline {11.14}{\ignorespaces Marcadores de publicaciones distribuidos por el litoral}}{100}{figure.11.14}%
+\contentsline {figure}{\numberline {11.15}{\ignorespaces Barra inferior en modo Publicar}}{101}{figure.11.15}%
+\contentsline {figure}{\numberline {11.16}{\ignorespaces Formulario de nueva publicación vacío}}{101}{figure.11.16}%
+\contentsline {figure}{\numberline {11.17}{\ignorespaces Formulario con título, descripción y foto cargada}}{101}{figure.11.17}%
+\contentsline {figure}{\numberline {11.18}{\ignorespaces Tarjeta compacta de una publicación recién creada}}{102}{figure.11.18}%
+\contentsline {figure}{\numberline {11.19}{\ignorespaces Panel de detalle completo de una publicación}}{103}{figure.11.19}%
+\contentsline {figure}{\numberline {11.20}{\ignorespaces Like activo, comentarios con mención y publicación guardada}}{104}{figure.11.20}%
+\contentsline {figure}{\numberline {11.21}{\ignorespaces Perfil propio con la pestaña Publicaciones activa}}{105}{figure.11.21}%
+\contentsline {figure}{\numberline {11.22}{\ignorespaces Modal de edición del perfil}}{105}{figure.11.22}%
+\contentsline {figure}{\numberline {11.23}{\ignorespaces Pestaña Guardadas con una publicación guardada}}{106}{figure.11.23}%
+\contentsline {figure}{\numberline {11.24}{\ignorespaces Perfil ajeno con el botón Seguir y las publicaciones del usuario}}{106}{figure.11.24}%
+\contentsline {figure}{\numberline {11.25}{\ignorespaces Panel con la lista de seguidores de un perfil}}{107}{figure.11.25}%
+\contentsline {figure}{\numberline {11.26}{\ignorespaces Campana con notificaciones pendientes}}{108}{figure.11.26}%
+\contentsline {figure}{\numberline {11.27}{\ignorespaces Panel de notificaciones con un like y un comentario recibidos}}{108}{figure.11.27}%
+\contentsline {figure}{\numberline {11.28}{\ignorespaces Botón de compartir en la cabecera del perfil}}{109}{figure.11.28}%
+\contentsline {figure}{\numberline {11.29}{\ignorespaces Icono de compartir en el panel de detalle de una publicación}}{109}{figure.11.29}%
+\contentsline {figure}{\numberline {11.30}{\ignorespaces Color celeste como indicador de elemento activo}}{110}{figure.11.30}%
+\contentsline {figure}{\numberline {11.31}{\ignorespaces Pantalla de inicio con fauna marina animada}}{110}{figure.11.31}%
+\contentsline {figure}{\numberline {11.32}{\ignorespaces Desliz hacia la izquierda para eliminar una notificación en móvil}}{111}{figure.11.32}%
+\contentsline {figure}{\numberline {11.33}{\ignorespaces Botón de cierre visible al pasar el cursor en escritorio}}{111}{figure.11.33}%
+\contentsline {figure}{\numberline {11.34}{\ignorespaces Mapa desenfocado al abrir el panel de detalle de una publicación}}{111}{figure.11.34}%
+\contentsline {figure}{\numberline {11.35}{\ignorespaces Inicio de la animación de ola}}{112}{figure.11.35}%
+\contentsline {figure}{\numberline {11.36}{\ignorespaces La ola cubre la pantalla completa durante la transición}}{112}{figure.11.36}%
+\contentsline {figure}{\numberline {11.37}{\ignorespaces Notificación de escaneo completado}}{112}{figure.11.37}%
+\contentsline {figure}{\numberline {11.38}{\ignorespaces Indicador celeste de escaneo activo visible desde el selector de especies}}{113}{figure.11.38}%
+\contentsline {figure}{\numberline {11.39}{\ignorespaces Pantalla de inicio en dispositivo móvil}}{114}{figure.11.39}%
+\contentsline {figure}{\numberline {11.40}{\ignorespaces Mapa con publicación abierta en dispositivo móvil}}{114}{figure.11.40}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {A.1}{\ignorespaces An example of a Home Integration System}}{85}{figure.Alph1.1}%
-\contentsline {figure}{\numberline {A.2}{\ignorespaces A different view on AAFM distinguishing between information extraction and explanatory operations}}{87}{figure.Alph1.2}%
-\contentsline {subfigure}{\numberline {(a)}{\ignorespaces {The AAFM seen as a black-box process}}}{87}{figure.Alph1.2}%
-\contentsline {subfigure}{\numberline {(b)}{\ignorespaces {Extending the AAFM process with explanations}}}{87}{figure.Alph1.2}%

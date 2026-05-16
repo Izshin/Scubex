@@ -23,6 +23,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [placeName, setPlaceName] = useState('');
+  const prevImagePreviewRef = useRef<string | null>(null);
 
   // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
   useEffect(() => {
@@ -45,6 +46,20 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
     map.on('move', updatePosition);
     return () => { map.off('move', updatePosition); };
   }, [map, updatePosition]);
+
+  // Pan map up when image is added so the preview fits in viewport
+  useEffect(() => {
+    if (!map) return;
+    const wasImage = prevImagePreviewRef.current !== null;
+    const isImage = imagePreview !== null;
+    prevImagePreviewRef.current = imagePreview;
+
+    if (!wasImage && isImage) {
+      map.panBy([0, -190], { duration: 350 });
+    } else if (wasImage && !isImage) {
+      map.panBy([0, 190], { duration: 350 });
+    }
+  }, [imagePreview, map]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

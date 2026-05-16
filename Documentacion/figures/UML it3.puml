@@ -1,0 +1,179 @@
+﻿@startuml
+' --- Configuración Visual ---
+skinparam shadowing true
+skinparam roundcorner 10
+skinparam nodesep 100
+skinparam ranksep 90
+skinparam linetype ortho
+
+skinparam legend {
+    BackgroundColor #FFFFFF
+    BorderColor #DDDDDD
+    BorderThickness 1
+}
+
+!define CONTROLLER_COLOR #D5E8D4
+!define SERVICE_COLOR #DAE8FC
+!define REPO_COLOR #FFF2CC
+!define ENTITY_COLOR #F8CECC
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor #333333
+    BorderColor #666666
+}
+
+skinparam class<<Controller>> {
+    BackgroundColor CONTROLLER_COLOR
+    BorderColor #82B366
+}
+
+skinparam class<<Service>> {
+    BackgroundColor SERVICE_COLOR
+    BorderColor #6C8EBF
+}
+
+skinparam class<<Repository>> {
+    BackgroundColor REPO_COLOR
+    BorderColor #D6B656
+}
+
+skinparam class<<Entity>> {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #B85450
+}
+
+package "Web Layer" {
+    together {
+        class PublicationController << Controller >> {
+            +create(body, auth)
+            +getAll()
+            +getInArea(latMin, latMax, lngMin, lngMax)
+            +getById(id)
+            +getMine(auth)
+            +update(id, body, auth)
+            +delete(id, auth)
+            -toDto(p)
+        }
+        class ImageController << Controller >> {
+            +upload(file, auth)
+            +get(id)
+        }
+    }
+    together {
+        class ProfileController << Controller >> {
+            +getProfile(auth)
+            +updateProfile(body, auth)
+            +deleteAccount(auth)
+        }
+        class UserPublicController << Controller >> {
+            +getPublicProfile(email, auth)
+            +searchUsers(q, auth)
+        }
+    }
+}
+
+package "Business Logic" {
+    class AuthHelper << Service >> {
+        +getUser(auth)
+    }
+    together {
+        class PublicationService << Service >> {
+            +create(publication)
+            +getAll()
+            +getByUser(user)
+            +getInArea(latMin, latMax, lngMin, lngMax)
+            +getById(id)
+            +update(id, updated, user)
+            +delete(id, user)
+        }
+        class UserService << Service >> {
+            +findOrCreate(sub, email, name, picture)
+            +findByEmail(email)
+            +findById(id)
+            +updateProfile(googleId, customName, customPictureUrl)
+            +deleteAccount(googleId)
+        }
+        class JwtService << Service >> {
+            +generateToken(user)
+            +validateToken(token)
+        }
+    }
+}
+
+package "Persistence" {
+    interface PublicationRepository << Repository >> {
+        +findAllByOrderByCreatedAtDesc()
+        +findByUser(user)
+        +findByLatitudeBetweenAndLongitudeBetween()
+    }
+    interface ImageRepository << Repository >> {
+        +save(image)
+        +findById(id)
+    }
+    interface UserRepository << Repository >> {
+        +findByGoogleId(googleId)
+        +findByEmail(email)
+    }
+}
+
+package "Domain Models" {
+    class Publication <<Entity>> {
+        -id: Long
+        -title: String
+        -description: String
+        -imageUrl: String
+        -latitude: Double
+        -longitude: Double
+        -createdAt: Instant
+        -updatedAt: Instant
+    }
+    class UploadedImage <<Entity>> {
+        -id: Long
+        -data: byte[]
+        -contentType: String
+        -createdAt: Instant
+    }
+    class User <<Entity>> {
+        -googleId: String
+        -email: String
+        -name: String
+        -customName: String
+        -customPictureUrl: String
+        +getDisplayName()
+        +getDisplayPicture()
+    }
+}
+
+' --- Relaciones ---
+PublicationController --> PublicationService
+PublicationController --> AuthHelper
+ImageController --> ImageRepository
+ImageController --> AuthHelper
+ProfileController --> UserService
+ProfileController --> JwtService
+ProfileController --> AuthHelper
+UserPublicController --> UserService
+UserPublicController --> PublicationService
+UserPublicController --> AuthHelper
+AuthHelper --> UserService
+UserService --> UserRepository
+PublicationService --> PublicationRepository
+PublicationRepository ..> Publication
+ImageRepository ..> UploadedImage
+UserRepository ..> User
+Publication "0..*" -right-> "1" User : author
+
+legend bottom
+  |= Icono |= Visibilidad (Modificador) |
+  | <color:green>●</color> | **Público** (+): Visible para todos |
+  | <color:red>■</color> | **Privado** (-): Solo visible dentro de la clase |
+  | <color:red>□</color> | **Protegido / Package** (# / ~): Acceso restringido/herencia |
+  | <size:8>  </size> | |
+  |= Color |= Capa Arquitectónica |
+  | <back:CONTROLLER_COLOR>      </back> | **Controller**: Entrada de la API |
+  | <back:SERVICE_COLOR>      </back> | **Service**: Lógica de negocio |
+  | <back:REPO_COLOR>      </back> | **Repository**: Acceso a Datos |
+  | <back:ENTITY_COLOR>      </back> | **Entity**: Modelos de DB |
+endlegend
+@enduml

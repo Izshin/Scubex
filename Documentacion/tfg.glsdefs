@@ -1,14 +1,14 @@
-\glsdefs@newdocentry{pl}%
+\glsdefs@newdocentry{api}%
 {%
-name={\acronymfont {\glsentryshort {pl}}},%
-sort={PL},%
+name={\acronymfont {\glsentryshort {api}}},%
+sort={API},%
 type={acronym},%
-first={PL},%
-firstplural={PLs},%
-text={PL},%
-plural={PLs},%
-description={Product Line},%
-descriptionplural={Product Line},%
+first={API},%
+firstplural={APIs},%
+text={API},%
+plural={APIs},%
+description={Application Programming Interface},%
+descriptionplural={Application Programming Interface},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -17,26 +17,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Product Line},%
-longplural={Product Lines},%
-short={PL},%
-shortplural={PLs},%
+long={Application Programming Interface},%
+longplural={Application Programming Interfaces},%
+short={API},%
+shortplural={APIs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{spl}%
+\glsdefs@newdocentry{rest}%
 {%
-name={\acronymfont {\glsentryshort {spl}}},%
-sort={SPL},%
+name={\acronymfont {\glsentryshort {rest}}},%
+sort={REST},%
 type={acronym},%
-first={SPL},%
-firstplural={SPLs},%
-text={SPL},%
-plural={SPLs},%
-description={Software Product Line},%
-descriptionplural={Software Product Line},%
+first={REST},%
+firstplural={RESTs},%
+text={REST},%
+plural={RESTs},%
+description={Representational State Transfer},%
+descriptionplural={Representational State Transfer},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -45,26 +45,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Software Product Line},%
-longplural={Software Product Lines},%
-short={SPL},%
-shortplural={SPLs},%
+long={Representational State Transfer},%
+longplural={Representational State Transfers},%
+short={REST},%
+shortplural={RESTs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{aafm}%
+\glsdefs@newdocentry{jwt}%
 {%
-name={\acronymfont {\glsentryshort {aafm}}},%
-sort={AAFM},%
+name={\acronymfont {\glsentryshort {jwt}}},%
+sort={JWT},%
 type={acronym},%
-first={AAFM},%
-firstplural={AAFMs},%
-text={AAFM},%
-plural={AAFMs},%
-description={Automated Analysis of Feature Models},%
-descriptionplural={Automated Analysis of Feature Models},%
+first={JWT},%
+firstplural={JWTs},%
+text={JWT},%
+plural={JWTs},%
+description={JSON Web Token},%
+descriptionplural={JSON Web Token},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -73,26 +73,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Automated Analysis of Feature Models},%
-longplural={Automated Analysis of Feature Modelss},%
-short={AAFM},%
-shortplural={AAFMs},%
+long={JSON Web Token},%
+longplural={JSON Web Tokens},%
+short={JWT},%
+shortplural={JWTs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{aasfm}%
+\glsdefs@newdocentry{oauth}%
 {%
-name={\acronymfont {\glsentryshort {aasfm}}},%
-sort={AASFM},%
+name={\acronymfont {\glsentryshort {oauth}}},%
+sort={OAuth},%
 type={acronym},%
-first={AASFM},%
-firstplural={AASFMs},%
-text={AASFM},%
-plural={AASFMs},%
-description={Automated Analysis of Stateful Feature Models},%
-descriptionplural={Automated Analysis of Stateful Feature Models},%
+first={OAuth},%
+firstplural={OAuths},%
+text={OAuth},%
+plural={OAuths},%
+description={Open Authorization},%
+descriptionplural={Open Authorization},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -101,26 +101,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Automated Analysis of Stateful Feature Models},%
-longplural={Automated Analysis of Stateful Feature Modelss},%
-short={AASFM},%
-shortplural={AASFMs},%
+long={Open Authorization},%
+longplural={Open Authorizations},%
+short={OAuth},%
+shortplural={OAuths},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{fm}%
+\glsdefs@newdocentry{cors}%
 {%
-name={\acronymfont {\glsentryshort {fm}}},%
-sort={FM},%
+name={\acronymfont {\glsentryshort {cors}}},%
+sort={CORS},%
 type={acronym},%
-first={FM},%
-firstplural={FMs},%
-text={FM},%
-plural={FMs},%
-description={Feature Model},%
-descriptionplural={Feature Model},%
+first={CORS},%
+firstplural={CORSs},%
+text={CORS},%
+plural={CORSs},%
+description={Cross-Origin Resource Sharing},%
+descriptionplural={Cross-Origin Resource Sharing},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -129,26 +129,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Feature Model},%
-longplural={Feature Models},%
-short={FM},%
-shortplural={FMs},%
+long={Cross-Origin Resource Sharing},%
+longplural={Cross-Origin Resource Sharings},%
+short={CORS},%
+shortplural={CORSs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{efm}%
+\glsdefs@newdocentry{hmr}%
 {%
-name={\acronymfont {\glsentryshort {efm}}},%
-sort={EFM},%
+name={\acronymfont {\glsentryshort {hmr}}},%
+sort={HMR},%
 type={acronym},%
-first={EFM},%
-firstplural={EFMs},%
-text={EFM},%
-plural={EFMs},%
-description={Extended Feature Model},%
-descriptionplural={Extended Feature Model},%
+first={HMR},%
+firstplural={HMRs},%
+text={HMR},%
+plural={HMRs},%
+description={Hot Module Replacement},%
+descriptionplural={Hot Module Replacement},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -157,26 +157,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Extended Feature Model},%
-longplural={Extended Feature Models},%
-short={EFM},%
-shortplural={EFMs},%
+long={Hot Module Replacement},%
+longplural={Hot Module Replacements},%
+short={HMR},%
+shortplural={HMRs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{cbfm}%
+\glsdefs@newdocentry{url}%
 {%
-name={\acronymfont {\glsentryshort {cbfm}}},%
-sort={CBFM},%
+name={\acronymfont {\glsentryshort {url}}},%
+sort={URL},%
 type={acronym},%
-first={CBFM},%
-firstplural={CBFMs},%
-text={CBFM},%
-plural={CBFMs},%
-description={Cardinality-Based Feature Model},%
-descriptionplural={Cardinality-Based Feature Model},%
+first={URL},%
+firstplural={URLs},%
+text={URL},%
+plural={URLs},%
+description={Uniform Resource Locator},%
+descriptionplural={Uniform Resource Locator},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -185,26 +185,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Cardinality-Based Feature Model},%
-longplural={Cardinality-Based Feature Models},%
-short={CBFM},%
-shortplural={CBFMs},%
+long={Uniform Resource Locator},%
+longplural={Uniform Resource Locators},%
+short={URL},%
+shortplural={URLs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{dspl}%
+\glsdefs@newdocentry{wkt}%
 {%
-name={\acronymfont {\glsentryshort {dspl}}},%
-sort={DSPL},%
+name={\acronymfont {\glsentryshort {wkt}}},%
+sort={WKT},%
 type={acronym},%
-first={DSPL},%
-firstplural={DSPLs},%
-text={DSPL},%
-plural={DSPLs},%
-description={Dynamic Software Product Line},%
-descriptionplural={Dynamic Software Product Line},%
+first={WKT},%
+firstplural={WKTs},%
+text={WKT},%
+plural={WKTs},%
+description={Well-Known Text},%
+descriptionplural={Well-Known Text},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -213,26 +213,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Dynamic Software Product Line},%
-longplural={Dynamic Software Product Lines},%
-short={DSPL},%
-shortplural={DSPLs},%
+long={Well-Known Text},%
+longplural={Well-Known Texts},%
+short={WKT},%
+shortplural={WKTs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{AI}%
+\glsdefs@newdocentry{wmo}%
 {%
-name={\acronymfont {\glsentryshort {AI}}},%
-sort={AI},%
+name={\acronymfont {\glsentryshort {wmo}}},%
+sort={WMO},%
 type={acronym},%
-first={AI},%
-firstplural={AIs},%
-text={AI},%
-plural={AIs},%
-description={Artificial Intelligence},%
-descriptionplural={Artificial Intelligence},%
+first={WMO},%
+firstplural={WMOs},%
+text={WMO},%
+plural={WMOs},%
+description={World Meteorological Organization},%
+descriptionplural={World Meteorological Organization},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -241,26 +241,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Artificial Intelligence},%
-longplural={Artificial Intelligences},%
-short={AI},%
-shortplural={AIs},%
+long={World Meteorological Organization},%
+longplural={World Meteorological Organizations},%
+short={WMO},%
+shortplural={WMOs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{csp}%
+\glsdefs@newdocentry{cdn}%
 {%
-name={\acronymfont {\glsentryshort {csp}}},%
-sort={CSP},%
+name={\acronymfont {\glsentryshort {cdn}}},%
+sort={CDN},%
 type={acronym},%
-first={CSP},%
-firstplural={CSPs},%
-text={CSP},%
-plural={CSPs},%
-description={Constraint Satisfaction Problem},%
-descriptionplural={Constraint Satisfaction Problem},%
+first={CDN},%
+firstplural={CDNs},%
+text={CDN},%
+plural={CDNs},%
+description={Content Delivery Network},%
+descriptionplural={Content Delivery Network},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -269,26 +269,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Constraint Satisfaction Problem},%
-longplural={Constraint Satisfaction Problems},%
-short={CSP},%
-shortplural={CSPs},%
+long={Content Delivery Network},%
+longplural={Content Delivery Networks},%
+short={CDN},%
+shortplural={CDNs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{cop}%
+\glsdefs@newdocentry{jdbc}%
 {%
-name={\acronymfont {\glsentryshort {cop}}},%
-sort={COP},%
+name={\acronymfont {\glsentryshort {jdbc}}},%
+sort={JDBC},%
 type={acronym},%
-first={COP},%
-firstplural={COPs},%
-text={COP},%
-plural={COPs},%
-description={Constraint Optimisation Problem},%
-descriptionplural={Constraint Optimisation Problem},%
+first={JDBC},%
+firstplural={JDBCs},%
+text={JDBC},%
+plural={JDBCs},%
+description={Java Database Connectivity},%
+descriptionplural={Java Database Connectivity},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -297,10 +297,66 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Constraint Optimisation Problem},%
-longplural={Constraint Optimisation Problems},%
-short={COP},%
-shortplural={COPs},%
+long={Java Database Connectivity},%
+longplural={Java Database Connectivitys},%
+short={JDBC},%
+shortplural={JDBCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{blob}%
+{%
+name={\acronymfont {\glsentryshort {blob}}},%
+sort={BLOB},%
+type={acronym},%
+first={BLOB},%
+firstplural={BLOBs},%
+text={BLOB},%
+plural={BLOBs},%
+description={Binary Large Object},%
+descriptionplural={Binary Large Object},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Binary Large Object},%
+longplural={Binary Large Objects},%
+short={BLOB},%
+shortplural={BLOBs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ttl}%
+{%
+name={\acronymfont {\glsentryshort {ttl}}},%
+sort={TTL},%
+type={acronym},%
+first={TTL},%
+firstplural={TTLs},%
+text={TTL},%
+plural={TTLs},%
+description={Time To Live},%
+descriptionplural={Time To Live},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Time To Live},%
+longplural={Time To Lives},%
+short={TTL},%
+shortplural={TTLs},%
 counter={page},%
 parent={},%
 %
@@ -334,17 +390,17 @@ parent={},%
 %
 }%
 
-\glsdefs@newdocentry{mas}%
+\glsdefs@newdocentry{obis}%
 {%
-name={\acronymfont {\glsentryshort {mas}}},%
-sort={MAS},%
+name={\acronymfont {\glsentryshort {obis}}},%
+sort={OBIS},%
 type={acronym},%
-first={MAS},%
-firstplural={MASs},%
-text={MAS},%
-plural={MASs},%
-description={Multi-Agent System},%
-descriptionplural={Multi-Agent System},%
+first={OBIS},%
+firstplural={OBISs},%
+text={OBIS},%
+plural={OBISs},%
+description={Ocean Biodiversity Information System},%
+descriptionplural={Ocean Biodiversity Information System},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -353,26 +409,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Multi-Agent System},%
-longplural={Multi-Agent Systems},%
-short={MAS},%
-shortplural={MASs},%
+long={Ocean Biodiversity Information System},%
+longplural={Ocean Biodiversity Information Systems},%
+short={OBIS},%
+shortplural={OBISs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{eo}%
+\glsdefs@newdocentry{iucn}%
 {%
-name={\acronymfont {\glsentryshort {eo}}},%
-sort={EO},%
+name={\acronymfont {\glsentryshort {iucn}}},%
+sort={IUCN},%
 type={acronym},%
-first={EO},%
-firstplural={EOs},%
-text={EO},%
-plural={EOs},%
-description={Explanatory Operation},%
-descriptionplural={Explanatory Operation},%
+first={IUCN},%
+firstplural={IUCNs},%
+text={IUCN},%
+plural={IUCNs},%
+description={International Union for Conservation of Nature},%
+descriptionplural={International Union for Conservation of Nature},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -381,26 +437,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Explanatory Operation},%
-longplural={Explanatory Operations},%
-short={EO},%
-shortplural={EOs},%
+long={International Union for Conservation of Nature},%
+longplural={International Union for Conservation of Natures},%
+short={IUCN},%
+shortplural={IUCNs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{fol}%
+\glsdefs@newdocentry{fdd}%
 {%
-name={\acronymfont {\glsentryshort {fol}}},%
-sort={FOL},%
+name={\acronymfont {\glsentryshort {fdd}}},%
+sort={FDD},%
 type={acronym},%
-first={FOL},%
-firstplural={FOLs},%
-text={FOL},%
-plural={FOLs},%
-description={First Order Logic},%
-descriptionplural={First Order Logic},%
+first={FDD},%
+firstplural={FDDs},%
+text={FDD},%
+plural={FDDs},%
+description={Feature-Driven Development},%
+descriptionplural={Feature-Driven Development},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -409,26 +465,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={First Order Logic},%
-longplural={First Order Logics},%
-short={FOL},%
-shortplural={FOLs},%
+long={Feature-Driven Development},%
+longplural={Feature-Driven Developments},%
+short={FDD},%
+shortplural={FDDs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{kb}%
+\glsdefs@newdocentry{mvp}%
 {%
-name={\acronymfont {\glsentryshort {kb}}},%
-sort={KB},%
+name={\acronymfont {\glsentryshort {mvp}}},%
+sort={MVP},%
 type={acronym},%
-first={KB},%
-firstplural={KBs},%
-text={KB},%
-plural={KBs},%
-description={Knowledge Base},%
-descriptionplural={Knowledge Base},%
+first={MVP},%
+firstplural={MVPs},%
+text={MVP},%
+plural={MVPs},%
+description={Minimum Viable Product},%
+descriptionplural={Minimum Viable Product},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -437,26 +493,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Knowledge Base},%
-longplural={Knowledge Bases},%
-short={KB},%
-shortplural={KBs},%
+long={Minimum Viable Product},%
+longplural={Minimum Viable Products},%
+short={MVP},%
+shortplural={MVPs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{cwa}%
+\glsdefs@newdocentry{uml}%
 {%
-name={\acronymfont {\glsentryshort {cwa}}},%
-sort={CWA},%
+name={\acronymfont {\glsentryshort {uml}}},%
+sort={UML},%
 type={acronym},%
-first={CWA},%
-firstplural={CWAs},%
-text={CWA},%
-plural={CWAs},%
-description={Closed World Assumption},%
-descriptionplural={Closed World Assumption},%
+first={UML},%
+firstplural={UMLs},%
+text={UML},%
+plural={UMLs},%
+description={Unified Modeling Language},%
+descriptionplural={Unified Modeling Language},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -465,26 +521,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Closed World Assumption},%
-longplural={Closed World Assumptions},%
-short={CWA},%
-shortplural={CWAs},%
+long={Unified Modeling Language},%
+longplural={Unified Modeling Languages},%
+short={UML},%
+shortplural={UMLs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{atl}%
+\glsdefs@newdocentry{hmac}%
 {%
-name={\acronymfont {\glsentryshort {atl}}},%
-sort={ATL},%
+name={\acronymfont {\glsentryshort {hmac}}},%
+sort={HMAC},%
 type={acronym},%
-first={ATL},%
-firstplural={ATLs},%
-text={ATL},%
-plural={ATLs},%
-description={Atlas Transformation Language},%
-descriptionplural={Atlas Transformation Language},%
+first={HMAC},%
+firstplural={HMACs},%
+text={HMAC},%
+plural={HMACs},%
+description={Hash-based Message Authentication Code},%
+descriptionplural={Hash-based Message Authentication Code},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -493,26 +549,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Atlas Transformation Language},%
-longplural={Atlas Transformation Languages},%
-short={ATL},%
-shortplural={ATLs},%
+long={Hash-based Message Authentication Code},%
+longplural={Hash-based Message Authentication Codes},%
+short={HMAC},%
+shortplural={HMACs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{mde}%
+\glsdefs@newdocentry{ddl}%
 {%
-name={\acronymfont {\glsentryshort {mde}}},%
-sort={MDE},%
+name={\acronymfont {\glsentryshort {ddl}}},%
+sort={DDL},%
 type={acronym},%
-first={MDE},%
-firstplural={MDEs},%
-text={MDE},%
-plural={MDEs},%
-description={Model-driven Engineering},%
-descriptionplural={Model-driven Engineering},%
+first={DDL},%
+firstplural={DDLs},%
+text={DDL},%
+plural={DDLs},%
+description={Data Definition Language},%
+descriptionplural={Data Definition Language},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -521,26 +577,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Model-driven Engineering},%
-longplural={Model-driven Engineerings},%
-short={MDE},%
-shortplural={MDEs},%
+long={Data Definition Language},%
+longplural={Data Definition Languages},%
+short={DDL},%
+shortplural={DDLs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{sfmm}%
+\glsdefs@newdocentry{hMR}%
 {%
-name={\acronymfont {\glsentryshort {sfmm}}},%
-sort={SFMM},%
+name={\acronymfont {\glsentryshort {hMR}}},%
+sort={HMR},%
 type={acronym},%
-first={SFMM},%
-firstplural={SFMMs},%
-text={SFMM},%
-plural={SFMMs},%
-description={Stateful Feature Metamodel},%
-descriptionplural={Stateful Feature Metamodel},%
+first={HMR},%
+firstplural={HMRs},%
+text={HMR},%
+plural={HMRs},%
+description={Hot Module Replacement},%
+descriptionplural={Hot Module Replacement},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -549,26 +605,26 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Stateful Feature Metamodel},%
-longplural={Stateful Feature Metamodels},%
-short={SFMM},%
-shortplural={SFMMs},%
+long={Hot Module Replacement},%
+longplural={Hot Module Replacements},%
+short={HMR},%
+shortplural={HMRs},%
 counter={page},%
 parent={},%
 %
 }%
 
-\glsdefs@newdocentry{sfm}%
+\glsdefs@newdocentry{openapi}%
 {%
-name={\acronymfont {\glsentryshort {sfm}}},%
-sort={SFM},%
+name={\acronymfont {\glsentryshort {openapi}}},%
+sort={OpenAPI},%
 type={acronym},%
-first={SFM},%
-firstplural={SFMs},%
-text={SFM},%
-plural={SFMs},%
-description={Stateful Feature Model},%
-descriptionplural={Stateful Feature Model},%
+first={OpenAPI},%
+firstplural={OpenAPIs},%
+text={OpenAPI},%
+plural={OpenAPIs},%
+description={Open Application Programming Interface Specification},%
+descriptionplural={Open Application Programming Interface Specification},%
 symbol={\relax },%
 symbolplural={\relax },%
 user1={},%
@@ -577,38 +633,10 @@ user3={},%
 user4={},%
 user5={},%
 user6={},%
-long={Stateful Feature Model},%
-longplural={Stateful Feature Models},%
-short={SFM},%
-shortplural={SFMs},%
-counter={page},%
-parent={},%
-%
-}%
-
-\glsdefs@newdocentry{steam}%
-{%
-name={\acronymfont {\glsentryshort {steam}}},%
-sort={STEAm},%
-type={acronym},%
-first={STEAm},%
-firstplural={STEAms},%
-text={STEAm},%
-plural={STEAms},%
-description={STateful fEature model Analyser},%
-descriptionplural={STateful fEature model Analyser},%
-symbol={\relax },%
-symbolplural={\relax },%
-user1={},%
-user2={},%
-user3={},%
-user4={},%
-user5={},%
-user6={},%
-long={STateful fEature model Analyser},%
-longplural={STateful fEature model Analysers},%
-short={STEAm},%
-shortplural={STEAms},%
+long={Open Application Programming Interface Specification},%
+longplural={Open Application Programming Interface Specifications},%
+short={OpenAPI},%
+shortplural={OpenAPIs},%
 counter={page},%
 parent={},%
 %

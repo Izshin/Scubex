@@ -18,8 +18,6 @@ import { loginWithGoogle } from "../lib/api";
 import type { PublicationData } from "../lib/api";
 
 const RADIUS_OPTIONS = [
-  { value: 500, label: "500m" },
-  { value: 1000, label: "1 km" },
   { value: 2000, label: "2 km" },
   { value: 5000, label: "5 km" },
   { value: 10000, label: "10 km" },

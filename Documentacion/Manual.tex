@@ -1,14 +1,394 @@
 %!TEX root =  tfg.tex
 \chapter{Manual de usuario}
 
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
+\begin{quotation}[Diseñador e inventor]{Donald A. Norman (1935--)}
+Good design is actually a lot harder to notice than poor design, in part because good designs fit our needs so well that the design is invisible.
 \end{quotation}
 
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Este capítulo describe la interfaz de Scubex desde el punto de vista del usuario, presentando cada módulo de la aplicación por separado y detallando al final las consideraciones de diseño y experiencia que guían el conjunto.
 \end{abstract}
 
-\section{Sección libre}
+% ─────────────────────────────────────────────────────────────────────────────
+\section{¿Qué es Scubex?}
+\label{sec:manual-que-es}
+% ─────────────────────────────────────────────────────────────────────────────
 
-Estructurar en función del proyecto.
+Scubex es una aplicación web para buceadores que reúne en un único lugar tres fuentes de información que habitualmente están separadas: la fauna marina de una zona, las condiciones climáticas y oceanográficas del momento, y las experiencias de otros buceadores.
+
+El punto de partida es siempre un mapa interactivo. El usuario selecciona cualquier punto del océano y puede, sin salir de esa pantalla, consultar qué especies han sido registradas científicamente en los alrededores, comprobar si las condiciones del día son aptas para bucear, y ver qué han publicado otros buceadores en esa misma zona. Si quiere dejar constancia de una inmersión propia, puede publicarla directamente sobre el mapa con una foto y una descripción, y el resto de la comunidad podrá verla, comentarla o guardarla.
+
+Scubex no requiere instalar nada: funciona desde cualquier navegador moderno, en ordenador o en móvil.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Autenticación}
+\label{sec:manual-auth}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Al abrir Scubex por primera vez se muestra la pantalla de inicio (Fig.~\ref{fig:landingPage}). El acceso se realiza mediante una cuenta de Google: basta con pulsar el botón \textit{Iniciar sesión con Google} y seleccionar la cuenta en la ventana emergente del navegador.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.75\textwidth]{figures/manual/LandingPage.png}
+\caption{Pantalla de inicio de Scubex\label{fig:landingPage}}
+\end{center}
+\end{figure}
+
+La pantalla no es estática: a medida que el usuario permanece en ella, van apareciendo criaturas marinas que se desplazan a distintas velocidades según la especie, llenando poco a poco la pantalla (Fig.~\ref{fig:landingAnimales}). Cuanto más tiempo se esté en la página, más fauna se acumula.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/PaginaInicialConMuchosAnimales.png}
+\caption{Pantalla de inicio con la fauna animada acumulada tras unos segundos\label{fig:landingAnimales}}
+\end{figure}
+
+Antes de autenticarse, el usuario puede consultar el aviso de privacidad pulsando el enlace correspondiente. Scubex únicamente solicita el nombre, el correo electrónico y la foto de perfil, que se usan exclusivamente para identificar al autor de publicaciones y comentarios (Fig.~\ref{fig:infoDatos}).
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.55\textwidth]{figures/manual/InfoDeDatos.png}
+\caption{Aviso de privacidad y datos recogidos por Scubex\label{fig:infoDatos}}
+\end{center}
+\end{figure}
+
+Una vez autenticado, el avatar del usuario aparece en la esquina superior derecha de la landing y el botón principal da paso al mapa. La sesión se mantiene activa entre visitas hasta que el usuario la cierra explícitamente desde su perfil.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/Autentificación.png}
+  \caption{Selector de cuenta de Google\label{fig:autentificacion}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/avatar.png}
+  \caption{Avatar del usuario tras autenticarse\label{fig:avatar}}
+\end{minipage}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Exploración del mapa, escaneo, búsqueda y condiciones}
+\label{sec:manual-mapa}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Al entrar al mapa se muestra una vista oceánica a pantalla completa (Fig.~\ref{fig:mapaGeneral}). En la barra superior aparecen el logotipo de la aplicación a la izquierda, y a la derecha la campana de notificaciones y el avatar del usuario. La lupa en el extremo derecho abre un buscador de lugares: al escribir un nombre de ciudad, bahía o punto de interés, el mapa vuela automáticamente a esa ubicación. En la parte inferior se encuentran los controles principales: el selector de modo (\textit{Escanear} o \textit{Publicar}), el radio de escaneo (2, 5 o 10~km) y el botón para lanzar el escaneo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{figures/manual/MapaGeneral.png}
+\caption{Interfaz principal del mapa con los controles de escaneo en la barra inferior\label{fig:mapaGeneral}}
+\end{figure}
+
+Para explorar una zona, basta con hacer clic sobre cualquier punto del océano: aparece un marcador y un círculo que delimita el área de búsqueda según el radio seleccionado. Al pulsar \textit{Escanear}, la aplicación consulta las bases de datos científicas OBIS e iNaturalist y obtiene simultáneamente las condiciones climáticas y oceanográficas del punto. Durante la consulta el botón muestra el estado \textit{Escaneando\ldots} y el círculo anima sobre el mapa (Fig.~\ref{fig:modoEscaneo}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/ModoEscaneo.png}
+\caption{Escaneo en curso: círculo de búsqueda sobre el mar y panel climático ya visible\label{fig:modoEscaneo}}
+\end{figure}
+
+Al terminar, aparece un aviso en pantalla con el nombre del lugar escaneado (Fig.~\ref{fig:popupEscaneo}). Pulsarlo hace que el mapa vuele hasta el punto y muestre el círculo de búsqueda, útil si el usuario había navegado a otra zona mientras esperaba los resultados.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/PopupFinalEscaneo.png}
+\caption{Notificación al finalizar el escaneo con el nombre del lugar\label{fig:popupEscaneo}}
+\end{figure}
+
+El panel de especies se vuelve entonces desplegable; al abrirlo, el mapa realiza un zoom suave hasta el área escaneada para situar los resultados en contexto (Fig.~\ref{fig:notifPanel}). El panel es colapsable en cualquier momento para recuperar espacio.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.25\textwidth]{figures/manual/NotificacionAzulPanelEspecies.png}
+\caption{Indicador del panel de especies listo para desplegarse\label{fig:notifPanel}}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/EscaneoTodoAbierto.png}
+\caption{Vista completa con ambos paneles abiertos tras el escaneo\label{fig:escaneoTodoAbierto}}
+\end{figure}
+
+El panel de especies lista todas las que han sido registradas en la zona, ordenadas por número de avistamientos. Cada tarjeta muestra el nombre común, el nombre científico y una fotografía de referencia. Al expandirla se accede al rango de profundidad habitual, la temperatura del agua en que se ha observado la especie, la fecha del primer y último registro, y el total de avistamientos globales en la base de datos (Fig.~\ref{fig:panelEspecies}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/manual/PanelEspecies.png}
+\caption{Panel de especies con una tarjeta expandida mostrando profundidad, temperatura y registros\label{fig:panelEspecies}}
+\end{figure}
+
+El panel climático (Fig.~\ref{fig:panelClima}) muestra un resumen compacto en la esquina superior izquierda con la temperatura del aire, un indicador de estado (\textit{Buenas condiciones}, \textit{Condiciones tolerables} o \textit{Condiciones adversas}) y las métricas más relevantes para el buceo: oleaje, corriente, temperatura del mar, visibilidad, viento, swell y probabilidad de lluvia. Pulsando el icono de información se abre un modal con la descripción detallada de cada parámetro y los umbrales que determinan su color (Fig.~\ref{fig:datosClima}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/PanelClima.png}
+  \caption{Resumen compacto de condiciones climáticas\label{fig:panelClima}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.54\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/DatosClima.png}
+  \caption{Modal de detalle con la descripción de cada métrica\label{fig:datosClima}}
+\end{minipage}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Sistema de publicaciones}
+\label{sec:manual-publicaciones}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Las publicaciones son el registro de inmersiones de la comunidad. En el mapa aparecen como marcadores celestes repartidos por la costa (Fig.~\ref{fig:muchasPublicaciones}); su distribución permite hacerse una idea rápida de qué zonas tienen más actividad.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/MuchasPublicacionesMapa.png}
+\caption{Marcadores de publicaciones distribuidos por el litoral\label{fig:muchasPublicaciones}}
+\end{figure}
+
+Para crear una, hay que cambiar al modo \textit{Publicar} en la barra inferior (Fig.~\ref{fig:modoPublicacion}) y hacer clic sobre el punto del mapa donde se realizó la inmersión.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/manual/ModoPublicacion.png}
+\caption{Barra inferior en modo Publicar\label{fig:modoPublicacion}}
+\end{figure}
+
+Se abre un formulario con título, descripción opcional, el nombre del lugar detectado automáticamente a partir de las coordenadas, y la posibilidad de adjuntar una foto (Fig.~\ref{fig:formularioVacio}). Al añadir una imagen el mapa se desplaza hacia arriba para que el formulario completo quede visible sin que la foto quede cortada (Fig.~\ref{fig:formularioRelleno}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.44\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/FormularioPublicacion.png}
+  \caption{Formulario de nueva publicación vacío\label{fig:formularioVacio}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.44\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/FormularioPublicaciónRelleno.png}
+  \caption{Formulario con título, descripción y foto cargada\label{fig:formularioRelleno}}
+\end{minipage}
+\end{figure}
+
+Al publicar, el marcador aparece en el mapa y al pulsarlo se abre una tarjeta con el título, la descripción, la imagen y el enlace \textit{Ver más} para expandir el detalle completo (Fig.~\ref{fig:publicacionCreada}). Cada vez que se abre una publicación el mapa se centra automáticamente en ella, de modo que la referencia geográfica permanece siempre visible al navegar entre varias. Si la publicación lleva foto, el mapa ajusta además su posición para que la imagen quede completamente a la vista sin quedar oculta bajo el borde superior de la aplicación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/manual/PublicacionRecienCreada.png}
+\caption{Tarjeta compacta de una publicación recién creada\label{fig:publicacionCreada}}
+\end{figure}
+
+El panel de detalle completo muestra el autor con su nombre, la fecha, el título, la descripción, la foto y el nombre del lugar correspondiente al punto marcado en el mapa (Fig.~\ref{fig:detallesPublicacion}). En la parte inferior aparecen los controles de interacción: like, comentarios, compartir y guardar.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/DetallesPublicacion.png}
+\caption{Panel de detalle completo de una publicación\label{fig:detallesPublicacion}}
+\end{figure}
+
+El like se activa con un toque y actualiza el contador de forma inmediata. Los comentarios se despliegan debajo y el panel hace un pequeño desplazamiento automático para dejarlos a la vista; para responder a alguien basta con pulsar el botón \textit{Responder} bajo cualquier comentario, que rellena automáticamente la mención en el campo de texto. El botón de guardar marca la publicación para recuperarla desde el perfil propio. En la Fig.~\ref{fig:interacciones} se ven los tres en uso simultáneo: like dado, sección de comentarios abierta y publicación guardada.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/DetallesPublicacionInteraccionLikeGuardadoComentando.png}
+\caption{Like activo, comentarios con mención y publicación guardada\label{fig:interacciones}}
+\end{figure}
+
+Todas estas interacciones generan notificaciones para el autor de la publicación. Cómo consultarlas y el resto de la capa social se describe en la siguiente sección.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Red social}
+\label{sec:manual-social}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El perfil de cada usuario recoge su avatar, nombre y tres contadores: publicaciones, seguidores y seguidos. Debajo hay dos pestañas, \textit{Publicaciones} y \textit{Guardadas}, que muestran respectivamente las inmersiones propias y las publicaciones de otros que el usuario ha marcado para recuperar más tarde (Fig.~\ref{fig:perfilPropio}). Pulsar sobre cualquier tarjeta en cualquiera de las dos pestañas abre el panel de detalle completo de esa publicación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/PaginaDePerfil.png}
+\caption{Perfil propio con la pestaña Publicaciones activa\label{fig:perfilPropio}}
+\end{figure}
+
+Desde el propio perfil se puede cambiar el nombre y la foto de perfil en cualquier momento pulsando \textit{Editar perfil} (Fig.~\ref{fig:editarPerfil}). El mismo modal incluye la opción de eliminar la cuenta.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.50\textwidth]{figures/manual/EditarPerfil.png}
+\caption{Modal de edición del perfil\label{fig:editarPerfil}}
+\end{figure}
+
+La pestaña \textit{Guardadas} muestra las publicaciones que el usuario ha ido guardando (Fig.~\ref{fig:guardadas}). Cada tarjeta indica el título, el número de likes y comentarios, y el autor; pulsarla navega directamente a esa publicación.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{figures/manual/PublicacionesGuardadas.png}
+\caption{Pestaña Guardadas con una publicación guardada\label{fig:guardadas}}
+\end{figure}
+
+Al visitar el perfil de otro usuario la cabecera muestra sus estadísticas y un botón \textit{Seguir} (Fig.~\ref{fig:perfilAjeno}). Al pulsarlo cambia a \textit{Siguiendo} y el contador se actualiza al instante; volver a pulsarlo deshace el seguimiento. Debajo de la cabecera aparecen sus publicaciones.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/PerfilAjeno.png}
+\caption{Perfil ajeno con el botón Seguir y las publicaciones del usuario\label{fig:perfilAjeno}}
+\end{figure}
+
+Los contadores de seguidores y seguidos son pulsables tanto en el perfil propio como en el ajeno. Al hacerlo se abre un panel con la lista de usuarios, y pulsar sobre cualquiera de ellos navega directamente a su perfil (Fig.~\ref{fig:listaSeguidores}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{figures/manual/ListaSeguidores.png}
+\caption{Panel con la lista de seguidores de un perfil\label{fig:listaSeguidores}}
+\end{figure}
+
+Las interacciones sobre las propias publicaciones, likes, comentarios y nuevos seguidores, generan notificaciones. Cuando hay notificaciones sin leer, la campana en la barra superior muestra un contador (Fig.~\ref{fig:campanaBadge}). Al pulsarla se despliega el panel con el detalle de cada una: quién ha interactuado, sobre qué publicación y cuándo (Fig.~\ref{fig:notificacionesPanel}). Pulsar sobre una notificación lleva directamente a la publicación correspondiente.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.22\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CampanaNotificacionConNotificacion.png}
+  \caption{Campana con notificaciones pendientes\label{fig:campanaBadge}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.62\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/NotificacionesAbiertasConNotificaciones.png}
+  \caption{Panel de notificaciones con un like y un comentario recibidos\label{fig:notificacionesPanel}}
+\end{minipage}
+\end{figure}
+
+Tanto los perfiles como las publicaciones individuales son compartibles mediante un enlace directo. El botón de compartir está presente en la cabecera del perfil y en el panel de detalle de cada publicación (Fig.~\ref{fig:compartirPerfil} y Fig.~\ref{fig:compartirPublicacion}); al pulsarlo se copia el enlace al portapapeles listo para enviarlo fuera de la aplicación.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CompartirPerfil.png}
+  \caption{Botón de compartir en la cabecera del perfil\label{fig:compartirPerfil}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.38\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/CompratirPublicacion.png}
+  \caption{Icono de compartir en el panel de detalle de una publicación\label{fig:compartirPublicacion}}
+\end{minipage}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Consideraciones estéticas y de flujo}
+\label{sec:manual-estetica}
+% ─────────────────────────────────────────────────────────────────────────────
+
+A lo largo del manual se han ido mencionando de forma puntual ciertas decisiones de diseño: el color que marca los elementos activos, las transiciones de pantalla, el comportamiento de los botones antes de que llegue la respuesta del servidor. Estas referencias han sido inevitablemente breves porque el foco de cada sección era otro. Sin embargo, el ámbito de la UI y la UX ha sido uno de los aspectos que más atención ha recibido durante el desarrollo del proyecto, y merece su espacio propio. A continuación se detallan algunas de las decisiones y consideraciones que han guiado la interfaz de Scubex.
+
+\subsection{Estética e interfaz}
+\label{sec:manual-ui}
+
+El color es el principal hilo conductor de la interfaz. El celeste identifica cualquier elemento activo o acción disponible: modo seleccionado en la barra inferior, radio de escaneo activo, botones de acción principal (Fig.~\ref{fig:patronCeleste}). El usuario no necesita leer etiquetas para entender qué puede pulsar o qué está ya activado; el color lo señala directamente.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/manual/PatronColorCeleste.png}
+\caption{Color celeste como indicador de elemento activo\label{fig:patronCeleste}}
+\end{figure}
+
+Más allá del color, toda la interfaz se ha cuidado para que refleje una estética marina. La paleta oscila entre el azul cielo de las zonas superficiales y el azul oscuro de las zonas más profundas, distinción que se puede observar no solo en la interfaz, sino en el pintado de batimetría en el mapa. Una ola hace de transición animada entre pantallas, y la fuente de trazos suaves refuerza esa sensación de fluidez marina. Este cuidado empieza desde la propia pantalla de inicio, donde la fauna marina aparece animada sobre un fondo oceánico (Fig.~\ref{fig:landingAnimalesEstetica}). La animación de ola se detalla en la sección de flujo (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/PaginaInicialConMuchosAnimales.png}
+\caption{Pantalla de inicio con fauna marina animada\label{fig:landingAnimalesEstetica}}
+\end{figure}
+
+El celeste guía al usuario en casi toda la interfaz salvo cuando existen patrones ya reconocibles de otras aplicaciones. El like sigue el rojo del corazón habitual en redes sociales; el guardado se rellena al pulsarlo; y en el panel de notificaciones, eliminar una notificación sigue el patrón del dispositivo: desliz hacia la izquierda en móvil y botón de cierre al pasar el cursor en escritorio (Fig.~\ref{fig:borrarMovil} y Fig.~\ref{fig:borrarPC}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.46\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/BorrarNotificacionMovil.png}
+  \caption{Desliz hacia la izquierda para eliminar una notificación en móvil\label{fig:borrarMovil}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.46\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/BorrarNotificaciónPC.png}
+  \caption{Botón de cierre visible al pasar el cursor en escritorio\label{fig:borrarPC}}
+\end{minipage}
+\end{figure}
+
+La aplicación incluye también algún detalle lúdico para quien lo descubra: por ejemplo, pulsar la foto de perfil propia hace que gire como una moneda.
+
+Otro detalle estético es el desenfoque aplicado al fondo al abrir un panel de detalle (Fig.~\ref{fig:todoBorroso}): el mapa sigue visible pero queda en segundo plano, dirigiendo la atención al contenido sin eliminar completamente el contexto geográfico.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/manual/TodoBorroso.png}
+\caption{Mapa desenfocado al abrir el panel de detalle de una publicación\label{fig:todoBorroso}}
+\end{figure}
+
+\subsection{Flujo y experiencia}
+\label{sec:manual-ux}
+
+Las transiciones entre pantallas se realizan mediante una animación de ola que barre la pantalla de un lado al otro. La ola está construida con partículas y capas de movimiento independiente para simular el comportamiento real del agua: la cresta avanza a distinta velocidad que la base, y pequeñas partículas flotan alrededor para reforzar la sensación marina (Fig.~\ref{fig:interfazOla1} y Fig.~\ref{fig:interfazOla2}). Su velocidad es configurable desde el perfil: la opción rápida la reduce al mínimo para quienes prefieren una navegación más directa.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazOla1.png}
+  \caption{Inicio de la animación de ola\label{fig:interfazOla1}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazOla2.png}
+  \caption{La ola cubre la pantalla completa durante la transición\label{fig:interfazOla2}}
+\end{minipage}
+\end{figure}
+
+La ola no es solo estética: tapa la carga inicial del mapa, de los perfiles y del resto de pantallas, de modo que el usuario percibe menos los destellos iniciales de las cargas. 
+
+Todos los tiempos de animación de la aplicación están calibrados para oscilar en torno a los 400 ms. Ese umbral no es arbitrario: el ser humano percibe duraciones por debajo de ese valor como prácticamente instantáneas~\cite{lawsofux}, de modo que la animación es visible pero no llega a sentirse como una espera. Al pulsar el popup de escaneo completado (Fig.~\ref{fig:popupEscaneoUX}), por ejemplo, el mapa realiza un vuelo hasta el punto escaneado en 700 ms; el panel de especies se abre a los 500 ms, antes de que el vuelo termine, de modo que el usuario percibe la apertura del panel como casi instantánea, pero le da tiempo a notar que está siendo reposicionado en el mapa.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/manual/PopupFinalEscaneo.png}
+\caption{Notificación de escaneo completado\label{fig:popupEscaneoUX}}
+\end{figure}
+
+Las acciones que dependen del servidor, como el like o el guardado, se reflejan en la interfaz antes de que llegue la confirmación. Si algo falla, la interfaz revierte el cambio de forma silenciosa, y el resultado es que la aplicación se siente rápida incluso con conexiones lentas.
+
+El modo Publicar queda bloqueado mientras el usuario está creando una publicación o consultando el detalle de otra: en ambos casos no es posible abrir el formulario hasta que el panel actual se cierra, evitando publicaciones duplicadas accidentales.
+
+Lo que sí se permite es escanear mientras se crea o se consulta una publicación: ambas acciones conviven sin conflicto. El indicador celeste del selector de especies (Fig.~\ref{fig:notificacionAzulEspecies}) despliega el panel de resultados sin cerrar el panel activo, de modo que el usuario puede consultar las especies sin interrumpir lo que estaba haciendo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.35\textwidth]{figures/manual/NotificacionAzulPanelEspecies.png}
+\caption{Indicador celeste de escaneo activo visible desde el selector de especies\label{fig:notificacionAzulEspecies}}
+\end{figure}
+
+Por último, la aplicación funciona en cualquier dispositivo sin necesidad de ninguna versión específica: todo el diseño es responsive desde el principio, de modo que los paneles, formularios y modales se adaptan al tamaño de pantalla disponible y la experiencia en móvil es equivalente a la de escritorio. Esta decisión responde a dos razones concretas: la mayoría de personas consultan redes sociales desde el móvil, y el buceo es una actividad de exterior, donde lo habitual es no tener un ordenador a mano.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.40\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazMovilPantallPrincipal.png}
+  \caption{Pantalla de inicio en dispositivo móvil\label{fig:interfazMovilLanding}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.40\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/InterfazMovilMapa.png}
+  \caption{Mapa con publicación abierta en dispositivo móvil\label{fig:interfazMovilMapa}}
+\end{minipage}
+\end{figure}
+
+Como nota personal, estas consideraciones de UI y UX han ocupado tanto tiempo de desarrollo como cualquier decisión arquitectónica, y en cierto modo creo que una buena interfaz es casi más importante que la parte técnica: por muy sólido que esté construido un sistema por dentro, si el usuario no sabe dónde está o qué puede hacer, simplemente deja de usarlo y lo olvida, que es precisamente lo contrario de lo que se busca. Por ello para verificar que estas decisiones eran correctas, se pidió a personas de distintos niveles de familiaridad con la tecnología que probaran el flujo y la legibilidad de la aplicación, desde usuarios habituales de redes sociales como compañeros de la carrera, hasta personas poco acostumbradas a aplicaciones web como familiares mas mayores. La capacidad de navegar sin instrucciones previas fue el criterio principal, y los ajustes derivados de esas pruebas son parte del resultado que se percibe en la aplicación y se describe en este capítulo.

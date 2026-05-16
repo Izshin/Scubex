@@ -1,42 +1,63 @@
 %!TEX root =  tfg.tex
 \chapter{Conclusiones}
 
-\begin{quotation}[Novelist]{Ernest Hemingway (1899--1961)}
-The good parts of a book may be only something a writer is lucky enough to overhear or it may be the wreck of his whole damn life -- and one is as good as the other.
+\begin{quotation}[Activista y estadista]{Nelson Mandela (1918--2013)}
+It always seems impossible until it is done.
 \end{quotation}
 
 \begin{abstract}
-Resumen de lo que va a ocurrir en el capítulo. ¿Cuál es el objetivo que tenemos con este capítulo?
+Este capítulo cierra el proyecto con una valoración de lo que ha funcionado, lo que se haría distinto, y las líneas de trabajo que quedan abiertas para el futuro.
 \end{abstract}
 
 \section{Informe post-mortem}
 
-Qué es un informe post-mortem
+El informe post-mortem es una reflexión al cierre de un proyecto: qué ha ido bien, qué ha ido mal y qué cambiaría si empezara de nuevo.
 
 \subsection{Lo que ha ido bien}
 
 \begin{itemize}
-\item Argumento a favor 1.
 
-\item Argumento a favor 2.
+\item \textbf{La metodología funcionó.} Trabajar con FDD en iteraciones cortas, con un objetivo concreto por cada una y documentando las decisiones en el momento en que se tomaban, evitó que el proyecto se dispersara. Sin esa estructura, gestionar ocho funcionalidades distintas en solitario habría sido bastante más caótico.
 
-\item Argumento a favor 3.
+\item \textbf{Documentar las decisiones técnicas.} Escribir por qué se tomó cada decisión, y no solo qué se hizo, obliga a justificarla. Hay opciones que parecen evidentes mientras se implementan y que al ponerlas por escrito resultan más discutibles de lo que parecían.
+
+\item \textbf{Todos los objetivos se completaron.} Los ocho objetivos definidos al inicio del proyecto se implementaron en las cuatro iteraciones previstas, por una sola persona y en paralelo con otras obligaciones académicas.
+
 \end{itemize}
 
 \subsection{Lo que ha ido mal}
 
 \begin{itemize}
-\item Argumento en contra 1.
 
-\item Argumento en contra 2.
+\item \textbf{La primera iteración se subestimó.} Coordinar dos APIs científicas con formatos distintos, diseñar la caché adaptativa y montar la autenticación en paralelo fue más costoso de lo previsto. Los 11 días de retraso iniciales se arrastraron durante todo el proyecto, aunque cada iteración fue recortando la desviación.
 
-\item Argumento en contra 3.
+\item \textbf{Las imágenes se guardan en la base de datos.} Almacenar los bytes directamente en PostgreSQL simplificó el desarrollo, pero es la decisión técnica que más claramente habría que cambiar: una base de datos con imágenes crece rápido y es costosa de mantener. Usar un servicio de almacenamiento de objetos desde el principio habría sido la opción correcta.
+
 \end{itemize}
 
 \subsection{Discusión}
 
-En función de lo anterior, qué cambiaría si empezara hoy el proyecto de nuevo.
+Si el proyecto empezara hoy, la única decisión técnica que cambiaría de forma inmediata es el almacenamiento de imágenes: integrar un servicio externo desde el primer día tiene un coste bajo y evita una migración posterior costosa. El resto de la arquitectura y la metodología se mantendrían igual.
 
 \section{Trabajos futuros}
 
-Enumera los puntos abiertos y que no se han resuelto. Indica si darían lugar a otro proyecto y de qué forma se podría acotar.
+Scubex en su estado actual cubre la propuesta de valor inicial: un buceador puede explorar el mapa, consultar la fauna marina de una zona, ver las condiciones climáticas y oceanográficas, publicar inmersiones y conectar con otros buceadores. Sin embargo, hay varias líneas abiertas que podrían ampliar la aplicación de forma significativa:
+
+\begin{itemize}
+
+\item \textbf{Migración del almacenamiento de imágenes.} Mover las imágenes de PostgreSQL a un servicio de objetos (Cloudinary, S3 o similar) reduciría el tamaño de la base de datos y permitiría servir imágenes con CDN global, mejorando los tiempos de carga para usuarios alejados del servidor.
+
+\item \textbf{Notificaciones push.} Sustituir el polling por notificaciones push del navegador o WebSockets permitiría alertar al usuario aunque la pestaña esté en segundo plano, con latencia nula en lugar del retraso actual del intervalo de consulta.
+
+\item \textbf{Paginación en el escáner de especies.} El escáner actual limita la consulta a las primeras 1.000 ocurrencias de OBIS. En zonas con alta densidad de registros científicos esto puede dejar fuera especies presentes en la zona. Implementar paginación sobre la API de OBIS y agregar los resultados de todas las páginas devolvería un listado completo independientemente del volumen de datos.
+
+\item \textbf{Moderación de contenido.} Actualmente cualquier texto puede publicarse como comentario sin ningún filtro. Un sistema básico de denuncias o moderación sería necesario si la base de usuarios creciera.
+
+\item \textbf{Perfiles privados y control de visibilidad.} Todos los perfiles son públicos. Añadir la opción de perfil privado con aprobación de seguidores acercaría Scubex al modelo de privacidad habitual en redes sociales de nicho.
+
+\item \textbf{Previsión meteorológica de varios días.} El panel climático actual muestra las condiciones en el momento de la consulta. Añadir una previsión de varios días permitiría planificar inmersiones con antelación, que es precisamente el caso de uso más habitual: decidir si merece la pena desplazarse a una zona concreta el fin de semana.
+
+\item \textbf{Menciones en comentarios más estándar.} El sistema de menciones actual funciona a través del botón \textit{Responder}, que rellena la mención usando el correo electrónico del usuario entre corchetes. Aunque cumple su función, resulta poco natural comparado con el \texttt{@usuario} habitual en otras redes sociales. Una futura iteración podría implementar un autocompletado al escribir \texttt{@} que sugiera usuarios por nombre y los vincule directamente a su perfil.
+
+\end{itemize}
+

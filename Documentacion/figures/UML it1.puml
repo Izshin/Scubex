@@ -1,0 +1,195 @@
+@startuml
+' --- Configuración Visual ---
+skinparam shadowing true
+skinparam roundcorner 10
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 55
+
+skinparam legend {
+    BackgroundColor #FFFFFF
+    BorderColor #DDDDDD
+    BorderThickness 1
+}
+
+!define CONTROLLER_COLOR #D5E8D4
+!define SERVICE_COLOR    #DAE8FC
+!define REPO_COLOR       #FFF2CC
+!define ENTITY_COLOR     #F8CECC
+!define EXTERNAL_COLOR   #E1D5E7
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor #333333
+    BorderColor #666666
+}
+skinparam class<<Controller>> {
+    BackgroundColor CONTROLLER_COLOR
+    BorderColor #82B366
+}
+skinparam class<<Service>> {
+    BackgroundColor SERVICE_COLOR
+    BorderColor #6C8EBF
+}
+skinparam class<<Repository>> {
+    BackgroundColor REPO_COLOR
+    BorderColor #D6B656
+}
+skinparam class<<Entity>> {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #B85450
+}
+skinparam class<<External>> {
+    BackgroundColor EXTERNAL_COLOR
+    BorderColor #9673A6
+}
+
+' ── Web Layer ────────────────────────────────────────────────────────────────
+package "Web Layer" {
+    together {
+        class SpeciesController <<Controller>> {
+            +getSpeciesInSelectedArea(lat, lng, radius)
+        }
+        class AuthController <<Controller>> {
+            +loginWithGoogle(body)
+        }
+    }
+}
+
+' ── Business Logic ───────────────────────────────────────────────────────────
+package "Business Logic" {
+    together {
+        class UserService <<Service>> {
+            +findOrCreate(sub, email, name, picture)
+        }
+        class SpeciesService <<Service>> {
+            +getSpeciesInSelectedArea(lat, lng, radius)
+            -roundCoord(value, radius)
+            -createPolygonFromRadius(lat, lng, radius)
+            -callObisApi(polygon)
+            -callObisEcoStats(name, executor)
+            -saveToCache(rLat, rLng, radius, species)
+        }
+        class JwtService <<Service>> {
+            +generateToken(user)
+            +validateToken(token)
+        }
+    }
+    UserService    -[hidden]right- SpeciesService
+    SpeciesService -[hidden]right- JwtService
+}
+
+' ── Persistence ──────────────────────────────────────────────────────────────
+package "Persistence" {
+    together {
+        interface CachedScanRepository <<Repository>> {
+            +findBestMatch(lat, lng, radius, cutoff)
+            +deleteByCreatedAtBefore(before)
+        }
+        interface SpeciesEnrichmentCacheRepository <<Repository>> {
+            +findByScientificNameAndCachedAtAfter(name, after)
+            +deleteByScientificNameNotNullAndCachedAtBefore(before)
+        }
+        interface UserRepository <<Repository>> {
+            +findByGoogleId(googleId)
+            +findByEmail(email)
+        }
+    }
+}
+
+' ── Entities ─────────────────────────────────────────────────────────────────
+package "Entities" {
+    together {
+        class CachedScan <<Entity>> {
+            -id: Long
+            -roundedLat: Double
+            -roundedLng: Double
+            -radius: Double
+            -createdAt: Instant
+        }
+        class SpeciesEnrichmentCache <<Entity>> {
+            -id: Long
+            -scientificName: String
+            -hasInatData: boolean
+            -commonName: String
+            -photoUrl: String
+            -iucnCategory: String
+            -cachedAt: Instant
+        }
+        class User <<Entity>> {
+            -googleId: String
+            -email: String
+            -name: String
+            -customName: String
+            +getDisplayName()
+        }
+    }
+    class CachedSpecies <<Entity>> {
+        -id: Long
+        -scientificName: String
+        -commonName: String
+        -photoUrl: String
+        -latitude: Double
+        -longitude: Double
+        -depthMin: Integer
+        -depthMax: Integer
+        -iucnCategory: String
+    }
+}
+
+' ── APIs Externas ─────────────────────────────────────────────────────────────
+package "APIs Externas" {
+    together {
+        class ObisAPI <<External>> {
+            [[https://api.obis.org]]
+            /v3/occurrence (WKT polygon)
+            /v3/statistics
+            /v3/statistics/env
+            /v3/checklist/redlist
+        }
+        class INaturalistAPI <<External>> {
+            [[https://api.inaturalist.org]]
+            /v1/taxa?q=scientificName
+        }
+        class GoogleOAuth2 <<External>> {
+            [[https://oauth2.googleapis.com]]
+            /tokeninfo?id_token=...
+        }
+    }
+    ObisAPI -[hidden]right- INaturalistAPI
+    INaturalistAPI -[hidden]right- GoogleOAuth2
+}
+
+' ── Relaciones ───────────────────────────────────────────────────────────────
+SpeciesController --> SpeciesService
+AuthController    --> UserService
+AuthController    --> JwtService
+
+SpeciesService --> CachedScanRepository
+SpeciesService --> SpeciesEnrichmentCacheRepository
+UserService    --> UserRepository
+
+SpeciesService ..> ObisAPI       : HTTP GET
+SpeciesService ..> INaturalistAPI: HTTP GET
+AuthController ..> GoogleOAuth2  : HTTP GET (tokeninfo)
+
+CachedScanRepository              ..> CachedScan
+SpeciesEnrichmentCacheRepository  ..> SpeciesEnrichmentCache
+UserRepository                    ..> User
+
+CachedScan "1" --> "0..*" CachedSpecies
+
+legend bottom
+  |= Icono |= Visibilidad (Modificador) |
+  | <color:green>●</color> | **Público** (+): Visible para todos |
+  | <color:red>■</color> | **Privado** (-): Solo visible dentro de la clase |
+  | <color:red>□</color> | **Protegido / Package** (# / ~): Acceso restringido/herencia |
+  | <size:8>  </size> | |
+  |= Color |= Capa Arquitectónica |
+  | <back:CONTROLLER_COLOR>      </back> | **Controller**: Entrada de la API |
+  | <back:SERVICE_COLOR>      </back> | **Service**: Lógica de negocio |
+  | <back:REPO_COLOR>      </back> | **Repository**: Acceso a Datos |
+  | <back:ENTITY_COLOR>      </back> | **Entity**: Modelos de DB |
+  | <back:EXTERNAL_COLOR>      </back> | **External**: API Externa |
+endlegend
+@enduml

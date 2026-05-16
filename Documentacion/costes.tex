@@ -14,76 +14,42 @@ En este capítulo se realiza el desglose de los costes asociados al proyecto, ba
 	\centering
 	\begin{coolTable}{ll}{2}
 {Resumen del proyecto}
-	\textbf{Costes de personal}&14.950 \euro\\
-	Desarrollador Full-Stack&9.750 \euro\\
-	Becario Documentaci\'{o}n&5.200 \euro\\
-	\textbf{Costes materiales}&68,40 \euro\\
-	\textbf{Costes indirectos}&1.500 \euro\\
+	\textbf{Costes de personal}&5.290,28 \euro\\
+	Desarrollador Full-Stack Junior&5.290,28 \euro\\
+	\textbf{Costes materiales}&67,23 \euro\\
+	\textbf{Costes indirectos}&535,75 \euro\\
 	\midrule
-	\textbf{TOTAL}&16.518,40 \euro\\
+	\textbf{TOTAL}&5.893,26 \euro\\
 	\end{coolTable}
 	\caption{Tabla resumen de costes del proyecto}
 \end{table*}
 
 \section{Costes de personal}
 
-Para el cálculo de los costes de personal se han consultado los datos de la \textbf{Guía Salarial 2026} de Manfred\footnote{\url{https://www.getmanfred.com/blog/guia-salarial-2026-salarios-en-tecnologia-espana-manfred}}, que recopila información salarial de más de 120.000 profesionales de tecnología en España.
+Para el cálculo de los costes de personal se han consultado los datos de la \textbf{Guía Salarial 2026} de Manfred~\cite{manfredsalarios2026}, que recopila información salarial de más de 120.000 profesionales de tecnología en España.
 
-Dado que el desarrollo de Scubex ha requerido asumir múltiples roles y tareas, se han considerado dos perfiles:
+El desarrollo de Scubex ha sido asumido íntegramente por un único perfil: un \textbf{Desarrollador Full-Stack Junior} con menos de dos años de experiencia, responsable tanto de la implementación como de la documentación. Según la guía salarial, este perfil se sitúa en el rango de 20.000--30.000\euro{} anuales; se ha tomado el valor medio de \textbf{25.000\euro{} brutos anuales}.
 
-\subsection{Desarrollador Full-Stack (Arquitectura e Implementación)}
+\subsection{Cálculo proporcional al tiempo dedicado}
 
-Se ha considerado como referencia el salario de \textbf{Desarrollador Full-Stack} con experiencia de 5-10 años, cuyo rango salarial se sitúa entre 41.000-50.000\euro{} anuales según dicha guía. Se ha tomado un valor medio de \textbf{45.000\euro{} brutos anuales}.
-
-\subsubsection{Cálculo proporcional al tiempo dedicado}
-
-La carga de trabajo estimada para el TFG es de \textbf{300 horas}, frente a una jornada laboral anual estándar de \textbf{1.800 horas}. Por tanto, el coste proporcional se calcula como:
+La carga de trabajo estimada para el TFG es de \textbf{293 horas}, frente a una jornada laboral anual estándar de \textbf{1.800 horas}. El coste proporcional se calcula como:
 
 \begin{equation}
-	\text{Salario proporcional} = \frac{45.000\text{\euro}}{6} = 7.500\text{\euro}
+	\text{Salario proporcional} = 25.000\text{\euro} \times \frac{293}{1.800} = 4.069{,}44\text{\euro}
 \end{equation}
 
-\subsubsection{Costes sociales}
+\subsection{Costes sociales}
 
-A este salario bruto se le añaden los \textbf{costes sociales} (Seguridad Social, contingencias comunes, desempleo, formación profesional, etc.) que suponen aproximadamente el \textbf{30\%} del salario bruto:
-
-\begin{equation}
-	\text{Costes sociales} = 7.500\text{\euro} \times 0.30 = 2.250\text{\euro}
-\end{equation}
-
-\subsubsection{Total Desarrollador Full-Stack}
+A este salario bruto se le añaden los \textbf{costes sociales} (Seguridad Social, contingencias comunes, desempleo, formación profesional, etc.), que suponen aproximadamente el \textbf{30\%} del salario bruto:
 
 \begin{equation}
-	\text{Total} = 7.500\text{\euro} + 2.250\text{\euro} = 9.750\text{\euro}
-\end{equation}
-
-\subsection{Becario Junior (Redacción de Documentación)}
-
-Para la redacción de la memoria académica y documentación técnica se ha considerado el perfil de un \textbf{becario junior} con experiencia menor a 2 años. Según la guía salarial, los desarrolladores junior se sitúan en el rango de 20.000-30.000\euro{} anuales. Se ha tomado un valor de \textbf{24.000\euro{} brutos anuales}.
-
-\subsubsection{Cálculo proporcional al tiempo dedicado}
-De la misma forma que se ha calculado anteriormente:
-
-\begin{equation}
-	\text{Salario proporcional} = \frac{24.000\text{\euro}}{6} = 4.000\text{\euro}
-\end{equation}
-
-\subsubsection{Costes sociales}
-
-\begin{equation}
-	\text{Costes sociales} = 4.000\text{\euro} \times 0.30 = 1.200\text{\euro}
-\end{equation}
-
-\subsubsection{Total Becario}
-
-\begin{equation}
-	\text{Total} = 4.000\text{\euro} + 1.200\text{\euro} = 5.200\text{\euro}
+	\text{Costes sociales} = 4.069{,}44\text{\euro} \times 0.30 = 1.220{,}83\text{\euro}
 \end{equation}
 
 \subsection{Total costes de personal}
 
 \begin{equation}
-	\text{Total} = 9.750\text{\euro} + 5.200\text{\euro} = 14.950\text{\euro}
+	\text{Total} = 4.069{,}44\text{\euro} + 1.220{,}83\text{\euro} = 5.290{,}28\text{\euro}
 \end{equation}
 
 \section{Costes materiales}
@@ -96,7 +62,7 @@ Para el desarrollo del proyecto se ha utilizado un portátil con un coste de adq
 
 \begin{itemize}
 	\item \textbf{Amortización anual}: $1.200\text{\euro} \times 0.25 = 300\text{\euro}$
-	\item \textbf{Amortización proporcional} (300h / 1.800h): $300\text{\euro} \times \frac{300}{1.800} = 50\text{\euro}$
+	\item \textbf{Amortización proporcional} (293h / 1.800h): $300\text{\euro} \times \frac{293}{1.800} = 48{,}83\text{\euro}$
 \end{itemize}
 
 \subsection{Despliegue en la nube}
@@ -123,7 +89,7 @@ En un escenario de producción real con mayor tráfico, los costes de Railway po
 \subsection{Total costes materiales}
 
 \begin{equation}
-	\text{Total} = 50\text{\,\euro} + 18,40\text{\,\euro} = 68,40\text{\,\euro}
+	\text{Total} = 48{,}83\text{\,\euro} + 18{,}40\text{\,\euro} = 67{,}23\text{\,\euro}
 \end{equation}
 
 \section{Costes indirectos}
@@ -133,7 +99,7 @@ Los costes indirectos incluyen gastos generales asociados al desarrollo del proy
 Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y materiales:
 
 \begin{equation}
-	\text{Costes indirectos} = (14.950\text{\,\euro} + 68,40\text{\,\euro}) \times 0.10 = 1.501,84\text{\,\euro} \approx 1.500\text{\,\euro}
+	\text{Costes indirectos} = (5.290{,}28\text{\,\euro} + 67{,}23\text{\,\euro}) \times 0.10 = 535{,}75\text{\,\euro}
 \end{equation}
 
 \section{Coste total del proyecto}
@@ -144,15 +110,14 @@ Se ha tomado un valor medio del \textbf{10\%} de la suma de costes de personal y
 {Desglose de costes}
 	\textbf{Concepto}&\textbf{Importe}\\
 	\midrule
-	Costes de personal&14.950\euro\\
-	\quad Desarrollador Full-Stack&9.750\euro\\
-	\quad Becario Documentaci\'{o}n&5.200\euro\\
-	Costes materiales&68,40\euro\\
-	\quad Amortización equipamiento&50\euro\\
+	Costes de personal&5.290,28\euro\\
+	\quad Desarrollador Full-Stack Junior&5.290,28\euro\\
+	Costes materiales&67,23\euro\\
+	\quad Amortización equipamiento&48,83\euro\\
 	\quad Despliegue Railway (4 meses)&18,40\euro\\
-	Costes indirectos&1.500\euro\\
+	Costes indirectos&535,75\euro\\
 	\midrule
-	\textbf{TOTAL PROYECTO}&\textbf{16.518,40\euro}\\
+	\textbf{TOTAL PROYECTO}&\textbf{5.893,26\euro}\\
 	\end{coolTable}
 	\caption{Coste total del proyecto Scubex}
 \end{table*}
