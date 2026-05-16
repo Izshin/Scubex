@@ -141,11 +141,64 @@ El panel climático (Fig.~\ref{fig:panelClima}) muestra un resumen compacto en l
 \label{sec:manual-publicaciones}
 % ─────────────────────────────────────────────────────────────────────────────
 
-% TODO: Crear una publicación: modo Publicación, clic en mapa, formulario (título, descripción, foto), envío.
-% TODO: Ver publicaciones ajenas: marcadores en el mapa, panel de detalle.
-% TODO: Interacciones: like/unlike, comentarios con @menciones, guardado, compartir.
-% TODO: Gestión propia: editar y eliminar publicación.
-% TODO: Notificaciones: tipos (like, comentario, mención, follow), campana, navegación desde notificación al punto del mapa.
+Las publicaciones son el registro de inmersiones de la comunidad. En el mapa aparecen como marcadores celestes repartidos por la costa (Fig.~\ref{fig:muchasPublicaciones}); su distribución permite hacerse una idea rápida de qué zonas tienen más actividad.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/manual/MuchasPublicacionesMapa.png}
+\caption{Marcadores de publicaciones distribuidos por el litoral\label{fig:muchasPublicaciones}}
+\end{figure}
+
+Para crear una, hay que cambiar al modo \textit{Publicar} en la barra inferior (Fig.~\ref{fig:modoPublicacion}) y hacer clic sobre el punto del mapa donde se realizó la inmersión.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/manual/ModoPublicacion.png}
+\caption{Barra inferior en modo Publicar\label{fig:modoPublicacion}}
+\end{figure}
+
+Se abre un formulario con título, descripción opcional, el nombre del lugar detectado automáticamente a partir de las coordenadas, y la posibilidad de adjuntar una foto (Fig.~\ref{fig:formularioVacio}). Al añadir una imagen el mapa se desplaza hacia arriba para que el formulario completo quede visible sin que la foto quede cortada (Fig.~\ref{fig:formularioRelleno}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.44\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/FormularioPublicacion.png}
+  \caption{Formulario de nueva publicación vacío\label{fig:formularioVacio}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.44\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{figures/manual/FormularioPublicaciónRelleno.png}
+  \caption{Formulario con título, descripción y foto cargada\label{fig:formularioRelleno}}
+\end{minipage}
+\end{figure}
+
+Al publicar, el marcador aparece en el mapa y al pulsarlo se abre una tarjeta con el título, la descripción, la imagen y el enlace \textit{Ver más} para expandir el detalle completo (Fig.~\ref{fig:publicacionCreada}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/manual/PublicacionRecienCreada.png}
+\caption{Tarjeta compacta de una publicación recién creada\label{fig:publicacionCreada}}
+\end{figure}
+
+El panel de detalle completo muestra el autor con su nombre, la fecha, el título, la descripción, la foto y el nombre del lugar correspondiente al punto marcado en el mapa (Fig.~\ref{fig:detallesPublicacion}). En la parte inferior aparecen los controles de interacción: like, comentarios, compartir y guardar.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/DetallesPublicacion.png}
+\caption{Panel de detalle completo de una publicación\label{fig:detallesPublicacion}}
+\end{figure}
+
+El like se activa con un toque y actualiza el contador de forma inmediata. Los comentarios se despliegan debajo y el panel hace un pequeño desplazamiento automático para dejarlos a la vista; para responder a alguien basta con pulsar el botón \textit{Responder} bajo cualquier comentario, que rellena automáticamente la mención en el campo de texto. El botón de guardar marca la publicación para recuperarla desde el perfil propio. En la Fig.~\ref{fig:interacciones} se ven los tres en uso simultáneo: like dado, sección de comentarios abierta y publicación guardada.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/manual/DetallesPublicacionInteraccionLikeGuardadoComentando.png}
+\caption{Like activo, comentarios con mención y publicación guardada\label{fig:interacciones}}
+\end{figure}
+
+Todas estas interacciones generan notificaciones para el autor de la publicación. Cómo consultarlas y el resto de la capa social se describe en la siguiente sección.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Red social}
@@ -162,7 +215,10 @@ El panel climático (Fig.~\ref{fig:panelClima}) muestra un resumen compacto en l
 \label{sec:manual-estetica}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Scubex mantiene un lenguaje visual coherente a lo largo de toda la interfaz. Los elementos interactivos o activos se identifican siempre por el mismo color celeste: el modo seleccionado en la barra inferior, el radio de escaneo activo, los botones de acción principal o cualquier opción marcada en un selector aparecen en ese tono (Fig.~\ref{fig:patronCeleste}). La única excepción deliberada es el like, que sigue el rojo del corazón vacío ya establecido por otras redes sociales, aprovechando un patrón que el usuario reconoce sin necesidad de aprenderlo.
+\subsection{Estética e interfaz}
+\label{sec:manual-ui}
+
+Scubex mantiene un lenguaje visual coherente a lo largo de toda la interfaz. Los elementos interactivos o activos se identifican siempre por el mismo color celeste: el modo seleccionado en la barra inferior, el radio de escaneo activo, los botones de acción principal o cualquier opción marcada en un selector aparecen en ese tono (Fig.~\ref{fig:patronCeleste}). La única excepción deliberada es el like, que sigue el rojo del corazón ya establecido por otras redes sociales, aprovechando un patrón que el usuario reconoce sin necesidad de aprenderlo.
 
 \begin{figure}[H]
 \centering
@@ -170,28 +226,9 @@ Scubex mantiene un lenguaje visual coherente a lo largo de toda la interfaz. Los
 \caption{Color celeste como indicador de elemento activo o acción disponible\label{fig:patronCeleste}}
 \end{figure}
 
+\subsection{Flujo y experiencia}
+\label{sec:manual-ux}
+
 Las transiciones entre pantallas se realizan mediante una animación de ola que recorre la pantalla de lado a lado. Su velocidad es configurable desde el perfil del usuario: la opción rápida reduce la duración al mínimo para quienes prefieren una navegación más directa.
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Casos de uso}
-\label{sec:manual-casos}
-% ─────────────────────────────────────────────────────────────────────────────
-
-\subsection{Explorador: uso centrado en información de la zona}
-\label{sec:caso-explorador}
-
-% TODO: Usuario que busca un lugar, escanea la fauna, consulta las condiciones climáticas y decide si bucear.
-% TODO: Flujo: PlaceSearch → clic en mapa → ajuste de radio → escaneo → revisión de especies → revisión del panel climático.
-
-\subsection{Social: uso centrado en la comunidad}
-\label{sec:caso-social}
-
-% TODO: Usuario que entra a ver publicaciones recientes, interactúa (likes, comentarios con menciones), sigue a un buceador, revisa notificaciones y guarda publicaciones.
-% TODO: Flujo: mapa con marcadores → detalle → like → comentario con @mención → perfil del autor → follow → campana de notificaciones → guardados en perfil.
-
-\subsection{El usuario avanzado: todos los microsistemas en marcha}
-\label{sec:caso-avanzado}
-
-% TODO: Sesión en la que confluyen varios sistemas simultáneamente.
-% TODO: Ilustrar: caché de especies (segunda consulta en la misma zona es instantánea), actualización optimista de likes (contador sube antes de que el servidor confirme), deduplicación de notificaciones (un comentario con mención no genera dos avisos), polling de notificaciones en segundo plano mientras se navega, geocodificación inversa al publicar.
-% TODO: Objetivo: mostrar que hay más cosas funcionando de las que el usuario percibe.
+Las acciones que dependen del servidor, como el like o el guardado, se reflejan en la interfaz antes de que llegue la confirmación: el contador sube y el icono cambia de estado al instante, sin esperar la respuesta. Si algo falla, la interfaz revierte el cambio de forma silenciosa. El resultado es que la aplicación se siente rápida incluso con conexiones lentas.

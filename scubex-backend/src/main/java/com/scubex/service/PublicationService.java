@@ -2,7 +2,11 @@ package com.scubex.service;
 
 import com.scubex.model.Publication;
 import com.scubex.model.User;
+import com.scubex.repository.CommentRepository;
+import com.scubex.repository.NotificationRepository;
+import com.scubex.repository.PublicationLikeRepository;
 import com.scubex.repository.PublicationRepository;
+import com.scubex.repository.PublicationSaveRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +16,21 @@ import java.util.List;
 public class PublicationService {
 
     private final PublicationRepository publicationRepository;
+    private final CommentRepository commentRepository;
+    private final PublicationLikeRepository likeRepository;
+    private final PublicationSaveRepository saveRepository;
+    private final NotificationRepository notificationRepository;
 
-    public PublicationService(PublicationRepository publicationRepository) {
+    public PublicationService(PublicationRepository publicationRepository,
+                              CommentRepository commentRepository,
+                              PublicationLikeRepository likeRepository,
+                              PublicationSaveRepository saveRepository,
+                              NotificationRepository notificationRepository) {
         this.publicationRepository = publicationRepository;
+        this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
+        this.saveRepository = saveRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public Publication create(Publication publication) {
@@ -55,6 +71,12 @@ public class PublicationService {
         if (existing == null || !existing.getUser().getId().equals(user.getId())) {
             return false;
         }
+        // Borrar hijos antes de borrar la publicación para evitar violaciones de FK
+        List<Long> pubIds = List.of(id);
+        commentRepository.deleteAllByPublicationIdIn(pubIds);
+        likeRepository.deleteAllByPublicationIdIn(pubIds);
+        saveRepository.deleteAllByPublicationIdIn(pubIds);
+        notificationRepository.deleteAllByPublicationId(id);
         publicationRepository.delete(existing);
         return true;
     }
