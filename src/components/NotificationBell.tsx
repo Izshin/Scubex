@@ -138,12 +138,16 @@ export default function NotificationBell({ onFocusPublication }: Props) {
     finally { setLoading(false); }
   }, []);
 
-  // Fetch count on mount and on tab focus
+  // Fetch count on mount, on tab focus, and every 3 minutes
   useEffect(() => {
     fetchCount();
+    const interval = window.setInterval(fetchCount, 3 * 60 * 1000);
     const onVisible = () => { if (document.visibilityState === 'visible') fetchCount(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [fetchCount]);
 
   // Fetch full list when panel opens
