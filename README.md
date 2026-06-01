@@ -49,7 +49,7 @@ La autenticación con Google requiere configurar un cliente OAuth2 en Google Clo
 
 ## Stack tecnológico
 
-El frontend usa React 18 con TypeScript, Vite como bundler, MapLibre GL JS para el mapa, Zustand para el estado global, TanStack Query para la gestión de peticiones y caché, Framer Motion para las animaciones y Tailwind CSS para los estilos.
+El frontend usa React 18 con TypeScript, Vite como bundler, MapLibre GL JS para el mapa, MobX para el estado global, TanStack Query para la gestión de peticiones y caché, Framer Motion para las animaciones y Tailwind CSS para los estilos.
 
 El backend usa Spring Boot con Java 21, Spring Security para la autenticación JWT, Spring Data JPA con Hibernate para la persistencia en PostgreSQL y RestTemplate para las llamadas a las APIs externas. Las pruebas unitarias usan JUnit 5 con Mockito.
 
