@@ -108,6 +108,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const popupWidth = isMobile ? Math.min(320, window.innerWidth - 24) : 400;
   const markerH = 60;
   const gap = 4;
+  const tailH = 10;
 
   const containerH = map?.getContainer().clientHeight ?? window.innerHeight;
   // On mobile: pin the popup just above the controls bar (≈88px from bottom of container)
