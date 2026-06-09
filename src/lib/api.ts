@@ -457,6 +457,60 @@ export async function getSavedPublications(): Promise<PublicationData[]> {
   return response.json();
 }
 
+// Daily forecast item (from Open-Meteo daily API, called directly from frontend)
+export interface DailyForecastItem {
+  date: string; // ISO date: "2025-06-10"
+  weatherCode: number | null;
+  tempMax: number | null;
+  tempMin: number | null;
+  precipProbMax: number | null;
+  windSpeedMax: number | null;
+  waveHeightMax: number | null;
+  divingCondition: 'good' | 'moderate' | 'bad';
+}
+
+function computeDailyCondition(
+  weatherCode: number | null,
+  windSpeedMax: number | null,
+  waveHeightMax: number | null,
+  precipProbMax: number | null,
+): 'good' | 'moderate' | 'bad' {
+  if (weatherCode !== null && [95, 96, 99].includes(weatherCode)) return 'bad';
+  if (windSpeedMax !== null && windSpeedMax > 40) return 'bad';
+  if (waveHeightMax !== null && waveHeightMax > 2.5) return 'bad';
+  let score = 0, weight = 0;
+  if (waveHeightMax !== null) { weight += 3; score += (waveHeightMax < 0.5 ? 2 : waveHeightMax < 1.5 ? 1 : 0) * 3; }
+  if (windSpeedMax !== null) { weight += 2; score += (windSpeedMax < 15 ? 2 : windSpeedMax < 30 ? 1 : 0) * 2; }
+  if (precipProbMax !== null) { weight += 1; score += (precipProbMax < 20 ? 2 : precipProbMax < 60 ? 1 : 0); }
+  if (weatherCode !== null) {
+    weight += 2;
+    score += (weatherCode === 95 || weatherCode === 96 || weatherCode === 99 ? 0 : weatherCode >= 61 ? 1 : 2) * 2;
+  }
+  if (weight === 0) return 'moderate';
+  const avg = score / weight;
+  return avg >= 1.5 ? 'good' : avg >= 0.8 ? 'moderate' : 'bad';
+}
+
+export async function getDailyForecast(lat: number, lng: number): Promise<DailyForecastItem[]> {
+  const [forecastRes, marineRes] = await Promise.allSettled([
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto&forecast_days=7&wind_speed_unit=kmh`).then(r => r.json()),
+    fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&daily=wave_height_max&timezone=auto&forecast_days=7`).then(r => r.json()),
+  ]);
+  const forecast = forecastRes.status === 'fulfilled' ? forecastRes.value?.daily : null;
+  const marine = marineRes.status === 'fulfilled' ? marineRes.value?.daily : null;
+  if (!forecast?.time) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (forecast.time as string[]).map((date: string, i: number) => {
+    const weatherCode = forecast.weather_code?.[i] ?? null;
+    const tempMax = forecast.temperature_2m_max?.[i] ?? null;
+    const tempMin = forecast.temperature_2m_min?.[i] ?? null;
+    const precipProbMax = forecast.precipitation_probability_max?.[i] ?? null;
+    const windSpeedMax = forecast.wind_speed_10m_max?.[i] ?? null;
+    const waveHeightMax = marine?.wave_height_max?.[i] ?? null;
+    return { date, weatherCode, tempMax, tempMin, precipProbMax, windSpeedMax, waveHeightMax, divingCondition: computeDailyCondition(weatherCode, windSpeedMax, waveHeightMax, precipProbMax) };
+  });
+}
+
 // Weather types
 export interface WeatherData {
   // Atmospheric

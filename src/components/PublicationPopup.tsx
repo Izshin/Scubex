@@ -106,14 +106,17 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
 
   const isMobile = window.innerWidth < 640;
   const popupWidth = isMobile ? Math.min(320, window.innerWidth - 24) : 400;
-  const tailH = 10;
   const markerH = 60;
   const gap = 4;
 
-  // Anchor at fixed bottom point above marker — card grows upward from here
-  const bottomAnchor = screenPos.y - markerH - gap;
+  const containerH = map?.getContainer().clientHeight ?? window.innerHeight;
+  // On mobile: pin the popup just above the controls bar (≈88px from bottom of container)
+  // On desktop: anchor above the marker pin
+  const bottomAnchor = isMobile
+    ? containerH - 88
+    : screenPos.y - markerH - gap;
 
-  // On mobile keep popup horizontally within viewport
+  // Keep popup horizontally within viewport
   const minLeft = 8;
   const maxLeft = window.innerWidth - popupWidth - 8;
   const rawLeft = screenPos.x - popupWidth / 2;
