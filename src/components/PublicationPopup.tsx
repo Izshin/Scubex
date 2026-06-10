@@ -8,7 +8,7 @@ interface PublicationPopupProps {
   lat: number;
   lng: number;
   map: Map | null;
-  onSubmit: (data: { title: string; description: string; imageUrl: string }) => void;
+  onSubmit: (data: { title: string; description: string; imageUrl: string; isPrivate: boolean }) => void;
   onClose: () => void;
   isLoading?: boolean;
 }
@@ -23,6 +23,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [placeName, setPlaceName] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const prevImagePreviewRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
@@ -115,7 +116,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
       }
     }
 
-    onSubmit({ title: title.trim(), description: description.trim(), imageUrl });
+    onSubmit({ title: title.trim(), description: description.trim(), imageUrl, isPrivate });
   };
 
   if (!screenPos) return null;
@@ -231,6 +232,21 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
             )}
           </div>
           {imageError && <p className="text-xs text-red-500 -mt-1">{imageError}</p>}
+          <div className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-700">Publicación privada</span>
+              <span className="text-[11px] text-gray-500">{isPrivate ? 'Solo tu la ves' : 'Visible para todos'}</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPrivate}
+              onClick={() => setIsPrivate(v => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${isPrivate ? 'bg-cyan-500' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isPrivate ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
           <div className="flex gap-2 pt-1">
             <button
               type="button"

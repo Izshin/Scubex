@@ -22,6 +22,7 @@ const Profile = observer(function Profile() {
   const [pictureInput, setPictureInput] = useState('');
   const [pictureFile, setPictureFile] = useState<File | null>(null);
   const [picturePreview, setPicturePreview] = useState('');
+  const [accountPrivateInput, setAccountPrivateInput] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
   const [pictureError, setPictureError] = useState('');
@@ -91,6 +92,7 @@ const Profile = observer(function Profile() {
     setNameInput(user.name);
     setPictureInput(user.picture);
     setPicturePreview(user.picture);
+    setAccountPrivateInput(Boolean(profileData?.accountPrivate ?? user.accountPrivate));
     setPictureFile(null);
     setEditing(true);
   };
@@ -127,7 +129,7 @@ const Profile = observer(function Profile() {
       }
       setUploading(false);
     }
-    await userStore.updateProfile(nameInput, finalPicture);
+    await userStore.updateProfile(nameInput, finalPicture, accountPrivateInput);
     setEditing(false);
     // Refresh profile data after edit
     getPublicProfile(user.email).then(setProfileData).catch(() => {});
@@ -219,6 +221,23 @@ const Profile = observer(function Profile() {
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white text-sm placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                     placeholder="Tu nombre"
                   />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-white/20 bg-white/10 px-4 py-2">
+                  <div className="flex flex-col">
+                    <span className="text-white text-sm">Cuenta privada</span>
+                    <span className="text-[11px] text-white/50">{accountPrivateInput ? 'Solo tu ves tus publicaciones' : 'Perfil visible para todos'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={accountPrivateInput}
+                    onClick={() => setAccountPrivateInput(v => !v)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 ${accountPrivateInput ? 'bg-cyan-400' : 'bg-white/25'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-200 ${accountPrivateInput ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
                 </div>
               </div>
 

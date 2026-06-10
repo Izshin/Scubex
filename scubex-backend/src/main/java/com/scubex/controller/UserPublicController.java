@@ -60,22 +60,23 @@ public class UserPublicController {
             return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         }
 
-        List<Publication> publications = publicationService.getByUser(user);
+        User me = getOptionalUser(auth);
+        boolean isOwn = me != null && me.getId().equals(user.getId());
+        List<Publication> publications = publicationService.getByUserVisibleTo(user, me);
         long followerCount = followService.getFollowerCount(user.getId());
         long followingCount = followService.getFollowingCount(user.getId());
 
         boolean isFollowing = false;
-        if (auth != null) {
-            User me = userService.findByGoogleId(auth.getName());
-            if (me != null) {
-                isFollowing = followService.isFollowing(me.getId(), user.getId());
-            }
+        if (me != null) {
+            isFollowing = followService.isFollowing(me.getId(), user.getId());
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("name", user.getDisplayName() != null ? user.getDisplayName() : "");
         result.put("email", user.getEmail());
         result.put("picture", user.getDisplayPicture() != null ? user.getDisplayPicture() : "");
+        result.put("accountPrivate", Boolean.TRUE.equals(user.getAccountPrivate()));
+        result.put("isOwnProfile", isOwn);
         result.put("followerCount", followerCount);
         result.put("followingCount", followingCount);
         result.put("isFollowing", isFollowing);
@@ -128,7 +129,11 @@ public class UserPublicController {
     public ResponseEntity<?> getSaved(Authentication auth) {
         User me = authHelper.getUser(auth);
         List<PublicationSave> saves = interactionService.getSavedByUser(me.getId());
-        return ResponseEntity.ok(saves.stream().map(s -> pubToDto(s.getPublication())).toList());
+        return ResponseEntity.ok(saves.stream()
+                .map(PublicationSave::getPublication)
+                .filter(p -> publicationService.canView(p, me))
+                .map(this::pubToDto)
+                .toList());
     }
 
     private Map<String, Object> userToDto(User u) {
@@ -148,6 +153,7 @@ public class UserPublicController {
         dto.put("latitude", p.getLatitude());
         dto.put("longitude", p.getLongitude());
         dto.put("createdAt", p.getCreatedAt().toString());
+        dto.put("isPrivate", Boolean.TRUE.equals(p.getIsPrivate()));
         dto.put("likeCount", interactionService.getLikeCount(p.getId()));
         dto.put("commentCount", interactionService.getCommentCount(p.getId()));
         dto.put("author", Map.of(
@@ -156,5 +162,10 @@ public class UserPublicController {
                 "picture", p.getUser().getDisplayPicture() != null ? p.getUser().getDisplayPicture() : ""
         ));
         return dto;
+    }
+
+    private User getOptionalUser(Authentication auth) {
+        if (auth == null || auth.getName() == null) return null;
+        return userService.findByGoogleId(auth.getName());
     }
 }

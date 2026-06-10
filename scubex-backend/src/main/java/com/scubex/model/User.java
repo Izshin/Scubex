@@ -31,6 +31,10 @@ public class User {
 
     private String customPictureUrl;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean accountPrivate = false;
+
     /** Returns customName if set, otherwise the Google name. */
     public String getDisplayName() {
         return customName != null && !customName.isBlank() ? customName : name;

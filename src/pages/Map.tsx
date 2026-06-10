@@ -172,7 +172,7 @@ const MapPage = observer(() => {
     mapStore.setScanRadius(radius);
   }, [mapStore]);
 
-  const handlePublish = useCallback(async (data: { title: string; description: string; imageUrl: string }) => {
+  const handlePublish = useCallback(async (data: { title: string; description: string; imageUrl: string; isPrivate?: boolean }) => {
     if (!publishCoords) return;
     const result = await publicationStore.addPublication({
       ...data,

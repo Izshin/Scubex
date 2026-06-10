@@ -24,7 +24,7 @@ interface PublicationDetailProps {
   isOwner: boolean;
   onClose: () => void;
   hidden?: boolean;
-  onEdit?: (id: number, data: { title: string; description?: string; imageUrl?: string }) => Promise<unknown>;
+  onEdit?: (id: number, data: { title: string; description?: string; imageUrl?: string; isPrivate?: boolean }) => Promise<unknown>;
   onDelete?: (id: number) => Promise<unknown>;
   onCountsChange?: (likeCount: number, commentCount: number) => void;
 }
@@ -70,6 +70,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState('');
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editImageError, setEditImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -177,6 +178,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
     setEditDescription(publication.description || '');
     setEditImageUrl(publication.imageUrl || '');
     setEditImagePreview(publication.imageUrl || '');
+    setEditIsPrivate(Boolean(publication.isPrivate));
     setEditImageFile(null);
     setEditing(true);
     setConfirmDelete(false);
@@ -226,6 +228,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
       title: editTitle.trim(),
       description: editDescription.trim() || undefined,
       imageUrl: finalImageUrl || undefined,
+      isPrivate: editIsPrivate,
     });
     setSaving(false);
     setEditing(false);
@@ -289,6 +292,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             {/* Body */}
             <div className="p-4">
               <h3 className="font-semibold text-gray-800 text-sm leading-tight">{publication.title}</h3>
+              {publication.isPrivate && (
+                <span className="inline-flex mt-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Privada</span>
+              )}
               {publication.description && (
                 <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{publication.description}</p>
               )}
@@ -458,6 +464,15 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                     />
                     {editImageError && <p className="text-xs text-red-500 mt-1">{editImageError}</p>}
                   </div>
+                  <label className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2">
+                    <span className="text-sm text-gray-700">Publicación privada</span>
+                    <input
+                      type="checkbox"
+                      checked={editIsPrivate}
+                      onChange={(e) => setEditIsPrivate(e.target.checked)}
+                      className="h-4 w-4 accent-cyan-600"
+                    />
+                  </label>
                 </div>
 
                 {/* Delete button */}
@@ -513,6 +528,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             ) : (
               <>
                 <h2 className="text-lg font-bold text-gray-800">{publication.title}</h2>
+                {publication.isPrivate && (
+                  <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Publicación privada</span>
+                )}
                 {publication.description && (
                   <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{publication.description}</p>
                 )}

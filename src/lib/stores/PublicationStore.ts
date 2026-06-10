@@ -34,6 +34,7 @@ class PublicationStore {
     imageUrl?: string;
     latitude: number;
     longitude: number;
+    isPrivate?: boolean;
   }) {
     this.isLoading = true;
     this.error = null;
@@ -75,7 +76,7 @@ class PublicationStore {
     );
   }
 
-  async editPublication(id: number, data: { title: string; description?: string; imageUrl?: string }) {
+  async editPublication(id: number, data: { title: string; description?: string; imageUrl?: string; isPrivate?: boolean }) {
     try {
       const updated = await updatePublication(id, data);
       runInAction(() => {

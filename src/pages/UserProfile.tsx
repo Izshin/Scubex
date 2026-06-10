@@ -137,6 +137,9 @@ export default function UserProfile() {
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold">{profile.name}</h1>
           <p className="text-white/60 text-sm mt-1">{profile.email}</p>
+          {profile.accountPrivate && !profile.isOwnProfile && (
+            <span className="inline-flex mt-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80">Cuenta privada</span>
+          )}
         </div>
 
         {/* Stats */}
@@ -237,7 +240,11 @@ export default function UserProfile() {
       )}
 
       {profile.publications.length === 0 && (
-        <p className="mt-10 text-white/40 text-sm">Este usuario aún no tiene publicaciones.</p>
+        <p className="mt-10 text-white/40 text-sm">
+          {profile.accountPrivate && !profile.isOwnProfile
+            ? 'Esta cuenta es privada y no muestra publicaciones.'
+            : 'Este usuario aún no tiene publicaciones.'}
+        </p>
       )}
 
       {/* Followers / Following modal */}

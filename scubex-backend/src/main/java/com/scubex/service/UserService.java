@@ -59,11 +59,14 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
-    public User updateProfile(String googleId, String customName, String customPictureUrl) {
+    public User updateProfile(String googleId, String customName, String customPictureUrl, Boolean accountPrivate) {
         User user = userRepository.findByGoogleId(googleId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setCustomName(customName);
         user.setCustomPictureUrl(customPictureUrl);
+        if (accountPrivate != null) {
+            user.setAccountPrivate(accountPrivate);
+        }
         return userRepository.save(user);
     }
 

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PublicationService {
@@ -41,16 +42,46 @@ public class PublicationService {
         return publicationRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    public List<Publication> getAllVisibleTo(User requester) {
+        return publicationRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(p -> canView(p, requester))
+                .toList();
+    }
+
     public List<Publication> getByUser(User user) {
         return publicationRepository.findByUser(user);
+    }
+
+    public List<Publication> getByUserVisibleTo(User user, User requester) {
+        if (isOwner(user, requester)) {
+            return publicationRepository.findByUser(user);
+        }
+        if (Boolean.TRUE.equals(user.getAccountPrivate())) {
+            return List.of();
+        }
+        return publicationRepository.findByUser(user).stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsPrivate()))
+                .toList();
     }
 
     public List<Publication> getInArea(Double latMin, Double latMax, Double lngMin, Double lngMax) {
         return publicationRepository.findByLatitudeBetweenAndLongitudeBetween(latMin, latMax, lngMin, lngMax);
     }
 
+    public List<Publication> getInAreaVisibleTo(Double latMin, Double latMax, Double lngMin, Double lngMax, User requester) {
+        return publicationRepository.findByLatitudeBetweenAndLongitudeBetween(latMin, latMax, lngMin, lngMax).stream()
+                .filter(p -> canView(p, requester))
+                .toList();
+    }
+
     public Publication getById(Long id) {
         return publicationRepository.findById(id).orElse(null);
+    }
+
+    public Publication getByIdVisibleTo(Long id, User requester) {
+        Publication p = publicationRepository.findById(id).orElse(null);
+        if (p == null) return null;
+        return canView(p, requester) ? p : null;
     }
 
     @Transactional
@@ -62,6 +93,7 @@ public class PublicationService {
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());
         existing.setImageUrl(updated.getImageUrl());
+        existing.setIsPrivate(updated.getIsPrivate() != null ? updated.getIsPrivate() : false);
         return publicationRepository.save(existing);
     }
 
@@ -79,5 +111,16 @@ public class PublicationService {
         notificationRepository.deleteAllByPublicationId(id);
         publicationRepository.delete(existing);
         return true;
+    }
+
+    public boolean canView(Publication p, User requester) {
+        if (p == null || p.getUser() == null) return false;
+        if (isOwner(p.getUser(), requester)) return true;
+        if (Boolean.TRUE.equals(p.getUser().getAccountPrivate())) return false;
+        return !Boolean.TRUE.equals(p.getIsPrivate());
+    }
+
+    private boolean isOwner(User owner, User requester) {
+        return owner != null && requester != null && Objects.equals(owner.getId(), requester.getId());
     }
 }

@@ -31,17 +31,19 @@ public class ProfileController {
                 "email", user.getEmail(),
                 "picture", user.getDisplayPicture() != null ? user.getDisplayPicture() : "",
                 "customName", user.getCustomName() != null ? user.getCustomName() : "",
-                "customPictureUrl", user.getCustomPictureUrl() != null ? user.getCustomPictureUrl() : ""
+            "customPictureUrl", user.getCustomPictureUrl() != null ? user.getCustomPictureUrl() : "",
+            "accountPrivate", Boolean.TRUE.equals(user.getAccountPrivate())
         ));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, Authentication auth) {
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body, Authentication auth) {
         User user = authHelper.getUser(auth);
-        String customName = body.get("customName");
-        String customPictureUrl = body.get("customPictureUrl");
+        String customName = body.get("customName") != null ? body.get("customName").toString() : null;
+        String customPictureUrl = body.get("customPictureUrl") != null ? body.get("customPictureUrl").toString() : null;
+        Boolean accountPrivate = body.get("accountPrivate") instanceof Boolean b ? b : null;
 
-        User updated = userService.updateProfile(user.getGoogleId(), customName, customPictureUrl);
+        User updated = userService.updateProfile(user.getGoogleId(), customName, customPictureUrl, accountPrivate);
         String newToken = jwtService.generateToken(updated);
 
         return ResponseEntity.ok(Map.of(
@@ -49,7 +51,8 @@ public class ProfileController {
                 "user", Map.of(
                         "name", updated.getDisplayName() != null ? updated.getDisplayName() : "",
                         "email", updated.getEmail(),
-                        "picture", updated.getDisplayPicture() != null ? updated.getDisplayPicture() : ""
+                    "picture", updated.getDisplayPicture() != null ? updated.getDisplayPicture() : "",
+                    "accountPrivate", Boolean.TRUE.equals(updated.getAccountPrivate())
                 )
         ));
     }

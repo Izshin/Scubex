@@ -33,6 +33,10 @@ public class Publication {
 
     private String imageUrl;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isPrivate = false;
+
     @Column(nullable = false)
     private Double latitude;
 

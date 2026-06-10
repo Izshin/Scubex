@@ -70,11 +70,11 @@ export async function loginWithGoogle(credential: string): Promise<{ token: stri
   return response.json();
 }
 
-export async function updateProfile(customName: string, customPictureUrl: string): Promise<{ token: string; user: { name: string; email: string; picture: string } }> {
+export async function updateProfile(customName: string, customPictureUrl: string, accountPrivate: boolean): Promise<{ token: string; user: { name: string; email: string; picture: string; accountPrivate?: boolean } }> {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-    body: JSON.stringify({ customName, customPictureUrl }),
+    body: JSON.stringify({ customName, customPictureUrl, accountPrivate }),
   });
   if (!response.ok) {
     throw new Error(`Profile update failed: ${response.status}`);
@@ -228,6 +228,7 @@ export interface PublicationData {
   createdAt: string;
   likeCount: number;
   commentCount: number;
+  isPrivate?: boolean;
   author: {
     email: string;
     name: string;
@@ -241,6 +242,7 @@ export async function createPublication(data: {
   imageUrl?: string;
   latitude: number;
   longitude: number;
+  isPrivate?: boolean;
 }): Promise<PublicationData> {
   const response = await fetch(`${API_BASE_URL}/api/publications`, {
     method: 'POST',
@@ -267,7 +269,7 @@ export async function uploadImage(file: File): Promise<string> {
 export async function getPublications(): Promise<PublicationData[]> {
   const response = await fetch(`${API_BASE_URL}/api/publications`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });
   if (!response.ok) throw new Error(`Fetch publications failed: ${response.status}`);
   return response.json();
@@ -282,7 +284,7 @@ export async function getPublicationsInArea(latMin: number, latMax: number, lngM
   });
   const response = await fetch(`${API_BASE_URL}/api/publications/area?${params}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });
   if (!response.ok) throw new Error(`Fetch area publications failed: ${response.status}`);
   return response.json();
@@ -296,7 +298,7 @@ export async function deletePublication(id: number): Promise<void> {
   if (!response.ok) throw new Error(`Delete publication failed: ${response.status}`);
 }
 
-export async function updatePublication(id: number, data: { title: string; description?: string; imageUrl?: string }): Promise<PublicationData> {
+export async function updatePublication(id: number, data: { title: string; description?: string; imageUrl?: string; isPrivate?: boolean }): Promise<PublicationData> {
   const response = await fetch(`${API_BASE_URL}/api/publications/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -408,6 +410,8 @@ export interface PublicProfileData {
   followerCount: number;
   followingCount: number;
   isFollowing: boolean;
+  accountPrivate?: boolean;
+  isOwnProfile?: boolean;
   publicationCount: number;
   publications: PublicationData[];
 }

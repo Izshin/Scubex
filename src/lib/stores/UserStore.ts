@@ -6,6 +6,7 @@ export interface UserData {
   email: string;
   picture: string;
   token: string;
+  accountPrivate?: boolean;
 }
 
 class UserStore {
@@ -47,11 +48,11 @@ class UserStore {
     return this.user?.token ?? null;
   }
 
-  async updateProfile(customName: string, customPictureUrl: string) {
+  async updateProfile(customName: string, customPictureUrl: string, accountPrivate: boolean) {
     this.profileLoading = true;
     this.profileError = null;
     try {
-      const data = await updateProfile(customName, customPictureUrl);
+      const data = await updateProfile(customName, customPictureUrl, accountPrivate);
       runInAction(() => {
         this.setUser({ ...data.user, token: data.token });
         this.profileLoading = false;

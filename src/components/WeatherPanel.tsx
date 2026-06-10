@@ -186,14 +186,14 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
           transition={{ duration: 0.3 }}
         >
           {/* Header: active icon + temp + condition badge + hoy button + controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[2.2px] sm:gap-2">
             <span className="text-2xl leading-none">{activeIcon}</span>
             <span className="text-lg font-bold text-gray-900 whitespace-nowrap">{activeTempLabel}</span>
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{isForecastDay ? styles.labelShort : styles.label}</span>
             {isForecastDay && (
               <button
                 onClick={() => setSelectedDay(0)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500 text-white shadow-sm shadow-cyan-400/40 hover:bg-cyan-600 transition-all flex-shrink-0"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500 text-white shadow-sm shadow-cyan-400/40 hover:bg-cyan-600 transition-all flex-shrink-0 sm:ml-auto"
               >
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
                   <path d="M5 1L2 4L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

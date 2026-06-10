@@ -37,6 +37,7 @@ public class PublicationController {
         String title = (String) body.get("title");
         String description = (String) body.get("description");
         String imageUrl = (String) body.get("imageUrl");
+        Boolean isPrivate = body.get("isPrivate") instanceof Boolean b ? b : false;
         Double latitude = ((Number) body.get("latitude")).doubleValue();
         Double longitude = ((Number) body.get("longitude")).doubleValue();
 
@@ -49,6 +50,7 @@ public class PublicationController {
                 .title(title)
                 .description(description)
                 .imageUrl(imageUrl)
+                .isPrivate(isPrivate)
                 .latitude(latitude)
                 .longitude(longitude)
                 .build();
@@ -58,8 +60,9 @@ public class PublicationController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
-        List<Publication> publications = publicationService.getAll();
+    public ResponseEntity<?> getAll(Authentication auth) {
+        User requester = getOptionalUser(auth);
+        List<Publication> publications = publicationService.getAllVisibleTo(requester);
         return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
     }
 
@@ -68,14 +71,17 @@ public class PublicationController {
             @RequestParam Double latMin,
             @RequestParam Double latMax,
             @RequestParam Double lngMin,
-            @RequestParam Double lngMax) {
-        List<Publication> publications = publicationService.getInArea(latMin, latMax, lngMin, lngMax);
+            @RequestParam Double lngMax,
+            Authentication auth) {
+        User requester = getOptionalUser(auth);
+        List<Publication> publications = publicationService.getInAreaVisibleTo(latMin, latMax, lngMin, lngMax, requester);
         return ResponseEntity.ok(publications.stream().map(this::toDto).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) {
-        Publication publication = publicationService.getById(id);
+    public ResponseEntity<?> getById(@PathVariable Long id, Authentication auth) {
+        User requester = getOptionalUser(auth);
+        Publication publication = publicationService.getByIdVisibleTo(id, requester);
         if (publication == null) {
             return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
         }
@@ -97,6 +103,7 @@ public class PublicationController {
                 .title((String) body.get("title"))
                 .description((String) body.get("description"))
                 .imageUrl((String) body.get("imageUrl"))
+            .isPrivate(body.get("isPrivate") instanceof Boolean b ? b : false)
                 .build();
 
         Publication result = publicationService.update(id, updated, user);
@@ -126,6 +133,7 @@ public class PublicationController {
         dto.put("latitude", p.getLatitude());
         dto.put("longitude", p.getLongitude());
         dto.put("createdAt", p.getCreatedAt().toString());
+        dto.put("isPrivate", Boolean.TRUE.equals(p.getIsPrivate()));
         dto.put("author", Map.of(
                 "email", p.getUser().getEmail() != null ? p.getUser().getEmail() : "",
                 "name", p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : "",
@@ -134,5 +142,10 @@ public class PublicationController {
         dto.put("likeCount", interactionService.getLikeCount(p.getId()));
         dto.put("commentCount", interactionService.getCommentCount(p.getId()));
         return dto;
+    }
+
+    private User getOptionalUser(Authentication auth) {
+        if (auth == null || auth.getName() == null) return null;
+        return userService.findByGoogleId(auth.getName());
     }
 }
