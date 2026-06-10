@@ -100,6 +100,9 @@ public class SpeciesService {
                             .latitude(cs.getLatitude())
                             .longitude(cs.getLongitude())
                             .numberOfOccurrences(cs.getNumberOfOccurrences())
+                            .description(cs.getDescription())
+                            .wikipediaUrl(cs.getWikipediaUrl())
+                            .invasive(cs.getInvasive())
                             .depthMin(cs.getDepthMin())
                             .depthMax(cs.getDepthMax())
                             .tempMin(cs.getTempMin())
@@ -259,7 +262,8 @@ public class SpeciesService {
         Integer depthMin, Integer depthMax,
         Integer tempMin,  Integer tempMax,
         Integer firstYear, Integer lastYear,
-        Integer globalRecords, String iucnCategory
+        Integer globalRecords, String iucnCategory,
+        Boolean invasive
     ) {}
 
     @SuppressWarnings("unchecked")
@@ -349,12 +353,33 @@ public class SpeciesService {
             return null;
         }, executor);
 
-        // Wait for all 3 in parallel
-        CompletableFuture.allOf(statsFuture, envFuture, iucnFuture).join();
+        // --- call 4: /checklist?wrims=true (invasive species) ---
+        CompletableFuture<Boolean> invasiveFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                URI uri = UriComponentsBuilder.fromUriString(obisApiUrl + "/checklist")
+                        .queryParam("scientificname", scientificName)
+                        .queryParam("wrims", true)
+                        .queryParam("size", 1)
+                        .build().encode().toUri();
+                ResponseEntity<Map> resp = restTemplate.getForEntity(uri, Map.class);
+                if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                    if (resp.getBody().get("results") instanceof List<?> results) {
+                        return !results.isEmpty();
+                    }
+                }
+            } catch (Exception e) {
+                // ignore wrims error
+            }
+            return false;
+        }, executor);
+
+        // Wait for all 4 in parallel
+        CompletableFuture.allOf(statsFuture, envFuture, iucnFuture, invasiveFuture).join();
 
         int[] stats = statsFuture.join();
         int[] env   = envFuture.join();
         String iucnCategory = iucnFuture.join();
+        Boolean invasive = invasiveFuture.join();
 
         Integer globalRecords = stats[0] >= 0 ? stats[0] : null;
         Integer firstYear     = stats[1] >= 0 ? stats[1] : null;
@@ -364,7 +389,7 @@ public class SpeciesService {
         Integer tempMin       = env[2] != Integer.MAX_VALUE ? env[2] : null;
         Integer tempMax       = env[3] != Integer.MIN_VALUE ? env[3] : null;
 
-        return new ObisEcoData(depthMin, depthMax, tempMin, tempMax, firstYear, lastYear, globalRecords, iucnCategory);
+        return new ObisEcoData(depthMin, depthMax, tempMin, tempMax, firstYear, lastYear, globalRecords, iucnCategory, invasive);
     }
 
     private INaturalistResponse callINaturalistApi(String scientificName) {
@@ -375,6 +400,7 @@ public class SpeciesService {
                     .queryParam("per_page", 1) // We only need the first result
                     .queryParam("order", "desc")
                     .queryParam("order_by", "observations_count") // Most observed first
+                    .queryParam("locale", "es") // Spanish common names + Spanish Wikipedia URL
                     .build()
                     .encode()
                     .toUri();
@@ -512,8 +538,12 @@ public class SpeciesService {
             if (firstResult.getPhotoUrl() != null) {
                 species.setPhotoUrl(firstResult.getPhotoUrl());
             }
-        } else {
-            // no iNaturalist data for this species
+            if (firstResult.getWikipediaSummary() != null) {
+                species.setDescription(firstResult.getWikipediaSummary().replaceAll("<[^>]*>", "").trim());
+            }
+            if (firstResult.getWikipediaUrl() != null) {
+                species.setWikipediaUrl(firstResult.getWikipediaUrl());
+            }
         }
 
         // Eco-data from OBIS statistics
@@ -526,6 +556,7 @@ public class SpeciesService {
             species.setLastYear(eco.lastYear());
             species.setGlobalRecords(eco.globalRecords());
             species.setIucnCategory(eco.iucnCategory());
+            species.setInvasive(eco.invasive() != null && eco.invasive() ? true : null);
         }
 
         return species;
@@ -544,6 +575,9 @@ public class SpeciesService {
         }
         species.setCommonName(enrichment.getCommonName());
         species.setPhotoUrl(enrichment.getPhotoUrl());
+        species.setDescription(enrichment.getDescription());
+        species.setWikipediaUrl(enrichment.getWikipediaUrl());
+        species.setInvasive(enrichment.getInvasive());
         species.setDepthMin(enrichment.getDepthMin());
         species.setDepthMax(enrichment.getDepthMax());
         species.setTempMin(enrichment.getTempMin());
@@ -560,17 +594,25 @@ public class SpeciesService {
         try {
             String commonName = null;
             String photoUrl = null;
+            String description = null;
             if (hasInatData && iNatData != null
                     && iNatData.getResults() != null && !iNatData.getResults().isEmpty()) {
                 INaturalistInfo first = iNatData.getResults().get(0);
                 commonName = first.getPreferred_common_name();
                 photoUrl = first.getPhotoUrl();
+                if (first.getWikipediaSummary() != null) {
+                    description = first.getWikipediaSummary().replaceAll("<[^>]*>", "").trim();
+                }
             }
             speciesEnrichmentCacheRepository.save(SpeciesEnrichmentCache.builder()
                     .scientificName(scientificName)
                     .hasInatData(hasInatData)
                     .commonName(commonName)
                     .photoUrl(photoUrl)
+                    .description(description)
+                    .wikipediaUrl(hasInatData && iNatData != null && !iNatData.getResults().isEmpty()
+                            ? iNatData.getResults().get(0).getWikipediaUrl() : null)
+                    .invasive(ecoData != null ? ecoData.invasive() : null)
                     .depthMin(ecoData != null ? ecoData.depthMin() : null)
                     .depthMax(ecoData != null ? ecoData.depthMax() : null)
                     .tempMin(ecoData != null ? ecoData.tempMin() : null)
@@ -605,6 +647,9 @@ public class SpeciesService {
                             .latitude(sr.getLatitude())
                             .longitude(sr.getLongitude())
                             .numberOfOccurrences(sr.getNumberOfOccurrences())
+                            .description(sr.getDescription())
+                            .wikipediaUrl(sr.getWikipediaUrl())
+                            .invasive(sr.getInvasive())
                             .depthMin(sr.getDepthMin())
                             .depthMax(sr.getDepthMax())
                             .tempMin(sr.getTempMin())

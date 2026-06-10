@@ -121,7 +121,10 @@ const MapPage = observer(() => {
     const lng = Number(lngLat.lng.toFixed(6));
 
     if (mode === 'publish') {
-      setSelectedPublication(null);
+      // Close publication detail if open (don't also open publish popup)
+      if (selectedPublication) { setSelectedPublication(null); return; }
+      // Close publish popup if clicking outside it
+      if (publishCoords) { setPublishCoords(null); return; }
       if (!userStore.isLoggedIn) {
         setLoginPromptCoords({ lat, lng });
         return;
@@ -139,11 +142,13 @@ const MapPage = observer(() => {
         });
       }
     } else {
-      if (isScanning) return; // don't move scan center while scan in progress
+      // Scan mode: close publication if open, and also set scan center
+      if (selectedPublication) setSelectedPublication(null);
+      if (isScanning) return;
       mapStore.setScanCenter({ lat, lng });
       weatherStore.fetchWeather(lat, lng);
     }
-  }, [mapStore, weatherStore, isScanning, mode, userStore.isLoggedIn]);
+  }, [mapStore, weatherStore, isScanning, mode, userStore.isLoggedIn, selectedPublication, publishCoords]);
 
   // Scan button triggers the actual API call
   const handleScan = useCallback(async () => {
@@ -258,29 +263,36 @@ const MapPage = observer(() => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
           >
-            {/* Mode toggle — always visible */}
-            <div className="flex bg-gray-100 rounded-lg p-px">
-              <button
-                onClick={() => { setMode('scan'); setPublishCoords(null); setLoginPromptCoords(null); }}
+            {/* Mode toggle — single tap on mobile, individual buttons on desktop */}
+            <button
+              onClick={() => {
+                const next = mode === 'scan' ? 'publish' : 'scan';
+                setMode(next);
+                if (next === 'scan') { setPublishCoords(null); }
+                setLoginPromptCoords(null);
+              }}
+              className="flex bg-gray-100 rounded-lg p-px"
+              title={mode === 'scan' ? 'Cambiar a Publicar' : 'Cambiar a Escanear'}
+            >
+              <span
                 className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                   mode === 'scan'
                     ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500'
                 }`}
               >
                 Escanear
-              </button>
-              <button
-                onClick={() => { setMode('publish'); setLoginPromptCoords(null); }}
+              </span>
+              <span
                 className={`px-3 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200 ${
                   mode === 'publish'
                     ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 -m-px rounded-lg'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500'
                 }`}
               >
                 Publicar
-              </button>
-            </div>
+              </span>
+            </button>
 
             {/* Divider */}
             <div className="w-px h-8 bg-gray-300 hidden sm:block" />
@@ -342,8 +354,7 @@ const MapPage = observer(() => {
           {/* Hint overlay */}
           {mode === 'scan' && !mapStore.scanCenter && !isScanning && !speciesStore.hasSpecies && (
             <motion.div
-              className="absolute bottom-40 sm:bottom-24 left-1/2 -translate-x-1/2 sm:left-8 sm:translate-x-0 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
-              initial={{ opacity: 0, y: -10 }}
+              className="absolute bottom-28 sm:bottom-24 right-3 left-auto max-w-[220px] sm:left-8 sm:right-auto sm:max-w-none bg-white/60 backdrop-blur-sm text-black text-sm px-4 py-2 rounded-xl z-10 pointer-events-none"
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
             >
@@ -356,7 +367,7 @@ const MapPage = observer(() => {
             {scanToastName && (
               <motion.button
                 key="scan-toast"
-                className={`absolute ${mode === 'publish' ? 'bottom-24' : 'bottom-40'} sm:bottom-24 left-3 sm:left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-800 text-xs px-3 py-2 rounded-2xl shadow-lg border border-gray-200/60 hover:bg-white transition-all`}
+                className={`absolute ${mode === 'publish' ? 'bottom-24' : 'bottom-28'} sm:bottom-24 left-3 sm:left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-800 text-xs px-3 py-2 rounded-2xl shadow-lg border border-gray-200/60 hover:bg-white transition-all`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
@@ -470,26 +481,31 @@ const MapPage = observer(() => {
           {/* Selected publication detail */}
           <AnimatePresence>
             {selectedPublication && (
-              <PublicationDetail
+              <motion.div
                 key={selectedPublication.id}
-                publication={selectedPublication}
-                map={mapRef.current?.getMap() ?? null}
-                isOwner={userStore.user?.email === selectedPublication.author.email}
-                hidden={detailHidden}
-                onClose={() => setSelectedPublication(null)}
-                onEdit={async (id, data) => {
-                  const updated = await publicationStore.editPublication(id, data);
-                  if (updated) setSelectedPublication(updated);
-                }}
-                onDelete={async (id) => {
-                  await publicationStore.removePublication(id);
-                  setSelectedPublication(null);
-                }}
-                onCountsChange={(likeCount, commentCount) => {
-                  setSelectedPublication(prev => prev ? { ...prev, likeCount, commentCount } : prev);
-                  publicationStore.updatePublicationCounts(selectedPublication.id, likeCount, commentCount);
-                }}
-              />
+                className="absolute inset-0 pointer-events-none"
+                exit={{ opacity: 0, transition: { duration: 0.18 } }}
+              >
+                <PublicationDetail
+                  publication={selectedPublication}
+                  map={mapRef.current?.getMap() ?? null}
+                  isOwner={userStore.user?.email === selectedPublication.author.email}
+                  hidden={detailHidden}
+                  onClose={() => setSelectedPublication(null)}
+                  onEdit={async (id, data) => {
+                    const updated = await publicationStore.editPublication(id, data);
+                    if (updated) setSelectedPublication(updated);
+                  }}
+                  onDelete={async (id) => {
+                    await publicationStore.removePublication(id);
+                    setSelectedPublication(null);
+                  }}
+                  onCountsChange={(likeCount, commentCount) => {
+                    setSelectedPublication(prev => prev ? { ...prev, likeCount, commentCount } : prev);
+                    publicationStore.updatePublicationCounts(selectedPublication.id, likeCount, commentCount);
+                  }}
+                />
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -509,6 +525,7 @@ const MapPage = observer(() => {
             data={weatherStore.weatherData}
             loading={weatherStore.isLoading}
             error={weatherStore.error}
+            forecast={weatherStore.forecastData}
             hidden={(searchOpen || sidebarOpen) && window.innerWidth < 640}
             onInfoOpen={() => setDetailHidden(true)}
             onInfoClose={() => setDetailHidden(false)}

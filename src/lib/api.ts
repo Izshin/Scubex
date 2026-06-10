@@ -16,6 +16,9 @@ interface BackendSpeciesResponse {
   lastYear?: number;
   globalRecords?: number;
   iucnCategory?: string;
+  description?: string;
+  wikipediaUrl?: string;
+  invasive?: boolean;
 }
 
 // Frontend display types  
@@ -35,6 +38,9 @@ interface FrontendSpeciesData {
   lastYear?: number;
   globalRecords?: number;
   iucnCategory?: string;
+  description?: string;
+  wikipediaUrl?: string;
+  invasive?: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -141,6 +147,9 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         lastYear: species.lastYear,
         globalRecords: species.globalRecords,
         iucnCategory: species.iucnCategory,
+        description: species.description,
+        wikipediaUrl: species.wikipediaUrl,
+        invasive: species.invasive,
       }))
       .sort((a, b) => b.records - a.records);
 
@@ -454,6 +463,29 @@ export async function getSavedPublications(): Promise<PublicationData[]> {
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });
   if (!response.ok) throw new Error(`Get saved failed: ${response.status}`);
+  return response.json();
+}
+
+// Daily forecast item (evaluated server-side by backend)
+export interface DailyForecastItem {
+  date: string;
+  weatherCode: number | null;
+  tempMax: number | null;
+  tempMin: number | null;
+  precipProbMax: number | null;
+  windSpeedMax: number | null;
+  waveHeightMax: number | null;
+  swellHeightMax: number | null;
+  divingCondition: 'good' | 'moderate' | 'bad';
+}
+
+export async function getDailyForecast(lat: number, lng: number): Promise<DailyForecastItem[]> {
+  const params = new URLSearchParams({ lat: lat.toString(), lng: lng.toString() });
+  const response = await fetch(`${API_BASE_URL}/api/weather/forecast?${params}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Forecast API error: ${response.status}`);
   return response.json();
 }
 

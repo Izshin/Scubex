@@ -46,4 +46,11 @@ public class CachedSpecies {
     private Integer lastYear;
     private Integer globalRecords;
     private String iucnCategory;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String wikipediaUrl;
+
+    private Boolean invasive;
 }

@@ -3,6 +3,8 @@ package com.scubex.service;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.scubex.DTO.DailyForecastResponse;
 import com.scubex.DTO.WeatherResponse;
 import com.scubex.model.CachedWeather;
 import com.scubex.model.openmeteo.ForecastApiResponse;
@@ -261,5 +264,109 @@ public class WeatherService {
         } catch (Exception e) {
             // ignore cache save errors
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // 7-day forecast (daily aggregates evaluated server-side)
+    // -------------------------------------------------------------------------
+
+    public List<DailyForecastResponse> getForecast(double lat, double lng) {
+        ForecastApiResponse.DailyForecast atmosphere = callForecastDailyApi(lat, lng);
+        MarineApiResponse.DailyMarine marine = callMarineDailyApi(lat, lng);
+
+        if (atmosphere == null || atmosphere.getTime() == null) return List.of();
+
+        List<DailyForecastResponse> result = new ArrayList<>();
+        for (int i = 0; i < atmosphere.getTime().size(); i++) {
+            Integer weatherCode = getOrNull(atmosphere.getWeatherCode(), i);
+            Double windSpeedMax = getOrNull(atmosphere.getWindSpeedMax(), i);
+            Double waveHeightMax = (marine != null) ? getOrNull(marine.getWaveHeightMax(), i) : null;
+            Double precipProbMax = getOrNull(atmosphere.getPrecipitationProbabilityMax(), i);
+            Double swellHeightMax = (marine != null) ? getOrNull(marine.getSwellWaveHeightMax(), i) : null;
+
+            result.add(DailyForecastResponse.builder()
+                    .date(atmosphere.getTime().get(i))
+                    .weatherCode(weatherCode)
+                    .tempMax(getOrNull(atmosphere.getTemperatureMax(), i))
+                    .tempMin(getOrNull(atmosphere.getTemperatureMin(), i))
+                    .precipProbMax(precipProbMax)
+                    .windSpeedMax(windSpeedMax)
+                    .waveHeightMax(waveHeightMax)
+                    .swellHeightMax(swellHeightMax)
+                    .divingCondition(evaluateDailyCondition(weatherCode, windSpeedMax, waveHeightMax, precipProbMax))
+                    .build());
+        }
+        return result;
+    }
+
+    private ForecastApiResponse.DailyForecast callForecastDailyApi(double lat, double lng) {
+        try {
+            URI uri = UriComponentsBuilder.fromUriString(forecastApiUrl)
+                    .queryParam("latitude", lat)
+                    .queryParam("longitude", lng)
+                    .queryParam("daily", "weather_code,temperature_2m_max,temperature_2m_min,"
+                            + "precipitation_probability_max,wind_speed_10m_max")
+                    .queryParam("timezone", "auto")
+                    .queryParam("forecast_days", 7)
+                    .queryParam("wind_speed_unit", "kmh")
+                    .build()
+                    .encode()
+                    .toUri();
+
+            ResponseEntity<ForecastApiResponse> response = restTemplate.getForEntity(uri, ForecastApiResponse.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody().getDaily();
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private MarineApiResponse.DailyMarine callMarineDailyApi(double lat, double lng) {
+        try {
+            URI uri = UriComponentsBuilder.fromUriString(marineApiUrl)
+                    .queryParam("latitude", lat)
+                    .queryParam("longitude", lng)
+                    .queryParam("daily", "wave_height_max,swell_wave_height_max")
+                    .queryParam("timezone", "auto")
+                    .queryParam("forecast_days", 7)
+                    .build()
+                    .encode()
+                    .toUri();
+
+            ResponseEntity<MarineApiResponse> response = restTemplate.getForEntity(uri, MarineApiResponse.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody().getDaily();
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String evaluateDailyCondition(Integer weatherCode, Double windSpeedMax,
+            Double waveHeightMax, Double precipProbMax) {
+        if (weatherCode != null && (weatherCode == 95 || weatherCode == 96 || weatherCode == 99)) return "bad";
+        if (windSpeedMax != null && windSpeedMax > 40) return "bad";
+        if (waveHeightMax != null && waveHeightMax > 2.5) return "bad";
+
+        int score = 0, weight = 0;
+        if (waveHeightMax != null) { weight += 3; score += (waveHeightMax < 0.5 ? 2 : waveHeightMax < 1.5 ? 1 : 0) * 3; }
+        if (windSpeedMax != null) { weight += 2; score += (windSpeedMax < 15 ? 2 : windSpeedMax < 30 ? 1 : 0) * 2; }
+        if (precipProbMax != null) { weight += 1; score += (precipProbMax < 20 ? 2 : precipProbMax < 60 ? 1 : 0); }
+        if (weatherCode != null) {
+            weight += 2;
+            score += (weatherCode == 95 || weatherCode == 96 || weatherCode == 99 ? 0 : weatherCode >= 61 ? 1 : 2) * 2;
+        }
+
+        if (weight == 0) return "moderate";
+        double avg = (double) score / weight;
+        return avg >= 1.5 ? "good" : avg >= 0.8 ? "moderate" : "bad";
+    }
+
+    private <T> T getOrNull(List<T> list, int index) {
+        if (list == null || index >= list.size()) return null;
+        return list.get(index);
     }
 }
