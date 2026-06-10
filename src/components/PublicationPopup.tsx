@@ -22,10 +22,11 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
+  const [placeName, setPlaceName] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const prevImagePreviewRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
-  const [placeName, setPlaceName] = useState('');
-  const prevImagePreviewRef = useRef<string | null>(null);
 
   // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
   useEffect(() => {
@@ -49,20 +50,19 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
     return () => { map.off('move', updatePosition); };
   }, [map, updatePosition]);
 
-  // Measure card height synchronously before paint
+  // Measure card height to anchor popup above marker consistently (same pattern as PublicationDetail)
   useLayoutEffect(() => {
     if (cardRef.current) {
       setCardHeight(cardRef.current.getBoundingClientRect().height);
     }
-  }, [screenPos]);
+  }, []);
 
-  // Keep measuring on resize/content changes
   useEffect(() => {
     if (!cardRef.current) return;
     const obs = new ResizeObserver(([entry]) => setCardHeight(entry.contentRect.height));
     obs.observe(cardRef.current);
     return () => obs.disconnect();
-  }, [imagePreview]);
+  }, []);
 
   // Pan map up when image is added so the preview fits in viewport
   useEffect(() => {
@@ -121,8 +121,8 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
 
   if (!screenPos) return null;
 
-  const containerWidth_pre = map?.getContainer().clientWidth ?? 800;
-  const popupWidth = containerWidth_pre < 500 ? Math.min(300, containerWidth_pre - 24) : 400;
+  const containerW = map?.getContainer().clientWidth ?? window.innerWidth;
+  const popupWidth = containerW < 500 ? Math.min(300, containerW - 24) : 400;
   const markerH = 60;
   const gap = 4;
   const tailH = 10;
@@ -132,11 +132,11 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   if (top < minTop) top = minTop;
 
   // Keep popup horizontally within viewport
-  let left = screenPos.x - popupWidth / 2;
-  if (left < 8) left = 8;
-  if (left + popupWidth > containerWidth_pre - 8) left = containerWidth_pre - popupWidth - 8;
+  const minLeft = 8;
+  const maxLeft = containerW - popupWidth - 8;
+  const rawLeft = screenPos.x - popupWidth / 2;
+  const left = Math.max(minLeft, Math.min(rawLeft, maxLeft));
 
-  // Compute tail horizontal offset — clamped so it never reaches rounded corners
   const tailMaxOffset = popupWidth / 2 - 28;
   const tailOffset = Math.max(
     -tailMaxOffset,
@@ -145,14 +145,18 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
 
   return (
     <motion.div
-      className="absolute z-30 pointer-events-auto flex flex-col items-center"
-      style={{ left, top, width: popupWidth }}
+      className="absolute z-30 pointer-events-none flex flex-col items-center"
+      style={{
+        left,
+        top,
+        width: popupWidth,
+      }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.2 }}
     >
-      <div ref={cardRef} className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div ref={cardRef} className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden pointer-events-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 flex items-center justify-between">
           <h3 className="text-white font-semibold text-sm">Nueva publicación</h3>
@@ -262,7 +266,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
         </form>
       </div>
 
-      {/* Tail — offset horizontally so it always points at the marker pin */}
+      {/* Tail pointing down to the marker */}
       <svg width="20" height={tailH} viewBox="0 0 20 10" fill="none" className="-mt-px" style={{ marginLeft: tailOffset * 2 }}>
         <path d="M0 0L10 10L20 0" fill="white" />
         <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
