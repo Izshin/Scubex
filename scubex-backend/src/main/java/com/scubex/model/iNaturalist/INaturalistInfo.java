@@ -12,6 +12,12 @@ import lombok.Data;
 public class INaturalistInfo{
     private String preferred_common_name;
     private String photoUrl;
+
+    @JsonProperty("wikipedia_summary")
+    private String wikipediaSummary;
+
+    @JsonProperty("wikipedia_url")
+    private String wikipediaUrl;
     
     @JsonProperty("default_photo")
     private void setDefaultPhoto(Map<String, Object> defaultPhoto) {

@@ -354,8 +354,7 @@ const MapPage = observer(() => {
           {/* Hint overlay */}
           {mode === 'scan' && !mapStore.scanCenter && !isScanning && !speciesStore.hasSpecies && (
             <motion.div
-              className="absolute bottom-40 sm:bottom-24 left-1/2 -translate-x-1/2 sm:left-8 sm:translate-x-0 bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full z-10 pointer-events-none"
-              initial={{ opacity: 0, y: -10 }}
+              className="absolute bottom-28 sm:bottom-24 right-3 left-auto max-w-[220px] sm:left-8 sm:right-auto sm:max-w-none bg-white/60 backdrop-blur-sm text-black text-sm px-4 py-2 rounded-xl z-10 pointer-events-none"
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
             >
@@ -368,7 +367,7 @@ const MapPage = observer(() => {
             {scanToastName && (
               <motion.button
                 key="scan-toast"
-                className={`absolute ${mode === 'publish' ? 'bottom-24' : 'bottom-40'} sm:bottom-24 left-3 sm:left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-800 text-xs px-3 py-2 rounded-2xl shadow-lg border border-gray-200/60 hover:bg-white transition-all`}
+                className={`absolute ${mode === 'publish' ? 'bottom-24' : 'bottom-28'} sm:bottom-24 left-3 sm:left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-800 text-xs px-3 py-2 rounded-2xl shadow-lg border border-gray-200/60 hover:bg-white transition-all`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}

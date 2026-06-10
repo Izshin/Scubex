@@ -29,4 +29,7 @@ public class SpeciesResponse {
     private Integer lastYear;
     private Integer globalRecords;
     private String iucnCategory;
+    private String description;
+    private String wikipediaUrl;
+    private Boolean invasive;
 }

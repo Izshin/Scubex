@@ -67,6 +67,9 @@ type Props = {
       lastYear?: number;
       globalRecords?: number;
       iucnCategory?: string;
+      description?: string;
+      wikipediaUrl?: string;
+      invasive?: boolean;
     }>;
     counts?: {
       total_taxa: number;
@@ -256,7 +259,7 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                       className="bg-green-100 text-green-700 px-2 py-1 rounded-full"
                       whileHover={{ scale: 1.05 }}
                     >
-                      📈 {s.records} registros
+                      📈 {s.records >= 100 ? '+100' : s.records} registros
                     </motion.span>
                     <motion.span 
                       className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
@@ -280,6 +283,13 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                     <polyline points="6 9 12 15 18 9" />
                   </motion.svg>
                 </div>
+                {s.invasive && (
+                  <div className="mt-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wide bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 rounded-full">
+                    Especie invasora
+                    </span>
+                  </div>
+                )}
 
                 <AnimatePresence>
                   {expandedId === s.taxon_id && (
@@ -304,16 +314,10 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                             <div className="text-orange-800 font-bold text-sm">{s.tempMin} – {s.tempMax ?? '?'} °C</div>
                           </div>
                         )}
-                        {s.firstYear != null && (
-                          <div className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
-                            <div className="text-purple-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Primer avistamiento</div>
-                            <div className="text-purple-800 font-bold text-sm">{s.firstYear} · último {s.lastYear ?? '?'}</div>
-                          </div>
-                        )}
-                        {s.globalRecords != null && (
-                          <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2">
-                            <div className="text-green-400 font-semibold uppercase tracking-wide text-[10px] mb-0.5">Registros globales</div>
-                            <div className="text-green-800 font-bold text-sm">{s.globalRecords.toLocaleString()}</div>
+                        {s.description && (
+                          <div className="col-span-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                            <div className="text-slate-400 font-semibold uppercase tracking-wide text-[10px] mb-1">Descripción</div>
+                            <div className="text-slate-700 text-xs leading-relaxed">{s.description}</div>
                           </div>
                         )}
                         {s.iucnCategory && (
@@ -322,7 +326,24 @@ export default function SpeciesPanel({ loading, data, zoom: _zoom }: Props) {
                             <div className="font-bold text-sm">{s.iucnCategory} — {IUCN_LABELS[s.iucnCategory] ?? s.iucnCategory}</div>
                           </div>
                         )}
-                        {s.depthMin == null && s.tempMin == null && s.firstYear == null && s.globalRecords == null && !s.iucnCategory && (
+                        {s.wikipediaUrl && (
+                          <div className="col-span-2">
+                            <a
+                              href={s.wikipediaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0">
+                                <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clipRule="evenodd" />
+                              </svg>
+                              Ver en Wikipedia
+                            </a>
+                          </div>
+                        )}
+                        {s.depthMin == null && s.tempMin == null && !s.description && !s.iucnCategory && (
                           <span className="col-span-2 text-gray-400 italic">Sin datos ecológicos disponibles</span>
                         )}
                       </div>

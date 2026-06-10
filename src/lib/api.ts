@@ -16,6 +16,9 @@ interface BackendSpeciesResponse {
   lastYear?: number;
   globalRecords?: number;
   iucnCategory?: string;
+  description?: string;
+  wikipediaUrl?: string;
+  invasive?: boolean;
 }
 
 // Frontend display types  
@@ -35,6 +38,9 @@ interface FrontendSpeciesData {
   lastYear?: number;
   globalRecords?: number;
   iucnCategory?: string;
+  description?: string;
+  wikipediaUrl?: string;
+  invasive?: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -141,6 +147,9 @@ export async function getZoneSpecies(scanData: { lat: number; lng: number; radiu
         lastYear: species.lastYear,
         globalRecords: species.globalRecords,
         iucnCategory: species.iucnCategory,
+        description: species.description,
+        wikipediaUrl: species.wikipediaUrl,
+        invasive: species.invasive,
       }))
       .sort((a, b) => b.records - a.records);
 

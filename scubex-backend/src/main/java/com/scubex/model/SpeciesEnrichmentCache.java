@@ -40,6 +40,13 @@ public class SpeciesEnrichmentCache {
     private Integer globalRecords;
     private String iucnCategory;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String wikipediaUrl;
+
+    private Boolean invasive;
+
     @Column(nullable = false)
     private Instant cachedAt;
 
