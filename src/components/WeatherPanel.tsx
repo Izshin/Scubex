@@ -201,7 +201,6 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
                 Hoy
               </button>
             )}
-            <span className="ml-auto" />
             <button
               onClick={() => setMinimized(!minimized)}
               className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 flex items-center justify-center transition-colors flex-shrink-0"
