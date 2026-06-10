@@ -292,11 +292,11 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             {/* Body */}
             <div className="p-4">
               <h3 className="font-semibold text-gray-800 text-sm leading-tight">{publication.title}</h3>
-              {publication.isPrivate && (
-                <span className="inline-flex mt-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Privada</span>
-              )}
               {publication.description && (
                 <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{publication.description}</p>
+              )}
+              {publication.isPrivate && (
+                <span className="inline-flex mt-2 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Privada</span>
               )}
               {publication.imageUrl && (
                 <img src={publication.imageUrl} alt="" className="w-full max-h-48 object-contain rounded-lg bg-gray-50 mt-3" />

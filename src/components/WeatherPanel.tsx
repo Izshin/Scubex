@@ -185,15 +185,15 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
           exit={{ opacity: 0, x: -20, scale: 0.95 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Header: active icon + temp + condition badge + hoy button + controls */}
-          <div className="flex items-center gap-[2.2px] sm:gap-2">
+          {/* Header: left summary + right actions */}
+          <div className="flex items-center gap-2">
             <span className="text-2xl leading-none">{activeIcon}</span>
             <span className="text-lg font-bold text-gray-900 whitespace-nowrap">{activeTempLabel}</span>
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{isForecastDay ? styles.labelShort : styles.label}</span>
             {isForecastDay && (
               <button
                 onClick={() => setSelectedDay(0)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500 text-white shadow-sm shadow-cyan-400/40 hover:bg-cyan-600 transition-all flex-shrink-0 sm:ml-auto"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500 text-white shadow-sm shadow-cyan-400/40 hover:bg-cyan-600 transition-all flex-shrink-0"
               >
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
                   <path d="M5 1L2 4L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -201,27 +201,30 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
                 Hoy
               </button>
             )}
-            <button
-              onClick={() => setMinimized(!minimized)}
-              className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 flex items-center justify-center transition-colors flex-shrink-0"
-              title={minimized ? 'Expandir' : 'Minimizar'}
-            >
-              <svg width="10" height="10" viewBox="0 0 10 10">
-                {minimized
-                  ? <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  : <path d="M2 7L5 4L8 7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                }
-              </svg>
-            </button>
-            {!minimized && (
+
+            <div className="ml-auto flex items-center gap-[2.2px] sm:gap-2">
               <button
-                onClick={() => { setShowInfo(true); onInfoOpen?.(); }}
-                className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
-                title="Más información"
+                onClick={() => setMinimized(!minimized)}
+                className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 flex items-center justify-center transition-colors flex-shrink-0"
+                title={minimized ? 'Expandir' : 'Minimizar'}
               >
-                ?
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  {minimized
+                    ? <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    : <path d="M2 7L5 4L8 7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  }
+                </svg>
               </button>
-            )}
+              {!minimized && (
+                <button
+                  onClick={() => { setShowInfo(true); onInfoOpen?.(); }}
+                  className="w-5 h-5 rounded-full bg-gray-200/80 hover:bg-cyan-100 text-gray-500 hover:text-cyan-600 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
+                  title="Más información"
+                >
+                  ?
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Collapsible body */}

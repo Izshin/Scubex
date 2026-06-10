@@ -25,6 +25,7 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(0);
   const [placeName, setPlaceName] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const prevImagePreviewRef = useRef<string | null>(null);
 
   // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
@@ -122,13 +123,15 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   if (!screenPos) return null;
 
   const containerWidth_pre = map?.getContainer().clientWidth ?? 800;
-  const popupWidth = containerWidth_pre < 500 ? Math.min(300, containerWidth_pre - 24) : 400;
-  const markerH = 60;
+  const isDesktop = containerWidth_pre >= 500;
+  const popupWidth = isDesktop ? 372 : Math.min(300, containerWidth_pre - 24);
+  const markerH = isDesktop ? 62 : 60;
   const gap = 4;
   const tailH = 10;
   const minTop = 8;
+  const desktopLift = isDesktop ? 20 : 0;
 
-  let top = screenPos.y - markerH - gap - tailH - cardHeight;
+  let top = screenPos.y - markerH - gap - tailH - cardHeight - desktopLift;
   if (top < minTop) top = minTop;
 
   // Keep popup horizontally within viewport

@@ -130,15 +130,16 @@ const MapPage = observer(() => {
         return;
       }
       setPublishCoords({ lat, lng });
-      // Offset so clicked point sits ~65% down, leaving space for popup above
+      // Offset marker down enough for popup, but keep desktop movement subtle
       const map = mapRef.current?.getMap();
       if (map) {
+        const containerW = map.getContainer().clientWidth;
         const containerH = map.getContainer().clientHeight;
-        // target at 65%: (P + H) / 2 = 0.65H → P = 0.3H
+        const topPaddingRatio = containerW >= 500 ? 0.45 : 0.24;
         map.flyTo({
           center: [lng, lat],
-          padding: { top: containerH * 0.3, bottom: 0, left: 0, right: 0 },
-          duration: 600,
+          padding: { top: containerH * topPaddingRatio, bottom: 0, left: 0, right: 0 },
+          duration: 450,
         });
       }
     } else {
