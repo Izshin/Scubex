@@ -1,5 +1,7 @@
 package com.scubex.model.openmeteo;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,6 +13,23 @@ public class MarineApiResponse {
 
     @JsonProperty("current")
     private CurrentMarine current;
+
+    @JsonProperty("daily")
+    private DailyMarine daily;
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class DailyMarine {
+
+        @JsonProperty("time")
+        private List<String> time;
+
+        @JsonProperty("wave_height_max")
+        private List<Double> waveHeightMax;
+
+        @JsonProperty("swell_wave_height_max")
+        private List<Double> swellWaveHeightMax;
+    }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)

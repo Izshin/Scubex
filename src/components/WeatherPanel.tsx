@@ -49,9 +49,9 @@ type Condition = 'good' | 'moderate' | 'bad';
 
 function getConditionStyles(condition: Condition) {
   switch (condition) {
-    case 'good':     return { bg: 'bg-emerald-50/90', border: 'border-emerald-300/60', badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400', label: 'Buenas condiciones' };
-    case 'moderate': return { bg: 'bg-amber-50/90',   border: 'border-amber-300/60',   badge: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-400',   label: 'Condiciones tolerables' };
-    case 'bad':      return { bg: 'bg-red-50/90',     border: 'border-red-300/60',     badge: 'bg-red-100 text-red-700',     dot: 'bg-red-400',     label: 'Condiciones adversas' };
+    case 'good':     return { bg: 'bg-emerald-50/90', border: 'border-emerald-300/60', badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400', label: 'Buenas condiciones',    labelShort: 'Buenas' };
+    case 'moderate': return { bg: 'bg-amber-50/90',   border: 'border-amber-300/60',   badge: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-400',   label: 'Condiciones tolerables', labelShort: 'Tolerables' };
+    case 'bad':      return { bg: 'bg-red-50/90',     border: 'border-red-300/60',     badge: 'bg-red-100 text-red-700',     dot: 'bg-red-400',     label: 'Condiciones adversas',   labelShort: 'Adversas' };
   }
 }
 
@@ -185,17 +185,20 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
           exit={{ opacity: 0, x: -20, scale: 0.95 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Header: active icon + temp + condition badge + back-to-today + controls */}
+          {/* Header: active icon + temp + condition badge + hoy button + controls */}
           <div className="flex items-center gap-2">
             <span className="text-2xl leading-none">{activeIcon}</span>
             <span className="text-lg font-bold text-gray-900 whitespace-nowrap">{activeTempLabel}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{styles.label}</span>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${styles.badge}`}>{isForecastDay ? styles.labelShort : styles.label}</span>
             {isForecastDay && (
               <button
                 onClick={() => setSelectedDay(0)}
-                className="text-[10px] text-cyan-600 hover:text-cyan-700 font-semibold whitespace-nowrap underline underline-offset-2 transition-colors ml-0.5"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500 text-white shadow-sm shadow-cyan-400/40 hover:bg-cyan-600 transition-all flex-shrink-0"
               >
-                ← Hoy
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M5 1L2 4L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Hoy
               </button>
             )}
             <span className="ml-auto" />
@@ -246,6 +249,8 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
                             isSelected
                               ? 'bg-cyan-500 text-white shadow-sm shadow-cyan-400/40'
+                              : i === 0
+                              ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                           }`}
                         >
@@ -304,9 +309,9 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
                         <Stat label="Prob. lluvia" value={forecastDay!.precipProbMax != null ? `${Math.round(forecastDay!.precipProbMax!)} %` : '—'} color={forecastStatColor('Prob. lluvia', forecastDay!.precipProbMax)} />
                         <Stat label="Viento máx"   value={forecastDay!.windSpeedMax != null ? `${Math.round(forecastDay!.windSpeedMax!)} km/h` : '—'} color={forecastStatColor('Viento', forecastDay!.windSpeedMax)} />
                         <Stat label="Oleaje máx"   value={forecastDay!.waveHeightMax != null ? `${forecastDay!.waveHeightMax!.toFixed(1)} m` : '—'} color={forecastStatColor('Oleaje', forecastDay!.waveHeightMax)} />
-                        <Stat label="Clima"        value={getWeatherInfo(forecastDay!.weatherCode).desc} />
+                        <Stat label="Swell máx"    value={forecastDay!.swellHeightMax != null ? `${forecastDay!.swellHeightMax!.toFixed(1)} m` : '—'} color={forecastStatColor('Oleaje', forecastDay!.swellHeightMax)} />
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-2 italic">Previsión · valores estimados</p>
+                      <p className="text-[10px] text-gray-400 mt-2 italic">Previsión a 7 días</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -384,19 +389,9 @@ export default function WeatherPanel({ data, loading, error, hidden = false, for
               </div>
 
               {/* Aviso legal */}
-              <div className="mt-3 pt-3 border-t border-amber-100 bg-amber-50/60 rounded-xl p-3">
-                <div className="flex items-start gap-2">
-                  <span className="text-base leading-none mt-0.5 flex-shrink-0">⚠️</span>
-                  <div>
-                    <p className="text-[11px] font-bold text-amber-800 mb-1">Aviso de responsabilidad</p>
-                    <p className="text-[11px] text-amber-700 leading-relaxed">
-                      Los datos mostrados provienen de fuentes externas (Open-Meteo) y tienen carácter meramente informativo.
-                      Scubex no se hace responsable de inexactitudes o discrepancias entre los datos mostrados y las condiciones reales en el momento de la inmersión.
-                      Consulta siempre fuentes oficiales y toma decisiones con criterio propio antes de bucear.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="mt-3 pt-3 border-t border-gray-100 text-[11px] text-gray-400 leading-relaxed text-center">
+                Los datos provienen de Open-Meteo y son meramente informativos. Scubex no se hace responsable de discrepancias con las condiciones reales. Consulta fuentes oficiales antes de bucear.
+              </p>
             </div>
 
             <div className="p-3 border-t border-gray-100 text-center">
