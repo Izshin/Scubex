@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { Map } from 'maplibre-gl';
 import { uploadImage } from '../lib/api';
@@ -24,6 +24,8 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const [screenPos, setScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [placeName, setPlaceName] = useState('');
   const prevImagePreviewRef = useRef<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardHeight, setCardHeight] = useState(0);
 
   // Reverse geocode to get place name (uses module-level cache to avoid repeated requests)
   useEffect(() => {
@@ -46,6 +48,20 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
     map.on('move', updatePosition);
     return () => { map.off('move', updatePosition); };
   }, [map, updatePosition]);
+
+  // Measure card height to anchor popup above marker consistently (same pattern as PublicationDetail)
+  useLayoutEffect(() => {
+    if (cardRef.current) {
+      setCardHeight(cardRef.current.getBoundingClientRect().height);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+    const obs = new ResizeObserver(([entry]) => setCardHeight(entry.contentRect.height));
+    obs.observe(cardRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   // Pan map up when image is added so the preview fits in viewport
   useEffect(() => {
@@ -104,39 +120,42 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
 
   if (!screenPos) return null;
 
-  const isMobile = window.innerWidth < 640;
-  const popupWidth = isMobile ? Math.min(320, window.innerWidth - 24) : 400;
+  const containerW = map?.getContainer().clientWidth ?? window.innerWidth;
+  const popupWidth = containerW < 500 ? Math.min(300, containerW - 24) : 400;
   const markerH = 60;
   const gap = 4;
   const tailH = 10;
-  const mobileControlsReserve = 128;
+  const minTop = 8;
 
-  const containerH = map?.getContainer().clientHeight ?? window.innerHeight;
-  // On mobile: pin the popup above the controls bar with extra headroom.
-  // On desktop: anchor above the marker pin
-  const bottomAnchor = isMobile
-    ? containerH - mobileControlsReserve
-    : screenPos.y - markerH - gap;
+  let top = screenPos.y - markerH - gap - tailH - cardHeight;
+  if (top < minTop) top = minTop;
 
   // Keep popup horizontally within viewport
   const minLeft = 8;
-  const maxLeft = window.innerWidth - popupWidth - 8;
+  const maxLeft = containerW - popupWidth - 8;
   const rawLeft = screenPos.x - popupWidth / 2;
   const left = Math.max(minLeft, Math.min(rawLeft, maxLeft));
 
+  const tailMaxOffset = popupWidth / 2 - 28;
+  const tailOffset = Math.max(
+    -tailMaxOffset,
+    Math.min(tailMaxOffset, screenPos.x - left - popupWidth / 2)
+  );
+
   return (
     <motion.div
-      className="absolute z-30 pointer-events-none"
-      style={{ left, top: bottomAnchor, width: popupWidth, height: 0 }}
+      className="absolute z-30 pointer-events-none flex flex-col items-center"
+      style={{
+        left,
+        top,
+        width: popupWidth,
+      }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.2 }}
     >
-      {/* Content anchored to bottom, grows upward */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-auto flex flex-col items-center">
-      {/* Bubble card */}
-      <div className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div ref={cardRef} className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden pointer-events-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 flex items-center justify-between">
           <h3 className="text-white font-semibold text-sm">Nueva publicación</h3>
@@ -232,11 +251,10 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
       </div>
 
       {/* Tail pointing down to the marker */}
-      <svg width="20" height={tailH} viewBox="0 0 20 10" fill="none" className="-mt-px">
+      <svg width="20" height={tailH} viewBox="0 0 20 10" fill="none" className="-mt-px" style={{ marginLeft: tailOffset * 2 }}>
         <path d="M0 0L10 10L20 0" fill="white" />
         <path d="M0 0L10 10L20 0" stroke="#e5e7eb" strokeWidth="1" fill="none" strokeLinejoin="round" />
       </svg>
-      </div>
     </motion.div>
   );
 }
