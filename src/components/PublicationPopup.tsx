@@ -109,12 +109,13 @@ export default function PublicationPopup({ lat, lng, map, onSubmit, onClose, isL
   const markerH = 60;
   const gap = 4;
   const tailH = 10;
+  const mobileControlsReserve = 128;
 
   const containerH = map?.getContainer().clientHeight ?? window.innerHeight;
-  // On mobile: pin the popup just above the controls bar (≈88px from bottom of container)
+  // On mobile: pin the popup above the controls bar with extra headroom.
   // On desktop: anchor above the marker pin
   const bottomAnchor = isMobile
-    ? containerH - 88
+    ? containerH - mobileControlsReserve
     : screenPos.y - markerH - gap;
 
   // Keep popup horizontally within viewport
