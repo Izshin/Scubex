@@ -158,7 +158,7 @@ const Profile = observer(function Profile() {
   };
 
   const handleShareProfile = async () => {
-    const url = `${window.location.origin}/user/${encodeURIComponent(user.email)}`;
+    const url = `${window.location.origin}/user/${encodeURIComponent(user.email)}?shared=1`;
     if (navigator.share) {
       try { await navigator.share({ title: user.name, url }); } catch { /* cancelled */ }
     } else {

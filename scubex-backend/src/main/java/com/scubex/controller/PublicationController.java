@@ -79,9 +79,13 @@ public class PublicationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id, Authentication auth) {
+    public ResponseEntity<?> getById(@PathVariable Long id,
+                                     @RequestParam(defaultValue = "false") boolean shared,
+                                     Authentication auth) {
         User requester = getOptionalUser(auth);
-        Publication publication = publicationService.getByIdVisibleTo(id, requester);
+        Publication publication = shared
+                ? publicationService.getById(id)
+                : publicationService.getByIdVisibleTo(id, requester);
         if (publication == null) {
             return ResponseEntity.status(404).body(Map.of("error", "Publication not found"));
         }

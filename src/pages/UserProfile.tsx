@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWaveTransition } from '../lib/transition';
 import { useUserStore } from '../lib/stores';
@@ -11,6 +11,7 @@ type ListModal = 'followers' | 'following' | null;
 
 export default function UserProfile() {
   const { email } = useParams<{ email: string }>();
+  const [searchParams] = useSearchParams();
   const { startWaveTransition } = useWaveTransition();
   const userStore = useUserStore();
 
@@ -26,16 +27,17 @@ export default function UserProfile() {
   const [listLoading, setListLoading] = useState(false);
 
   const isOwnProfile = userStore.user?.email === email;
+  const isSharedLink = searchParams.get('shared') === '1';
 
   useEffect(() => {
     if (!email) return;
     setLoading(true);
     setError(null);
-    getPublicProfile(email)
+    getPublicProfile(email, isSharedLink)
       .then(setProfile)
       .catch(() => setError('No se pudo cargar el perfil.'))
       .finally(() => setLoading(false));
-  }, [email]);
+  }, [email, isSharedLink]);
 
   const handleToggleFollow = async () => {
     if (!email || !userStore.isLoggedIn || togglingFollow || !profile) return;
@@ -59,7 +61,7 @@ export default function UserProfile() {
   };
 
   const handleShareProfile = async () => {
-    const url = `${window.location.origin}/user/${encodeURIComponent(email ?? '')}`;
+    const url = `${window.location.origin}/user/${encodeURIComponent(email ?? '')}?shared=1`;
     if (navigator.share) {
       try { await navigator.share({ title: profile?.name ?? 'Perfil', url }); } catch { /* cancelled */ }
     } else {
@@ -201,7 +203,7 @@ export default function UserProfile() {
             {profile.publications.map(pub => (
               <div
                 key={pub.id}
-                onClick={() => startWaveTransition('/map', { focusPublication: pub.id })}
+                onClick={() => startWaveTransition(`/map?pub=${pub.id}&shared=1`)}
                 className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all group cursor-pointer"
               >
                 {pub.imageUrl ? (

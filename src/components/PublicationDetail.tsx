@@ -276,11 +276,32 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           <div ref={cardRef} className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                {publication.author.picture && (
-                  <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
-                )}
-                <span className="text-white/80 text-xs truncate cursor-pointer hover:text-white transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  {publication.author.picture && (
+                    <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
+                  )}
+                  <span className="text-white/80 text-xs truncate cursor-pointer hover:text-white transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-white/60 text-[10px]">
+                    {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {publication.isPrivate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isOwner) return;
+                        setExpanded(true);
+                        startEditing();
+                      }}
+                      className={`inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-medium leading-none text-white ${isOwner ? 'hover:bg-white/20 cursor-pointer transition-all' : ''}`}
+                      title={isOwner ? 'Editar privacidad' : undefined}
+                    >
+                      Privada
+                    </button>
+                  )}
+                </div>
               </div>
               <button onClick={onClose} className="text-white/70 hover:text-white transition-colors flex-shrink-0 ml-2">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -294,9 +315,6 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
               <h3 className="font-semibold text-gray-800 text-sm leading-tight">{publication.title}</h3>
               {publication.description && (
                 <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{publication.description}</p>
-              )}
-              {publication.isPrivate && (
-                <span className="inline-flex mt-2 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Privada</span>
               )}
               {publication.imageUrl && (
                 <img src={publication.imageUrl} alt="" className="w-full max-h-48 object-contain rounded-lg bg-gray-50 mt-3" />
@@ -368,15 +386,27 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3.5 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>
+            <div className="flex items-center gap-3 min-w-0">
               {publication.author.picture && (
-                <img src={publication.author.picture} alt="" className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0" />
+                <img src={publication.author.picture} alt="" className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
               )}
               <div className="min-w-0">
-                <span className="text-white font-semibold text-sm block truncate hover:text-cyan-200 transition-colors">{publication.author.name}</span>
-                <span className="text-white/60 text-[10px]">
-                  {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </span>
+                <span className="text-white font-semibold text-sm block truncate hover:text-cyan-200 transition-colors cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-white/60 text-[10px]">
+                    {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                  {publication.isPrivate && (
+                    <button
+                      type="button"
+                      onClick={() => { if (isOwner) startEditing(); }}
+                      className={`inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-medium leading-none text-white ${isOwner ? 'hover:bg-white/20 cursor-pointer transition-all' : ''}`}
+                      title={isOwner ? 'Editar privacidad' : undefined}
+                    >
+                      Privada
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -464,15 +494,21 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                     />
                     {editImageError && <p className="text-xs text-red-500 mt-1">{editImageError}</p>}
                   </div>
-                  <label className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2">
-                    <span className="text-sm text-gray-700">Publicación privada</span>
-                    <input
-                      type="checkbox"
-                      checked={editIsPrivate}
-                      onChange={(e) => setEditIsPrivate(e.target.checked)}
-                      className="h-4 w-4 accent-cyan-600"
-                    />
-                  </label>
+                  <div className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700">Publicación privada</span>
+                      <span className="text-[11px] text-gray-500">{editIsPrivate ? 'Solo tu la ves' : 'Visible para todos'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={editIsPrivate}
+                      onClick={() => setEditIsPrivate(v => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${editIsPrivate ? 'bg-cyan-500' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${editIsPrivate ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Delete button */}
@@ -528,9 +564,6 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
             ) : (
               <>
                 <h2 className="text-lg font-bold text-gray-800">{publication.title}</h2>
-                {publication.isPrivate && (
-                  <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Publicación privada</span>
-                )}
                 {publication.description && (
                   <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{publication.description}</p>
                 )}
@@ -605,7 +638,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
                       </button>
 
                       {/* Share button */}
-                      <ShareButton url={`${window.location.origin}/map?pub=${publication.id}`} title={publication.title} />
+                      <ShareButton url={`${window.location.origin}/map?pub=${publication.id}&shared=1`} title={publication.title} />
                     </div>
 
                     {/* Save button */}

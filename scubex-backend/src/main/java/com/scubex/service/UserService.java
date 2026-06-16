@@ -59,13 +59,23 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public User updateProfile(String googleId, String customName, String customPictureUrl, Boolean accountPrivate) {
         User user = userRepository.findByGoogleId(googleId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setCustomName(customName);
         user.setCustomPictureUrl(customPictureUrl);
         if (accountPrivate != null) {
+            boolean wasPrivate = Boolean.TRUE.equals(user.getAccountPrivate());
             user.setAccountPrivate(accountPrivate);
+            // Cascade to publications only when switching to private account.
+            if (!wasPrivate && accountPrivate) {
+                List<Publication> publications = publicationRepository.findByUser(user);
+                if (!publications.isEmpty()) {
+                    publications.forEach(p -> p.setIsPrivate(true));
+                    publicationRepository.saveAll(publications);
+                }
+            }
         }
         return userRepository.save(user);
     }

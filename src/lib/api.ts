@@ -290,6 +290,18 @@ export async function getPublicationsInArea(latMin: number, latMax: number, lngM
   return response.json();
 }
 
+export async function getPublicationById(id: number, shared = false): Promise<PublicationData> {
+  const params = new URLSearchParams();
+  if (shared) params.set('shared', 'true');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/api/publications/${id}${suffix}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!response.ok) throw new Error(`Fetch publication failed: ${response.status}`);
+  return response.json();
+}
+
 export async function deletePublication(id: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/publications/${id}`, {
     method: 'DELETE',
@@ -422,8 +434,11 @@ export interface FollowStatus {
 }
 
 // Public profile
-export async function getPublicProfile(email: string): Promise<PublicProfileData> {
-  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}`, {
+export async function getPublicProfile(email: string, shared = false): Promise<PublicProfileData> {
+  const params = new URLSearchParams();
+  if (shared) params.set('shared', 'true');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(email)}${suffix}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });

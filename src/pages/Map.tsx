@@ -14,7 +14,7 @@ import Avatar from "../components/Avatar";
 import Spinner from "../components/Spinner";
 import { useSpeciesStore, useMapStore, useWeatherStore, usePublicationStore, useUserStore } from "../lib/stores/index.tsx";
 import { useWaveTransition } from "../lib/transition";
-import { loginWithGoogle } from "../lib/api";
+import { loginWithGoogle, getPublicationById } from "../lib/api";
 import type { PublicationData } from "../lib/api";
 
 const RADIUS_OPTIONS = [
@@ -37,6 +37,7 @@ const MapPage = observer(() => {
   const [mode, setMode] = useState<'scan' | 'publish'>('scan');
   const [publishCoords, setPublishCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedPublication, setSelectedPublication] = useState<PublicationData | null>(null);
+  const [sharedLinkPublication, setSharedLinkPublication] = useState<PublicationData | null>(null);
   const [detailHidden, setDetailHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [loginPromptCoords, setLoginPromptCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -45,6 +46,18 @@ const MapPage = observer(() => {
   // publication) don't fly back to the originally focused publication.
   const focusedPubIdRef = useRef<number | null>(null);
   const [searchParams] = useSearchParams();
+
+  const closeSelectedPublication = useCallback(() => {
+    if (selectedPublication && sharedLinkPublication && selectedPublication.id === sharedLinkPublication.id) {
+      setSharedLinkPublication(null);
+    }
+    setSelectedPublication(null);
+  }, [selectedPublication, sharedLinkPublication]);
+
+  const mapPublications =
+    sharedLinkPublication && !publicationStore.publications.some(p => p.id === sharedLinkPublication.id)
+      ? [...publicationStore.publications, sharedLinkPublication]
+      : publicationStore.publications;
 
   // Load publications on mount
   useEffect(() => {
@@ -55,32 +68,48 @@ const MapPage = observer(() => {
   useEffect(() => {
     const state = location.state as { focusPublication?: number } | null;
     const pubId = state?.focusPublication ?? (searchParams.get('pub') ? Number(searchParams.get('pub')) : null);
+    const isSharedLink = searchParams.get('shared') === '1';
     if (!pubId) return;
     // Already handled this id — don't fly again
     if (focusedPubIdRef.current === pubId) return;
-    // Wait for publications to load, then fly to the target
-    const tryFocus = () => {
-      const pub = publicationStore.publications.find(p => p.id === pubId);
-      if (pub) {
-        focusedPubIdRef.current = pubId;
-        setSelectedPublication(pub);
-        setPublishCoords(null);
-        const map = mapRef.current?.getMap();
-        if (map) {
-          const containerH = map.getContainer().clientHeight;
-          map.flyTo({
-            center: [pub.longitude, pub.latitude],
-            padding: { top: containerH * 0.3, bottom: 0, left: 0, right: 0 },
-            zoom: 14,
-            duration: 800,
-          });
-        }
-      } else {
-        // Publications might not be loaded yet, retry shortly
-        setTimeout(tryFocus, 300);
+
+    let cancelled = false;
+
+    const focusPublication = (pub: PublicationData) => {
+      if (cancelled) return;
+      focusedPubIdRef.current = pubId;
+      setSelectedPublication(pub);
+      setPublishCoords(null);
+      const map = mapRef.current?.getMap();
+      if (map) {
+        const containerH = map.getContainer().clientHeight;
+        map.flyTo({
+          center: [pub.longitude, pub.latitude],
+          padding: { top: containerH * 0.3, bottom: 0, left: 0, right: 0 },
+          zoom: 14,
+          duration: 800,
+        });
       }
     };
-    tryFocus();
+
+    const pubInStore = publicationStore.publications.find(p => p.id === pubId);
+    if (pubInStore) {
+      setSharedLinkPublication(null);
+      focusPublication(pubInStore);
+    } else if (isSharedLink) {
+      getPublicationById(pubId, true)
+        .then((pub) => {
+          setSharedLinkPublication(pub);
+          focusPublication(pub);
+        })
+        .catch(() => {
+          // Keep silent if link is invalid or resource is unavailable.
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [location.state, searchParams, publicationStore.publications]);
 
   const handleViewportChange = useCallback((bbox: number[]) => {
@@ -122,7 +151,7 @@ const MapPage = observer(() => {
 
     if (mode === 'publish') {
       // Close publication detail if open (don't also open publish popup)
-      if (selectedPublication) { setSelectedPublication(null); return; }
+      if (selectedPublication) { closeSelectedPublication(); return; }
       // Close publish popup if clicking outside it
       if (publishCoords) { setPublishCoords(null); return; }
       if (!userStore.isLoggedIn) {
@@ -144,12 +173,12 @@ const MapPage = observer(() => {
       }
     } else {
       // Scan mode: close publication if open, and also set scan center
-      if (selectedPublication) setSelectedPublication(null);
+      if (selectedPublication) closeSelectedPublication();
       if (isScanning) return;
       mapStore.setScanCenter({ lat, lng });
       weatherStore.fetchWeather(lat, lng);
     }
-  }, [mapStore, weatherStore, isScanning, mode, userStore.isLoggedIn, selectedPublication, publishCoords]);
+  }, [mapStore, weatherStore, isScanning, mode, userStore.isLoggedIn, selectedPublication, publishCoords, closeSelectedPublication]);
 
   // Scan button triggers the actual API call
   const handleScan = useCallback(async () => {
@@ -254,7 +283,7 @@ const MapPage = observer(() => {
             scanCenter={mapStore.scanCenter}
             publishCenter={mode === 'publish' ? publishCoords : null}
             scanRadius={mapStore.scanRadius}
-            publications={publicationStore.publications}
+            publications={mapPublications}
           />
 
           {/* Controls bar: mode toggle + radius selector + action button */}
@@ -492,13 +521,21 @@ const MapPage = observer(() => {
                   map={mapRef.current?.getMap() ?? null}
                   isOwner={userStore.user?.email === selectedPublication.author.email}
                   hidden={detailHidden}
-                  onClose={() => setSelectedPublication(null)}
+                  onClose={closeSelectedPublication}
                   onEdit={async (id, data) => {
                     const updated = await publicationStore.editPublication(id, data);
-                    if (updated) setSelectedPublication(updated);
+                    if (updated) {
+                      setSelectedPublication(updated);
+                      if (sharedLinkPublication && sharedLinkPublication.id === updated.id) {
+                        setSharedLinkPublication(updated);
+                      }
+                    }
                   }}
                   onDelete={async (id) => {
                     await publicationStore.removePublication(id);
+                    if (sharedLinkPublication && sharedLinkPublication.id === id) {
+                      setSharedLinkPublication(null);
+                    }
                     setSelectedPublication(null);
                   }}
                   onCountsChange={(likeCount, commentCount) => {

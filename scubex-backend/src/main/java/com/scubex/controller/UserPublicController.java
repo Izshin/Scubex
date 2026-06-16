@@ -54,7 +54,9 @@ public class UserPublicController {
     // ── Public profile ──
 
     @GetMapping("/{email}")
-    public ResponseEntity<?> getPublicProfile(@PathVariable String email, Authentication auth) {
+    public ResponseEntity<?> getPublicProfile(@PathVariable String email,
+                                              @RequestParam(defaultValue = "false") boolean shared,
+                                              Authentication auth) {
         User user = userService.findByEmail(email);
         if (user == null) {
             return ResponseEntity.status(404).body(Map.of("error", "User not found"));
@@ -62,7 +64,9 @@ public class UserPublicController {
 
         User me = getOptionalUser(auth);
         boolean isOwn = me != null && me.getId().equals(user.getId());
-        List<Publication> publications = publicationService.getByUserVisibleTo(user, me);
+        List<Publication> publications = shared
+                ? publicationService.getByUser(user)
+                : publicationService.getByUserVisibleTo(user, me);
         long followerCount = followService.getFollowerCount(user.getId());
         long followingCount = followService.getFollowingCount(user.getId());
 
