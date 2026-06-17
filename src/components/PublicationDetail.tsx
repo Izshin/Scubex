@@ -279,9 +279,9 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   {publication.author.picture && (
-                    <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
+                    <img src={publication.author.picture} alt="" className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}?shared=1`)} />
                   )}
-                  <span className="text-white/80 text-xs truncate cursor-pointer hover:text-white transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
+                  <span className="text-white/80 text-xs truncate cursor-pointer hover:text-white transition-colors" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}?shared=1`)}>{publication.author.name}</span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-white/60 text-[10px]">
@@ -388,10 +388,10 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3.5 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3 min-w-0">
               {publication.author.picture && (
-                <img src={publication.author.picture} alt="" className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)} />
+                <img src={publication.author.picture} alt="" className="w-8 h-8 rounded-full border-2 border-white/30 flex-shrink-0 cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}?shared=1`)} />
               )}
               <div className="min-w-0">
-                <span className="text-white font-semibold text-sm block truncate hover:text-cyan-200 transition-colors cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}`)}>{publication.author.name}</span>
+                <span className="text-white font-semibold text-sm block truncate hover:text-cyan-200 transition-colors cursor-pointer" onClick={() => startWaveTransition(`/user/${encodeURIComponent(publication.author.email)}?shared=1`)}>{publication.author.name}</span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-white/60 text-[10px]">
                     {new Date(publication.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}

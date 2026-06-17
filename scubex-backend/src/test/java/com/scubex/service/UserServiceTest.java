@@ -150,7 +150,7 @@ class UserServiceTest {
         when(userRepository.findByGoogleId("gid-update")).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        User result = userService.updateProfile("gid-update", "Nuevo Nombre", "https://newpic.png");
+            User result = userService.updateProfile("gid-update", "Nuevo Nombre", "https://newpic.png", null);
 
         assertEquals("Nuevo Nombre", result.getCustomName());
         assertEquals("https://newpic.png", result.getCustomPictureUrl());

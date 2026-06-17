@@ -7,6 +7,7 @@ import com.scubex.repository.NotificationRepository;
 import com.scubex.repository.PublicationLikeRepository;
 import com.scubex.repository.PublicationRepository;
 import com.scubex.repository.PublicationSaveRepository;
+import com.scubex.repository.UserFollowRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,17 +22,20 @@ public class PublicationService {
     private final PublicationLikeRepository likeRepository;
     private final PublicationSaveRepository saveRepository;
     private final NotificationRepository notificationRepository;
+    private final UserFollowRepository userFollowRepository;
 
     public PublicationService(PublicationRepository publicationRepository,
                               CommentRepository commentRepository,
                               PublicationLikeRepository likeRepository,
                               PublicationSaveRepository saveRepository,
-                              NotificationRepository notificationRepository) {
+                              NotificationRepository notificationRepository,
+                              UserFollowRepository userFollowRepository) {
         this.publicationRepository = publicationRepository;
         this.commentRepository = commentRepository;
         this.likeRepository = likeRepository;
         this.saveRepository = saveRepository;
         this.notificationRepository = notificationRepository;
+        this.userFollowRepository = userFollowRepository;
     }
 
     public Publication create(Publication publication) {
@@ -57,7 +61,9 @@ public class PublicationService {
             return publicationRepository.findByUser(user);
         }
         if (Boolean.TRUE.equals(user.getAccountPrivate())) {
-            return List.of();
+            return canAccessPrivateAuthor(user, requester)
+                    ? publicationRepository.findByUser(user)
+                    : List.of();
         }
         return publicationRepository.findByUser(user).stream()
                 .filter(p -> !Boolean.TRUE.equals(p.getIsPrivate()))
@@ -116,11 +122,18 @@ public class PublicationService {
     public boolean canView(Publication p, User requester) {
         if (p == null || p.getUser() == null) return false;
         if (isOwner(p.getUser(), requester)) return true;
-        if (Boolean.TRUE.equals(p.getUser().getAccountPrivate())) return false;
+        if (Boolean.TRUE.equals(p.getUser().getAccountPrivate())) {
+            return canAccessPrivateAuthor(p.getUser(), requester);
+        }
         return !Boolean.TRUE.equals(p.getIsPrivate());
     }
 
     private boolean isOwner(User owner, User requester) {
         return owner != null && requester != null && Objects.equals(owner.getId(), requester.getId());
+    }
+
+    private boolean canAccessPrivateAuthor(User author, User requester) {
+        if (author == null || requester == null) return false;
+        return userFollowRepository.existsByFollowerIdAndFollowedId(requester.getId(), author.getId());
     }
 }

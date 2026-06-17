@@ -105,7 +105,7 @@ class ProfileControllerTest {
                 .build();
 
         when(authHelper.getUser(any())).thenReturn(user);
-        when(userService.updateProfile("gid-1", "Carlos D.", "https://new.pic")).thenReturn(updated);
+        when(userService.updateProfile("gid-1", "Carlos D.", "https://new.pic", null)).thenReturn(updated);
         when(jwtService.generateToken(updated)).thenReturn("new.jwt.token");
 
         mockMvc.perform(put("/api/profile")
