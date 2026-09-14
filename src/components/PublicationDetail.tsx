@@ -353,8 +353,7 @@ export default function PublicationDetail({ publication, map, isOwner, onClose, 
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
           <motion.div
-            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ width: 'calc(100% - 3rem)', height: 'calc(100% - 3rem)', maxWidth: 480 }}
+            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-[calc(100%-3rem)] h-[calc(100%-3rem)] max-w-[480px] lg:max-w-[920px] lg:h-auto lg:max-h-[85vh]"
             initial={{ scale: 0.95 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.95 }}
